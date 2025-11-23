@@ -31,7 +31,7 @@ export function HeaderBar({
     { to: "/docs", label: "Docs" },
     { to: "/class-uml", label: "UML" },
     { to: "/linters", label: "Linters" },
-    { to: "/audit", label: "Audit" },
+    { to: "/monitoring", label: "Agent Monitor" },
     { to: "/timeline", label: "Timeline" },
     { to: "/ollama", label: "AI Insights" },
     { to: "/overview", label: "Overview" },

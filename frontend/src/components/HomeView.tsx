@@ -190,14 +190,14 @@ export function HomeView({
           <span className="home-card-cta">Open Timeline →</span>
         </Link>
 
-        <Link to="/audit" className="home-card">
+        <Link to="/monitoring" className="home-card">
           <div className="home-card-body">
-            <h3>Audit Trail</h3>
+            <h3>Agent Monitoring</h3>
             <p>
-              Capture every agent action in a live run: intents, commands, diffs, and tests. Export a narrative your boss can audit.
+              Real-time dashboard with terminal output, phase timelines, and file diffs. Watch your agents work live.
             </p>
           </div>
-          <span className="home-card-cta">Open Audit →</span>
+          <span className="home-card-cta">Open Dashboard →</span>
         </Link>
 
         <Link to="/linters" className="home-card">

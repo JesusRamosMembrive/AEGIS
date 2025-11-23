@@ -10,7 +10,6 @@ import { OverviewDashboard } from "./components/OverviewDashboard";
 import { PromptLibraryView } from "./components/PromptLibraryView";
 import { AppLayout } from "./components/AppLayout";
 import { OllamaInsightsView } from "./components/OllamaInsightsView";
-import { AuditSessionsView } from "./components/AuditSessionsView";
 import { AgentMonitoringDashboard } from "./components/AgentMonitoringDashboard";
 import CodeTimelineView from "./components/CodeTimelineView";
 import { DocsLibraryView } from "./components/DocsLibraryView";
@@ -74,10 +73,6 @@ export function App(): JSX.Element {
           <Route
             path="/ollama"
             element={withLayout("Ollama Insights", <OllamaInsightsView />)}
-          />
-          <Route
-            path="/audit"
-            element={withLayout("Audit Trail", <AuditSessionsView />)}
           />
           <Route
             path="/monitoring"
