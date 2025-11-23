@@ -1,5 +1,6 @@
 """Git helpers for timeline visualizations and Code Map features."""
 
+import os
 import subprocess  # nosec B404 - Required for invoking git CLI safely. All commands use list args (no shell injection risk).
 from dataclasses import dataclass
 from datetime import datetime
@@ -130,14 +131,26 @@ class GitHistory:
     - Extract commit metadata
     """
 
-    def __init__(self, repo_path: Path):
+    def __init__(self, repo_path: Path, audit_run_id: Optional[int] = None):
         """
         Initialize git history analyzer.
 
         Args:
             repo_path: Path to git repository root
+            audit_run_id: Optional audit run ID for tracking git operations
         """
         self.repo_path = Path(repo_path)
+        self.audit_run_id = audit_run_id
+
+        # Try to get audit_run_id from environment if not provided
+        if self.audit_run_id is None:
+            audit_run_id_str = os.getenv("ATLAS_AUDIT_RUN_ID")
+            if audit_run_id_str:
+                try:
+                    self.audit_run_id = int(audit_run_id_str)
+                except ValueError:
+                    pass
+
         self._validate_git_repo()
 
     def _validate_git_repo(self) -> None:
@@ -159,6 +172,25 @@ class GitHistory:
         Raises:
             GitHistoryError: If command fails
         """
+        # Use audit hook if run_id is available
+        if self.audit_run_id is not None:
+            try:
+                from code_map.audit.hooks import audit_run_command
+                result = audit_run_command(
+                    ["git"] + args,
+                    run_id=self.audit_run_id,
+                    phase="explore",
+                    actor="system",
+                    cwd=self.repo_path,
+                )
+                if result.returncode != 0:
+                    raise GitHistoryError(f"Git command failed: {result.stderr}")
+                return result.stdout
+            except ImportError:
+                # Fallback if audit module not available
+                pass
+
+        # Normal execution without audit
         try:
             result = subprocess.run(  # nosec B603 - Git command constructed from controlled list args, no user input in command itself
                 ["git"] + args,
@@ -453,6 +485,26 @@ class GitHistory:
         """Return diff between working tree and HEAD for the given file."""
 
         normalized = Path(file_path).as_posix()
+
+        # Use audit hook if run_id is available
+        if self.audit_run_id is not None:
+            try:
+                from code_map.audit.hooks import audit_run_command
+                result = audit_run_command(
+                    ["git", "diff", "HEAD", "--", normalized],
+                    run_id=self.audit_run_id,
+                    phase="explore",
+                    actor="system",
+                    cwd=self.repo_path,
+                )
+                if result.returncode not in {0, 1}:
+                    raise GitHistoryError(result.stderr.strip() or "git diff failed")
+                return result.stdout
+            except ImportError:
+                # Fallback if audit module not available
+                pass
+
+        # Normal execution without audit
         try:
             result = subprocess.run(  # nosec B603 - arguments are controlled
                 ["git", "diff", "HEAD", "--", normalized],

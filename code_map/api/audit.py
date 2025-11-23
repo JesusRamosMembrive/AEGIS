@@ -5,9 +5,13 @@ Audit endpoints to track agent sessions and events.
 
 from __future__ import annotations
 
+import asyncio
+import json
 from pathlib import Path
+from typing import AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 from ..audit import (
     AuditEvent,
@@ -182,3 +186,61 @@ async def append_audit_event(
     except Exception as exc:  # pragma: no cover - defensive
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return _serialize_event(event)
+
+
+@router.get("/runs/{run_id}/stream")
+async def stream_audit_events(
+    run_id: int,
+    state: AppState = Depends(get_app_state),
+) -> StreamingResponse:
+    """
+    Stream audit events in real-time using Server-Sent Events (SSE).
+
+    Polls the database every 1 second for new events and sends them to the client.
+    Sends a heartbeat ping every 10 seconds to keep the connection alive.
+    """
+    # Validate run exists and belongs to current workspace
+    run = get_run(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    _validate_run_root(run, state)
+
+    async def event_generator() -> AsyncGenerator[str, None]:
+        """Generate SSE events for new audit events."""
+        last_event_id = 0
+        heartbeat_counter = 0
+
+        try:
+            while True:
+                # Fetch new events since last_event_id
+                events = list_events(run_id, limit=100, after_id=last_event_id)
+
+                # Send new events
+                for event in events:
+                    event_data = _serialize_event(event).model_dump(mode="json")
+                    yield f"event: audit_event\n"
+                    yield f"data: {json.dumps(event_data)}\n\n"
+                    last_event_id = event.id
+
+                # Send heartbeat every 10 seconds (10 iterations of 1s sleep)
+                heartbeat_counter += 1
+                if heartbeat_counter >= 10:
+                    yield f": heartbeat\n\n"
+                    heartbeat_counter = 0
+
+                # Wait before next poll
+                await asyncio.sleep(1)
+
+        except asyncio.CancelledError:
+            # Client disconnected
+            yield f": connection closed\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        },
+    )
