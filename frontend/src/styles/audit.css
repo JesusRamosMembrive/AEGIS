@@ -369,6 +369,12 @@
   flex-wrap: wrap;
 }
 
+.audit-connection-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 @media (max-width: 1080px) {
   .audit-grid {
     grid-template-columns: 1fr;

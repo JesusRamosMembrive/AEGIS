@@ -31,6 +31,6 @@ export const queryKeys = {
     ["linters", "notifications", unreadOnly] as const,
   auditRuns: (limit: number) => ["audit", "runs", limit] as const,
   auditRun: (runId: number) => ["audit", "runs", runId] as const,
-  auditEvents: (runId: number, limit: number) =>
-    ["audit", "runs", runId, "events", limit] as const,
+  auditEvents: (runId: number, limit?: number) =>
+    ["audit", "runs", runId, "events", limit ?? "all"] as const,
 };

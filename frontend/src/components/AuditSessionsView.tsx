@@ -10,6 +10,7 @@ import {
 } from "../api/client";
 import { queryKeys } from "../api/queryKeys";
 import type { AuditEvent, AuditRun } from "../api/types";
+import { useAuditEventStream } from "../hooks/useAuditEventStream";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   intent: "Intent",
@@ -155,8 +156,14 @@ export function AuditSessionsView(): JSX.Element {
         ? getAuditEvents(selectedRunId, { limit: DEFAULT_EVENT_LIMIT })
         : Promise.resolve({ events: [] }),
     enabled: Boolean(selectedRunId),
-    refetchInterval: selectedRunId ? 2500 : false,
+    // No polling - using SSE instead
   });
+
+  // Real-time event streaming via SSE
+  const { isConnected: sseConnected, error: sseError } = useAuditEventStream(
+    selectedRunId,
+    Boolean(selectedRunId)
+  );
 
   const createRunMutation = useMutation({
     mutationFn: createAuditRun,
@@ -465,9 +472,20 @@ export function AuditSessionsView(): JSX.Element {
                     </button>
                   ))}
                 </div>
-                <span className="audit-muted">
-                  {filteredEvents.length} events · auto-refreshing
-                </span>
+                <div className="audit-connection-status">
+                  {sseConnected ? (
+                    <span className="audit-badge status-success">
+                      🟢 Live
+                    </span>
+                  ) : sseError ? (
+                    <span className="audit-badge status-warning" title={sseError}>
+                      🟡 Reconnecting
+                    </span>
+                  ) : null}
+                  <span className="audit-muted">
+                    {filteredEvents.length} events
+                  </span>
+                </div>
               </div>
 
               <div className="audit-events">
