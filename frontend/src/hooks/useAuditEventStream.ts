@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { API_BASE_URL } from "../api/client";
 import { queryKeys } from "../api/queryKeys";
 import type { AuditEvent } from "../api/types";
+import { useBackendStore } from "../state/useBackendStore";
 
 /**
  * Hook para manejar el stream de eventos SSE de audit trail.
@@ -49,7 +49,10 @@ export function useAuditEventStream(
       return;
     }
 
-    const url = `${API_BASE_URL}/audit/runs/${runId}/stream`;
+    // Build SSE URL using same logic as API client
+    const backendUrl = useBackendStore.getState().backendUrl || "http://localhost:8010";
+    const baseUrl = backendUrl.endsWith("/api") ? backendUrl : `${backendUrl}/api`;
+    const url = `${baseUrl}/audit/runs/${runId}/stream`;
     const eventSource = new EventSource(url);
 
     const handleOpen = () => {
