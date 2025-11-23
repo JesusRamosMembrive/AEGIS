@@ -45,11 +45,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 try:
     from code_map.audit import create_run, close_run, append_event
     from code_map.audit.hooks import AuditContext, audit_run_command
+    from code_map.audit.file_watcher_hook import AuditFileWatcher
     AUDIT_AVAILABLE = True
-except ImportError:
+    FILE_WATCHER_AVAILABLE = True
+except ImportError as e:
     # Graceful degradation if audit system not available
     AUDIT_AVAILABLE = False
-    print("[Audit Bridge] Warning: code_map.audit not available. Audit logging disabled.", file=sys.stderr)
+    FILE_WATCHER_AVAILABLE = False
+    print(f"[Audit Bridge] Warning: code_map.audit not available. Audit logging disabled. ({e})", file=sys.stderr)
 
 
 # ============================================================================
@@ -530,6 +533,78 @@ def get_current_run_id() -> Optional[int]:
         except ValueError:
             return None
     return None
+
+
+# ============================================================================
+# File Watcher Integration
+# ============================================================================
+
+def start_file_watcher(
+    run_id: Optional[int],
+    root_path: Optional[str] = None,
+    phase: Optional[str] = None,
+    actor: str = "claude_code"
+) -> Optional[Any]:
+    """
+    Start automatic file change monitoring with diff generation.
+
+    Monitors a directory tree and automatically creates audit events
+    with diffs whenever files are created, modified, or deleted.
+
+    Args:
+        run_id: Active audit session ID
+        root_path: Directory to watch (defaults to current directory)
+        phase: Current workflow phase (apply, validate, etc.)
+        actor: Agent identifier
+
+    Returns:
+        AuditFileWatcher instance, or None if unavailable
+
+    Example:
+        run_id = start_audit_session("Implement feature X")
+        watcher = start_file_watcher(run_id, phase="apply")
+
+        # Work on files - changes are automatically logged
+        # ... modify files ...
+
+        stop_file_watcher(watcher)
+    """
+    if not FILE_WATCHER_AVAILABLE or run_id is None:
+        return None
+
+    if root_path is None:
+        root_path = os.getcwd()
+
+    watcher = AuditFileWatcher(
+        run_id=run_id,
+        root_path=root_path,
+        actor=actor,
+        phase=phase
+    )
+
+    # Snapshot current state before watching
+    watcher.snapshot_current_state()
+
+    # Start watching
+    watcher.start()
+
+    return watcher
+
+
+def stop_file_watcher(watcher: Optional[Any]) -> None:
+    """
+    Stop file change monitoring.
+
+    Args:
+        watcher: AuditFileWatcher instance from start_file_watcher()
+
+    Example:
+        watcher = start_file_watcher(run_id)
+        # ... work ...
+        stop_file_watcher(watcher)
+    """
+    if watcher is not None:
+        watcher.stop()
 
 
 # ============================================================================
