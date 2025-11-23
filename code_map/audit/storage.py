@@ -128,9 +128,9 @@ def _row_to_run(row: Mapping[str, Any]) -> AuditRun:
         status=row["status"],
         root_path=row["root_path"],
         created_at=_parse_timestamp(row["created_at"]) or datetime.now(timezone.utc),
-        closed_at=_parse_timestamp(row.get("closed_at")),
-        notes=row.get("notes"),
-        event_count=int(row.get("event_count") or 0),
+        closed_at=_parse_timestamp(row["closed_at"]) if "closed_at" in row.keys() else None,
+        notes=row["notes"] if "notes" in row.keys() else None,
+        event_count=int(row["event_count"]) if "event_count" in row.keys() else 0,
     )
 
 
@@ -140,12 +140,12 @@ def _row_to_event(row: Mapping[str, Any]) -> AuditEvent:
         run_id=int(row["run_id"]),
         type=row["type"],
         title=row["title"],
-        detail=row.get("detail"),
-        actor=row.get("actor"),
-        phase=row.get("phase"),
-        status=row.get("status"),
-        ref=row.get("ref"),
-        payload=_parse_payload(row.get("payload")),
+        detail=row["detail"] if "detail" in row.keys() else None,
+        actor=row["actor"] if "actor" in row.keys() else None,
+        phase=row["phase"] if "phase" in row.keys() else None,
+        status=row["status"] if "status" in row.keys() else None,
+        ref=row["ref"] if "ref" in row.keys() else None,
+        payload=_parse_payload(row["payload"]) if "payload" in row.keys() else None,
         created_at=_parse_timestamp(row["created_at"]) or datetime.now(timezone.utc),
     )
 

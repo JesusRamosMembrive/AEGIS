@@ -7,12 +7,12 @@ emit audit events.
 
 Usage:
     # Decorator for automatic function tracking
-    @audit_tracked(event_type="command", phase="apply")
+    @audit_tracked(type="command", phase="apply")
     def run_tests():
         subprocess.run(["pytest", "tests/"])
 
     # Context manager for tracking blocks of work
-    with AuditContext(run_id=123, phase="plan", event_type="analysis"):
+    with AuditContext(run_id=123, phase="plan", type="analysis"):
         # analyze codebase
         pass
 
@@ -53,6 +53,7 @@ class AuditContext:
         actor: str = "agent",
         detail: Optional[str] = None,
         ref: Optional[str] = None,
+        payload: Optional[Dict[str, Any]] = None,
     ):
         self.run_id = run_id
         self.title = title
@@ -61,6 +62,7 @@ class AuditContext:
         self.actor = actor
         self.detail = detail
         self.ref = ref
+        self.payload = payload or {}
         self.start_time: Optional[float] = None
         self.start_event_id: Optional[int] = None
 
@@ -68,16 +70,18 @@ class AuditContext:
         """Start tracking - emit 'running' status event"""
         self.start_time = time.time()
 
+        payload = {**self.payload, "started_at": self.start_time}
+
         event = storage.append_event(
             run_id=self.run_id,
-            event_type=self.event_type,
+            type=self.event_type,
             title=f"{self.title} (started)",
             detail=self.detail,
             actor=self.actor,
             phase=self.phase,
             status="running",
             ref=self.ref,
-            payload={"started_at": self.start_time}
+            payload=payload
         )
         self.start_event_id = event.id
         return self
@@ -90,7 +94,7 @@ class AuditContext:
             # Success case
             storage.append_event(
                 run_id=self.run_id,
-                event_type=self.event_type,
+                type=self.event_type,
                 title=f"{self.title} (completed)",
                 detail=self.detail,
                 actor=self.actor,
@@ -104,7 +108,7 @@ class AuditContext:
             error_detail = f"{self.detail}\n\nError: {exc_type.__name__}: {exc_val}" if self.detail else f"Error: {exc_type.__name__}: {exc_val}"
             storage.append_event(
                 run_id=self.run_id,
-                event_type=self.event_type,
+                type=self.event_type,
                 title=f"{self.title} (failed)",
                 detail=error_detail,
                 actor=self.actor,
@@ -141,7 +145,7 @@ def audit_tracked(
         capture_return: Include return value in payload
 
     Example:
-        @audit_tracked(event_type="command", phase="validate")
+        @audit_tracked(type="command", phase="validate")
         def run_tests():
             return subprocess.run(["pytest", "tests/"])
 
@@ -165,7 +169,7 @@ def audit_tracked(
             # Emit start event
             start_event = storage.append_event(
                 run_id=run_id,
-                event_type=event_type,
+                type=event_type,
                 title=f"{title} (started)",
                 actor=actor,
                 phase=phase,
@@ -184,7 +188,7 @@ def audit_tracked(
 
                 storage.append_event(
                     run_id=run_id,
-                    event_type=event_type,
+                    type=event_type,
                     title=f"{title} (completed)",
                     actor=actor,
                     phase=phase,
@@ -200,7 +204,7 @@ def audit_tracked(
                 # Error - emit failure event
                 storage.append_event(
                     run_id=run_id,
-                    event_type=event_type,
+                    type=event_type,
                     title=f"{title} (failed)",
                     detail=f"Error: {type(e).__name__}: {e}",
                     actor=actor,
@@ -259,7 +263,7 @@ def audit_run_command(
     start_time = time.time()
     start_event = storage.append_event(
         run_id=run_id,
-        event_type="command",
+        type="command",
         title=f"$ {cmd_str}",
         actor=actor,
         phase=phase,
@@ -293,7 +297,7 @@ def audit_run_command(
         status = "ok" if result.returncode == 0 else "error"
         storage.append_event(
             run_id=run_id,
-            event_type="command_result",
+            type="command_result",
             title=f"$ {cmd_str} (exit {result.returncode})",
             detail=detail,
             actor=actor,
@@ -316,7 +320,7 @@ def audit_run_command(
 
         storage.append_event(
             run_id=run_id,
-            event_type="command_result",
+            type="command_result",
             title=f"$ {cmd_str} (timeout)",
             detail=f"Command timed out after {timeout}s",
             actor=actor,
@@ -337,7 +341,7 @@ def audit_run_command(
 
         storage.append_event(
             run_id=run_id,
-            event_type="command_result",
+            type="command_result",
             title=f"$ {cmd_str} (error)",
             detail=f"Error: {type(e).__name__}: {e}",
             actor=actor,
@@ -375,7 +379,7 @@ def audit_phase(run_id: int, phase_name: str, actor: str = "agent"):
     # Emit phase start
     start_event = storage.append_event(
         run_id=run_id,
-        event_type="phase",
+        type="phase",
         title=f"Phase: {phase_name.upper()} started",
         actor=actor,
         phase=phase_name,
@@ -391,7 +395,7 @@ def audit_phase(run_id: int, phase_name: str, actor: str = "agent"):
         # Success - emit phase completion
         storage.append_event(
             run_id=run_id,
-            event_type="phase",
+            type="phase",
             title=f"Phase: {phase_name.upper()} completed",
             actor=actor,
             phase=phase_name,
@@ -409,7 +413,7 @@ def audit_phase(run_id: int, phase_name: str, actor: str = "agent"):
         # Error - emit phase failure
         storage.append_event(
             run_id=run_id,
-            event_type="phase",
+            type="phase",
             title=f"Phase: {phase_name.upper()} failed",
             detail=f"Error: {type(e).__name__}: {e}",
             actor=actor,
