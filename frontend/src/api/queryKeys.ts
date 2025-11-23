@@ -29,4 +29,8 @@ export const queryKeys = {
     ["linters", "reports", limit, offset] as const,
   lintersNotifications: (unreadOnly: boolean) =>
     ["linters", "notifications", unreadOnly] as const,
+  auditRuns: (limit: number) => ["audit", "runs", limit] as const,
+  auditRun: (runId: number) => ["audit", "runs", runId] as const,
+  auditEvents: (runId: number, limit: number) =>
+    ["audit", "runs", runId, "events", limit] as const,
 };

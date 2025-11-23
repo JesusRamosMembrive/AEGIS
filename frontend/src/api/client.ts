@@ -28,6 +28,13 @@ import type {
   OllamaInsightsResponse,
   OllamaInsightsClearResponse,
   GraphvizOptionsPayload,
+  AuditRun,
+  AuditRunListResponse,
+  AuditRunCreatePayload,
+  AuditRunClosePayload,
+  AuditEvent,
+  AuditEventListResponse,
+  AuditEventCreatePayload,
 } from "./types";
 import { useBackendStore } from "../state/useBackendStore";
 
@@ -463,6 +470,61 @@ export function initializeStageToolkit(payload: StageInitPayload): Promise<Stage
 export function installSuperClaudeFramework(): Promise<SuperClaudeInstallResponse> {
   return fetchJson<SuperClaudeInstallResponse>("/stage/superclaude/install", {
     method: "POST",
+  });
+}
+
+/**
+ * Audit log endpoints (pair programming sessions).
+ */
+export function listAuditRuns(limit = 20): Promise<AuditRunListResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return fetchJson<AuditRunListResponse>(`/audit/runs?${params.toString()}`);
+}
+
+export function createAuditRun(payload: AuditRunCreatePayload): Promise<AuditRun> {
+  return fetchJson<AuditRun>("/audit/runs", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function closeAuditRun(
+  runId: number,
+  payload: AuditRunClosePayload = {}
+): Promise<AuditRun> {
+  return fetchJson<AuditRun>(`/audit/runs/${runId}/close`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getAuditRun(runId: number): Promise<AuditRun> {
+  return fetchJson<AuditRun>(`/audit/runs/${runId}`);
+}
+
+export function getAuditEvents(
+  runId: number,
+  options?: { limit?: number; afterId?: number | null }
+): Promise<AuditEventListResponse> {
+  const params = new URLSearchParams();
+  if (options?.limit) {
+    params.set("limit", String(options.limit));
+  }
+  if (options?.afterId) {
+    params.set("after_id", String(options.afterId));
+  }
+  const suffix = params.toString();
+  const path = suffix ? `/audit/runs/${runId}/events?${suffix}` : `/audit/runs/${runId}/events`;
+  return fetchJson<AuditEventListResponse>(path);
+}
+
+export function appendAuditEvent(
+  runId: number,
+  payload: AuditEventCreatePayload
+): Promise<AuditEvent> {
+  return fetchJson<AuditEvent>(`/audit/runs/${runId}/events`, {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 

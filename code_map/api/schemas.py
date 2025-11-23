@@ -678,6 +678,106 @@ class UMLDiagramResponse(BaseModel):
     stats: Dict[str, int]
 
 
+class AuditRunSchema(BaseModel):
+    """Metadata for an auditable agent session."""
+
+    id: int
+    name: Optional[str] = None
+    status: str
+    root_path: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    closed_at: Optional[datetime] = None
+    event_count: int = 0
+
+
+class AuditRunCreateRequest(BaseModel):
+    """Payload to start a new audit run."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: Optional[str] = Field(
+        default=None, max_length=128, description="Human-friendly label for the session"
+    )
+    notes: Optional[str] = Field(
+        default=None, max_length=2000, description="Optional context or goal"
+    )
+    root_path: Optional[str] = Field(
+        default=None, description="Root path to associate with the run"
+    )
+
+
+class AuditRunCloseRequest(BaseModel):
+    """Payload to finalize a run."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Optional[str] = Field(
+        default="closed", description="Status label when closing the run"
+    )
+    notes: Optional[str] = Field(
+        default=None, max_length=2000, description="Extra notes captured on close"
+    )
+
+
+class AuditRunListResponse(BaseModel):
+    """List wrapper for runs."""
+
+    runs: List[AuditRunSchema]
+
+
+class AuditEventSchema(BaseModel):
+    """Single auditable event within a run."""
+
+    id: int
+    run_id: int
+    type: str
+    title: str
+    detail: Optional[str] = None
+    actor: Optional[str] = None
+    phase: Optional[str] = None
+    status: Optional[str] = None
+    ref: Optional[str] = None
+    payload: Optional[Dict[str, Any]] = None
+    created_at: datetime
+
+
+class AuditEventCreateRequest(BaseModel):
+    """Payload to append a new event to a run."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: str = Field(
+        ...,
+        description="Event type, e.g. intent|plan|command|command_result|diff|test|note",
+    )
+    title: str = Field(..., max_length=200, description="Short label for the event")
+    detail: Optional[str] = Field(
+        default=None, description="Optional expanded description or output"
+    )
+    actor: Optional[str] = Field(
+        default=None, description="Who triggered the event (agent|human)"
+    )
+    phase: Optional[str] = Field(
+        default=None, description="Workflow phase like explore|plan|apply|validate"
+    )
+    status: Optional[str] = Field(
+        default=None, description="Status marker (ok|error|pending|running)"
+    )
+    ref: Optional[str] = Field(
+        default=None, description="File or resource reference related to the event"
+    )
+    payload: Optional[Dict[str, Any]] = Field(
+        default=None, description="Structured payload (command args, exit code, etc.)"
+    )
+
+
+class AuditEventListResponse(BaseModel):
+    """List wrapper for events."""
+
+    events: List[AuditEventSchema]
+
+
 def serialize_symbol(
     symbol: SymbolInfo, state: AppState, *, include_path: bool = True
 ) -> SymbolSchema:

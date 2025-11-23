@@ -461,3 +461,58 @@ export interface LintersNotificationEntry {
   root_path?: string | null;
   read: boolean;
 }
+
+export interface AuditRun {
+  id: number;
+  name?: string | null;
+  status: string;
+  root_path?: string | null;
+  notes?: string | null;
+  created_at: string;
+  closed_at?: string | null;
+  event_count: number;
+}
+
+export interface AuditRunListResponse {
+  runs: AuditRun[];
+}
+
+export interface AuditRunCreatePayload {
+  name?: string | null;
+  notes?: string | null;
+  root_path?: string | null;
+}
+
+export interface AuditRunClosePayload {
+  status?: string | null;
+  notes?: string | null;
+}
+
+export interface AuditEvent {
+  id: number;
+  run_id: number;
+  type: string;
+  title: string;
+  detail?: string | null;
+  actor?: string | null;
+  phase?: string | null;
+  status?: string | null;
+  ref?: string | null;
+  payload?: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AuditEventListResponse {
+  events: AuditEvent[];
+}
+
+export interface AuditEventCreatePayload {
+  type: string;
+  title: string;
+  detail?: string | null;
+  actor?: string | null;
+  phase?: string | null;
+  status?: string | null;
+  ref?: string | null;
+  payload?: Record<string, unknown> | null;
+}
