@@ -1296,7 +1296,7 @@
   {
     "path": "code_map/api/terminal.py",
     "relative": true,
-    "modified_at": "2025-11-24T15:00:01.876804+00:00",
+    "modified_at": "2025-11-24T16:54:04.954969+00:00",
     "symbols": [
       {
         "name": "terminal_websocket",
@@ -4333,7 +4333,7 @@
   {
     "path": "code_map/terminal/pty_shell.py",
     "relative": true,
-    "modified_at": "2025-11-24T13:08:37.395376+00:00",
+    "modified_at": "2025-11-24T16:33:15.280820+00:00",
     "symbols": [
       {
         "name": "PTYShell",
@@ -4352,49 +4352,49 @@
       {
         "name": "spawn",
         "kind": "method",
-        "lineno": 45,
+        "lineno": 46,
         "parent": "PTYShell",
         "docstring": "Spawn shell process with PTY\n\nRaises:\n    OSError: If fork fails"
       },
       {
         "name": "_set_winsize",
         "kind": "method",
-        "lineno": 86,
+        "lineno": 87,
         "parent": "PTYShell",
         "docstring": "Set terminal window size\n\nArgs:\n    cols: Terminal width\n    rows: Terminal height"
       },
       {
         "name": "resize",
         "kind": "method",
-        "lineno": 100,
+        "lineno": 101,
         "parent": "PTYShell",
         "docstring": "Resize terminal\n\nArgs:\n    cols: New terminal width\n    rows: New terminal height"
       },
       {
         "name": "write",
         "kind": "method",
-        "lineno": 113,
+        "lineno": 114,
         "parent": "PTYShell",
         "docstring": "Write data to shell stdin\n\nArgs:\n    data: String to write to shell"
       },
       {
         "name": "read",
         "kind": "method",
-        "lineno": 129,
+        "lineno": 130,
         "parent": "PTYShell",
         "docstring": "Read shell output asynchronously\n\nContinuously reads from shell output and calls callback\nwith received data. Runs until shell process exits.\n\nArgs:\n    callback: Function to call with output data"
       },
       {
         "name": "close",
         "kind": "method",
-        "lineno": 196,
+        "lineno": 197,
         "parent": "PTYShell",
         "docstring": "Close shell process and cleanup resources"
       },
       {
         "name": "__del__",
         "kind": "method",
-        "lineno": 227,
+        "lineno": 237,
         "parent": "PTYShell",
         "docstring": "Cleanup on garbage collection"
       }
@@ -4959,6 +4959,13 @@
     "errors": []
   },
   {
+    "path": "frontend/dist/assets/index-CJ22wpIM.js",
+    "relative": true,
+    "modified_at": "2025-11-24T17:20:34.267809+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
     "path": "frontend/dist/assets/index-CV1XqL5j.js",
     "relative": true,
     "modified_at": "2025-10-30T20:46:53.217326+00:00",
@@ -4982,7 +4989,7 @@
   {
     "path": "frontend/dist/index.html",
     "relative": true,
-    "modified_at": "2025-11-11T17:12:55.223321+00:00",
+    "modified_at": "2025-11-24T17:20:34.266613+00:00",
     "symbols": [
       {
         "name": "root",
@@ -6167,7 +6174,7 @@
   {
     "path": "frontend/src/components/RemoteTerminalView.tsx",
     "relative": true,
-    "modified_at": "2025-11-24T16:22:57.060204+00:00",
+    "modified_at": "2025-11-24T18:15:35.026316+00:00",
     "symbols": [
       {
         "name": "RemoteTerminalView",
@@ -6184,16 +6191,9 @@
         "docstring": null
       },
       {
-        "name": "start",
-        "kind": "function",
-        "lineno": 131,
-        "parent": null,
-        "docstring": null
-      },
-      {
         "name": "sendResize",
         "kind": "function",
-        "lineno": 169,
+        "lineno": 167,
         "parent": null,
         "docstring": null
       }
@@ -7020,7 +7020,7 @@
   {
     "path": "frontend/src/main.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.692853+00:00",
+    "modified_at": "2025-11-24T18:15:17.114174+00:00",
     "symbols": [],
     "errors": []
   },

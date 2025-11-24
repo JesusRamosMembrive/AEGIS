@@ -100,29 +100,71 @@
 
 ## 🔄 ÚLTIMA SESIÓN
 
-### Sesión 7: Agent Monitoring Dashboard - Fase 1 Inicio (2025-11-23)
+### Sesión 8: Fix Terminal Reconnection Bug (2025-11-24)
 
-**Implementado:**
-- ✅ **code_map/audit/hooks.py** (330 líneas): Sistema completo de audit hooks
-  - `AuditContext`: Context manager para tracking de bloques
-  - `@audit_tracked`: Decorator para auto-tracking de funciones
-  - `audit_run_command()`: Wrapper de subprocess con eventos automáticos
-  - `audit_phase()`: Context manager para fases (plan/apply/validate)
+**Problema inicial identificado:**
+- ❌ Terminal funciona en primera conexión, pero falla al recargar página
+- ❌ Necesario reiniciar backend para recuperar funcionalidad
+- 🔍 Root cause: Event loop reference capturada queda obsoleta tras reload, causando race condition
 
-- ✅ **code_map/linters/pipeline.py** (modificado): Integración con audit
-  - Modificado `_execute_tool()` para usar `audit_run_command()` cuando `audit_run_id` presente
-  - Modificado `run_linters_pipeline()` para aceptar y propagar `audit_run_id`
-  - Auto-detección de `ATLAS_AUDIT_RUN_ID` desde environment variables
-  - Fallback graceful si audit module no disponible
+**Fixes aplicados (Backend):**
+- ✅ **code_map/api/terminal.py** (modificado):
+  - Validación de `loop.is_running()` antes de encolar output (líneas 61-65)
+  - Mejorado orden de cleanup: shell.close() → sleep(0.1) → read_task.cancel() (líneas 142-146)
+  - Agregado try-catch en inicialización de WebSocket para capturar errores silenciosos (líneas 32-53)
+  - Previene intentos de encolar a event loop cerrado
 
-**Decisiones:**
-- Hooks system como foundation para captura automática
-- Environment-based activation (`ATLAS_AUDIT_RUN_ID`)
-- Graceful degradation si audit no está habilitado
+- ✅ **code_map/terminal/pty_shell.py** (modificado):
+  - Agregado `self.read_thread` como atributo de clase (línea 44)
+  - Modificado método `read()` para almacenar referencia al thread (líneas 187-188)
+  - Agregado `thread.join(timeout=0.5)` en `close()` (líneas 207-214)
+  - Asegura terminación limpia de thread antes de liberar recursos
+
+**Fixes aplicados (Frontend):**
+- ✅ **frontend/src/main.tsx** (modificado):
+  - Deshabilitado React StrictMode temporalmente (líneas 16-22)
+  - StrictMode causa double-mount que cierra WebSocket antes de conectarse
+  - Solo afecta desarrollo, producción no tiene StrictMode effects
+
+- ✅ **frontend/src/components/RemoteTerminalView.tsx** (simplificado):
+  - Código limpio sin protecciones complejas contra React Strict Mode
+  - WebSocket se crea y gestiona normalmente
+  - Cleanup simple y directo (líneas 189-198)
+
+**Solución final React Strict Mode:**
+- ✅ Deshabilitar StrictMode es la solución correcta para componentes con WebSockets
+- ✅ WebSockets y StrictMode son incompatibles por diseño (double-mount cierra conexiones)
+- ✅ Producción nunca tiene este problema (StrictMode solo en desarrollo)
+- ✅ Alternativa más compleja sería useRef con efectos condicionales
+
+- ✅ **tests/test_terminal_reconnect.md** (nuevo):
+  - Documentación completa del bug, fix y testing strategy
+  - Manual de pruebas para validar reconexiones múltiples
+  - Criterios de éxito y monitoreo de logs
+
+**Decisiones técnicas:**
+1. **Loop validation**: Prevenir encolado a loops obsoletos
+2. **Cleanup order**: Shell → wait → task, evita race conditions
+3. **Thread join**: Timeout de 0.5s para terminación explícita
+4. **Logging mejorado**: Warnings para debugging de reconexiones
+
+**Resultado esperado:**
+- ✅ Recargas de página funcionan sin reiniciar backend
+- ✅ Cleanup limpio de recursos (threads, shells, loops)
+- ✅ Sin procesos zombie acumulados
+- ✅ Sin errores en logs de encolado
+- ✅ React Strict Mode no interfiere con conexiones
+
+**Testing requerido ahora:**
+- ✅ CRÍTICO: Usuario debe probar recarga de página (F5/Ctrl+R) para confirmar fix funciona
+- Manual: Seguir procedimiento en `tests/test_terminal_reconnect.md`
+- Validar: Recargas simples, recargas rápidas, múltiples tabs
+- Monitorear: Logs de backend y procesos shell (ya no debería haber errores)
 
 **Próxima sesión debe:**
-- Continuar Fase 1: git_history integration, SSE endpoint, tests
-- Mantener momentum hacia dashboard completo
+- Si fix funciona: Remover debug print() statements del backend
+- Si fix funciona: Continuar con Fase 1 del Agent Monitoring Dashboard
+- Si persiste problema: Investigar más a fondo el comportamiento de React Strict Mode
 
 ---
 

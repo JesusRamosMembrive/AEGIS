@@ -29,19 +29,31 @@ async def terminal_websocket(websocket: WebSocket):
     Server sends:
     - Raw text from shell output
     """
-    await websocket.accept()
-    logger.info("Terminal WebSocket connection accepted")
-
-    # Spawn shell process
-    shell = PTYShell(cols=80, rows=24)
-
     try:
-        shell.spawn()
-        logger.info(f"Shell spawned successfully: PID={shell.pid}, FD={shell.master_fd}")
+        await websocket.accept()
+        print("[TERMINAL] WebSocket connection accepted")  # DEBUG
+        logger.info("Terminal WebSocket connection accepted")
+
+        # Spawn shell process
+        shell = PTYShell(cols=80, rows=24)
+
+        try:
+            shell.spawn()
+            print(f"[TERMINAL] Shell spawned: PID={shell.pid}, FD={shell.master_fd}")  # DEBUG
+            logger.info(f"Shell spawned successfully: PID={shell.pid}, FD={shell.master_fd}")
+        except Exception as e:
+            print(f"[TERMINAL] ERROR spawning shell: {e}")  # DEBUG
+            logger.error(f"Failed to spawn shell: {e}", exc_info=True)
+            await websocket.send_text(f"Failed to spawn shell: {str(e)}\r\n")
+            await websocket.close()
+            return
     except Exception as e:
-        logger.error(f"Failed to spawn shell: {e}", exc_info=True)
-        await websocket.send_text(f"Failed to spawn shell: {str(e)}\r\n")
-        await websocket.close()
+        print(f"[TERMINAL] ERROR during initialization: {e}")  # DEBUG
+        logger.error(f"Error during WebSocket initialization: {e}", exc_info=True)
+        try:
+            await websocket.close()
+        except:
+            pass
         return
 
     # Create queue for shell output
@@ -56,8 +68,13 @@ async def terminal_websocket(websocket: WebSocket):
         def send_output(data: str):
             """Callback for shell output - runs in sync context"""
             try:
-                # Put data in queue (thread-safe)
-                loop.call_soon_threadsafe(output_queue.put_nowait, data)
+                # Validate loop is still running before queueing
+                # This prevents errors when reconnecting after page reload
+                if loop.is_running():
+                    # Put data in queue (thread-safe)
+                    loop.call_soon_threadsafe(output_queue.put_nowait, data)
+                else:
+                    logger.warning("Attempted to queue output to closed event loop")
             except Exception as e:
                 logger.error(f"Error queueing output: {e}")
 
@@ -66,16 +83,21 @@ async def terminal_websocket(websocket: WebSocket):
         # Shell exited - signal end with None
         logger.info("Shell process exited")
         try:
-            loop.call_soon_threadsafe(output_queue.put_nowait, None)
+            if loop.is_running():
+                loop.call_soon_threadsafe(output_queue.put_nowait, None)
         except Exception:
             pass
 
     # Start reading shell output
+    print("[TERMINAL] Creating read task")  # DEBUG
     read_task = asyncio.create_task(read_output())
+    print("[TERMINAL] Read task created")  # DEBUG
 
     try:
         # Send initial welcome message
+        print("[TERMINAL] Sending welcome message")  # DEBUG
         await websocket.send_text("Connected to shell. Type commands.\r\n")
+        print("[TERMINAL] Welcome message sent")  # DEBUG
 
         # Main event loop - handle both input and output
         while True:
@@ -130,9 +152,16 @@ async def terminal_websocket(websocket: WebSocket):
     except Exception as e:
         logger.error(f"Error in terminal session: {e}", exc_info=True)
     finally:
-        # Cleanup
+        # Cleanup - proper order to prevent race conditions
         logger.info("Cleaning up terminal session")
+
+        # 1. Stop the shell first (sets running = False)
         shell.close()
+
+        # 2. Wait briefly for read thread to exit cleanly
+        await asyncio.sleep(0.1)
+
+        # 3. Cancel the read task
         read_task.cancel()
 
         try:
@@ -140,6 +169,7 @@ async def terminal_websocket(websocket: WebSocket):
         except asyncio.CancelledError:
             pass
 
+        # 4. Close WebSocket last
         try:
             if websocket.application_state == WebSocketState.CONNECTED:
                 await websocket.close()

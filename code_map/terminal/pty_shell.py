@@ -41,6 +41,7 @@ class PTYShell:
         self.master_fd: Optional[int] = None
         self.pid: Optional[int] = None
         self.running = False
+        self.read_thread: Optional[threading.Thread] = None
 
     def spawn(self) -> None:
         """
@@ -183,12 +184,12 @@ class PTYShell:
             logger.info("PTY read thread exited")
 
         # Start read thread
-        thread = threading.Thread(target=read_thread, daemon=True, name="PTYReadThread")
-        thread.start()
-        logger.info(f"Started PTY read thread: {thread.name}")
+        self.read_thread = threading.Thread(target=read_thread, daemon=True, name="PTYReadThread")
+        self.read_thread.start()
+        logger.info(f"Started PTY read thread: {self.read_thread.name}")
 
         # Wait for thread to finish
-        while self.running and thread.is_alive():
+        while self.running and self.read_thread.is_alive():
             await asyncio.sleep(0.1)
 
         logger.info("Shell read loop exited")
@@ -202,6 +203,15 @@ class PTYShell:
 
         logger.info("Closing shell process...")
         self.running = False
+
+        # Wait for read thread to exit cleanly (if it exists)
+        if self.read_thread is not None and self.read_thread.is_alive():
+            logger.debug("Waiting for read thread to exit...")
+            self.read_thread.join(timeout=0.5)
+            if self.read_thread.is_alive():
+                logger.warning("Read thread did not exit cleanly within timeout")
+            else:
+                logger.debug("Read thread exited cleanly")
 
         # Terminate child process first
         if self.pid is not None:

@@ -124,40 +124,38 @@ export function RemoteTerminalView() {
   useEffect(() => {
     if (!xtermRef.current) return;
 
-    let socket: WebSocket | null = null;
     const terminal = xtermRef.current;
     const wsUrl = wsBaseUrl.replace("http://", "ws://").replace("https://", "wss://");
 
-    const start = () => {
-      if (!xtermRef.current) return;
-      socket = new WebSocket(`${wsUrl}/api/terminal/ws`);
-      wsRef.current = socket;
+    // Create WebSocket connection
+    const socket = new WebSocket(`${wsUrl}/api/terminal/ws`);
+    wsRef.current = socket;
 
-      socket.onopen = () => {
-        setConnected(true);
-        setError(null);
+    socket.onopen = () => {
+      console.log("WebSocket connected successfully");
+      setConnected(true);
+      setError(null);
 
-        const { cols, rows } = xtermRef.current ?? terminal;
-        socket?.send(`__RESIZE__:${cols}:${rows}`);
-      };
+      const { cols, rows } = xtermRef.current ?? terminal;
+      socket.send(`__RESIZE__:${cols}:${rows}`);
+    };
 
-      socket.onmessage = (event) => {
-        xtermRef.current?.write(event.data);
-      };
+    socket.onmessage = (event) => {
+      xtermRef.current?.write(event.data);
+    };
 
-      socket.onerror = (err) => {
-        console.error("WebSocket error:", err);
-        setConnected(false);
-        setError("Connection error");
-        xtermRef.current?.writeln("");
-        xtermRef.current?.writeln("\x1b[1;31m✗ Connection error\x1b[0m");
-      };
+    socket.onerror = (err) => {
+      console.error("WebSocket error:", err);
+      setConnected(false);
+      setError("Connection error");
+      xtermRef.current?.writeln("");
+      xtermRef.current?.writeln("\x1b[1;31m✗ Connection error\x1b[0m");
+    };
 
-      socket.onclose = () => {
-        setConnected(false);
-        xtermRef.current?.writeln("");
-        xtermRef.current?.writeln("\x1b[2mConnection closed\x1b[0m");
-      };
+    socket.onclose = () => {
+      setConnected(false);
+      xtermRef.current?.writeln("");
+      xtermRef.current?.writeln("\x1b[2mConnection closed\x1b[0m");
     };
 
     const disposable = xtermRef.current.onData((data) => {
@@ -188,14 +186,12 @@ export function RemoteTerminalView() {
       resizeObserver.observe(terminalRef.current);
     }
 
-    const timer = window.setTimeout(start, 0);
-
     return () => {
-      window.clearTimeout(timer);
       disposable.dispose();
       resizeDisposable.dispose();
       resizeObserver.disconnect();
-      if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+
+      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
         socket.close();
       }
       wsRef.current = null;
