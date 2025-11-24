@@ -42,8 +42,9 @@ async def terminal_websocket(websocket: WebSocket):
 
     try:
         shell.spawn()
+        logger.info(f"Shell spawned successfully: PID={shell.pid}, FD={shell.master_fd}")
     except Exception as e:
-        logger.error(f"Failed to spawn shell: {e}")
+        logger.error(f"Failed to spawn shell: {e}", exc_info=True)
         await websocket.send_json({
             "type": "error",
             "message": f"Failed to spawn shell: {str(e)}"
@@ -90,8 +91,9 @@ async def terminal_websocket(websocket: WebSocket):
                     "type": "output",
                     "data": data
                 })
+                logger.debug(f"Forwarded {len(data)} bytes to WebSocket")
             except Exception as e:
-                logger.error(f"Error forwarding output: {e}")
+                logger.error(f"Error forwarding output: {e}", exc_info=True)
                 break
 
     forward_task = asyncio.create_task(forward_output())

@@ -24,6 +24,22 @@ export function RemoteTerminalView() {
   useEffect(() => {
     if (!terminalRef.current || xtermRef.current) return;
 
+    // Ensure container has dimensions before initializing terminal
+    const container = terminalRef.current;
+    const rect = container.getBoundingClientRect();
+
+    if (rect.width === 0 || rect.height === 0) {
+      // Container not yet laid out, wait for next frame
+      console.log("Terminal container not ready, waiting...");
+      const timer = setTimeout(() => {
+        // Trigger re-render by forcing dependency update
+        container.style.minHeight = "600px";
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+
+    console.log(`Initializing terminal with container dimensions: ${rect.width}x${rect.height}`);
+
     const terminal = new Terminal({
       cursorBlink: true,
       fontSize: 14,
@@ -59,8 +75,17 @@ export function RemoteTerminalView() {
     terminal.loadAddon(fitAddon);
     terminal.loadAddon(webLinksAddon);
 
-    terminal.open(terminalRef.current);
-    fitAddon.fit();
+    terminal.open(container);
+
+    // Wait a frame for terminal to be fully attached before fitting
+    requestAnimationFrame(() => {
+      try {
+        fitAddon.fit();
+        console.log("Terminal fitted successfully");
+      } catch (err) {
+        console.error("Error fitting terminal:", err);
+      }
+    });
 
     xtermRef.current = terminal;
     fitAddonRef.current = fitAddon;
