@@ -190,6 +190,16 @@ export function HomeView({
           <span className="home-card-cta">Open Timeline →</span>
         </Link>
 
+        <Link to="/agent-control" className="home-card">
+          <div className="home-card-body">
+            <h3>Agent Control</h3>
+            <p>
+              Interactive terminal to control Claude. Send tasks, see responses in real-time, pause/resume execution. Perfect for pair programming.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Control →</span>
+        </Link>
+
         <Link to="/monitoring" className="home-card">
           <div className="home-card-body">
             <h3>Agent Monitoring</h3>

@@ -11,6 +11,7 @@ import { PromptLibraryView } from "./components/PromptLibraryView";
 import { AppLayout } from "./components/AppLayout";
 import { OllamaInsightsView } from "./components/OllamaInsightsView";
 import { AgentMonitoringDashboard } from "./components/AgentMonitoringDashboard";
+import { AgentControlView } from "./components/AgentControlView";
 import CodeTimelineView from "./components/CodeTimelineView";
 import { DocsLibraryView } from "./components/DocsLibraryView";
 import { useEventStream } from "./hooks/useEventStream";
@@ -77,6 +78,10 @@ export function App(): JSX.Element {
           <Route
             path="/monitoring"
             element={withLayout("Agent Monitoring", <AgentMonitoringDashboard />)}
+          />
+          <Route
+            path="/agent-control"
+            element={withLayout("Agent Control", <AgentControlView />)}
           />
           <Route
             path="/class-uml"
