@@ -84,13 +84,16 @@ async def terminal_websocket(websocket: WebSocket):
     # Start reading shell output
     read_task = asyncio.create_task(read_output())
     logger.info("Started read_output task")
+    print(f"[TERMINAL] Started read_output task")  # DEBUG
 
     # Task to forward output from queue to WebSocket
     async def forward_output():
         """Forward shell output from queue to WebSocket"""
         try:
+            print(f"[TERMINAL] Forward task started, waiting for output...")  # DEBUG
             while True:
                 data = await output_queue.get()
+                print(f"[TERMINAL] Got {len(data)} bytes from queue, sending to WebSocket")  # DEBUG
                 await websocket.send_json({
                     "type": "output",
                     "data": data
@@ -98,10 +101,13 @@ async def terminal_websocket(websocket: WebSocket):
                 logger.debug(f"Forwarded {len(data)} bytes to WebSocket")
         except Exception as e:
             logger.error(f"Error forwarding output: {e}", exc_info=True)
+            print(f"[TERMINAL] Error in forward_output: {e}")  # DEBUG
 
     forward_task = asyncio.create_task(forward_output())
     logger.info("Started forward_output task")
+    print(f"[TERMINAL] Started forward_output task")  # DEBUG
     logger.info("Entering main WebSocket message loop")
+    print(f"[TERMINAL] Entering main WebSocket message loop")  # DEBUG
 
     try:
         # Handle incoming WebSocket messages

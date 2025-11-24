@@ -137,6 +137,7 @@ class PTYShell:
         def read_thread():
             """Thread function for reading PTY output"""
             logger.info("PTY read thread started")
+            print(f"[PTY] Read thread started, master_fd={self.master_fd}, running={self.running}")  # DEBUG
             while self.running:
                 try:
                     # Check if master_fd is still valid
@@ -156,11 +157,13 @@ class PTYShell:
                         if not data:
                             # EOF - shell exited
                             logger.info("PTY read EOF - shell exited")
+                            print(f"[PTY] EOF detected, shell exited")  # DEBUG
                             self.running = False
                             break
 
                         # Decode and call callback (thread-safe)
                         text = data.decode("utf-8", errors="replace")
+                        print(f"[PTY] Read {len(data)} bytes: {repr(text[:50])}")  # DEBUG
                         callback(text)
 
                 except OSError as e:
