@@ -61,9 +61,15 @@ class PTYShell:
         self.pid, self.master_fd = pty.fork()
 
         if self.pid == 0:
-            # Child process - execute shell in interactive mode
-            # Force interactive shell with -i flag
-            os.execvp(shell, [shell, "-i"])
+            # Child process - execute shell in login + interactive mode
+            # Set terminal environment
+            os.environ.update({
+                "TERM": "xterm-256color",
+                "COLORTERM": "truecolor",
+                "LANG": os.environ.get("LANG", "C.UTF-8"),
+            })
+            # Force login and interactive shell with -li flags
+            os.execvp(shell, [shell, "-li"])
         else:
             # Parent process - set terminal size
             print(f"[PTY] Parent process: PID={self.pid}, FD={self.master_fd}")  # DEBUG

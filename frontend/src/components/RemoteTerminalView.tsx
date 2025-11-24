@@ -116,46 +116,15 @@ export function RemoteTerminalView() {
     ws.onopen = () => {
       setConnected(true);
       setError(null);
-      terminal.writeln("\x1b[1;32m✓ Connected to shell\x1b[0m");
-      terminal.writeln("");
 
       // Send initial terminal size
       const { cols, rows } = terminal;
-      ws.send(JSON.stringify({
-        type: "resize",
-        cols,
-        rows,
-      }));
+      ws.send(`__RESIZE__:${cols}:${rows}`);
     };
 
     ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-
-        switch (message.type) {
-          case "output":
-            // Write shell output to terminal
-            terminal.write(message.data);
-            break;
-
-          case "exit":
-            // Shell exited
-            terminal.writeln("");
-            terminal.writeln("\x1b[1;33m⚠ Shell process exited\x1b[0m");
-            setConnected(false);
-            ws.close();
-            break;
-
-          case "error":
-            // Error occurred
-            terminal.writeln("");
-            terminal.writeln(`\x1b[1;31m✗ Error: ${message.message}\x1b[0m`);
-            setError(message.message);
-            break;
-        }
-      } catch (err) {
-        console.error("Failed to parse WebSocket message:", err);
-      }
+      // Direct text output from shell
+      terminal.write(event.data);
     };
 
     ws.onerror = (err) => {
@@ -174,26 +143,26 @@ export function RemoteTerminalView() {
     // Handle keyboard input
     const disposable = terminal.onData((data) => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: "input",
-          data,
-        }));
+        ws.send(data);
       }
     });
 
     // Handle terminal resize
+    const sendResize = () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        const { cols, rows } = terminal;
+        ws.send(`__RESIZE__:${cols}:${rows}`);
+      }
+    };
+
+    const resizeDisposable = terminal.onResize(() => {
+      sendResize();
+    });
+
     const resizeObserver = new ResizeObserver(() => {
       if (fitAddonRef.current) {
         fitAddonRef.current.fit();
-
-        const { cols, rows } = terminal;
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: "resize",
-            cols,
-            rows,
-          }));
-        }
+        sendResize();
       }
     });
 
@@ -206,6 +175,7 @@ export function RemoteTerminalView() {
     // Cleanup
     return () => {
       disposable.dispose();
+      resizeDisposable.dispose();
       resizeObserver.disconnect();
       ws.close();
     };
