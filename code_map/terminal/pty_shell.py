@@ -128,30 +128,43 @@ class PTYShell:
 
         loop = asyncio.get_event_loop()
 
-        while self.running:
-            # Check if data is available
-            readable, _, _ = select.select([self.master_fd], [], [], 0.1)
-
-            if readable:
-                try:
-                    # Read available data
+        def read_from_fd():
+            """Blocking read operation to run in executor"""
+            try:
+                # Check if data is available with short timeout
+                readable, _, _ = select.select([self.master_fd], [], [], 0.1)
+                if readable:
                     data = os.read(self.master_fd, 1024)
                     if not data:
-                        # EOF - shell exited
-                        self.running = False
-                        break
+                        return None  # EOF
+                    return data
+                return b""  # No data available
+            except OSError as e:
+                logger.error(f"Error reading from shell: {e}")
+                return None  # Error
 
-                    # Decode and send to callback
-                    text = data.decode("utf-8", errors="replace")
-                    await loop.run_in_executor(None, callback, text)
+        while self.running:
+            try:
+                # Run blocking I/O in executor to avoid blocking event loop
+                data = await loop.run_in_executor(None, read_from_fd)
 
-                except OSError as e:
-                    logger.error(f"Error reading from shell: {e}")
+                if data is None:
+                    # EOF or error - shell exited
                     self.running = False
                     break
-            else:
-                # No data available, yield control
-                await asyncio.sleep(0.01)
+
+                if data:
+                    # Decode and send to callback
+                    text = data.decode("utf-8", errors="replace")
+                    callback(text)
+                else:
+                    # No data available, yield control briefly
+                    await asyncio.sleep(0.01)
+
+            except Exception as e:
+                logger.error(f"Error in read loop: {e}", exc_info=True)
+                self.running = False
+                break
 
         logger.info("Shell read loop exited")
 

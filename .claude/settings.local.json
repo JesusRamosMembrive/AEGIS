@@ -53,7 +53,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npm run typecheck:*)",
       "Bash(npm --prefix /home/jesusramos/Workspace/ATLAS/frontend run typecheck)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(ps:*)"
     ],
     "deny": [],
     "ask": []
