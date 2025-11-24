@@ -51,17 +51,22 @@ class PTYShell:
         """
         # Determine shell to use
         shell = os.environ.get("SHELL", "/bin/bash")
+        print(f"[PTY] Shell from env: {shell}")  # DEBUG
         if not os.path.exists(shell):
             shell = "/bin/sh"  # Fallback to sh
+            print(f"[PTY] Shell not found, using fallback: {shell}")  # DEBUG
 
+        print(f"[PTY] About to fork with shell: {shell}")  # DEBUG
         # Fork process with PTY
         self.pid, self.master_fd = pty.fork()
 
         if self.pid == 0:
             # Child process - execute shell
+            print(f"[PTY] Child process executing shell: {shell}")  # DEBUG
             os.execvp(shell, [shell])
         else:
             # Parent process - set terminal size
+            print(f"[PTY] Parent process: PID={self.pid}, FD={self.master_fd}")  # DEBUG
             self.running = True
             self._set_winsize(self.cols, self.rows)
 
@@ -69,6 +74,7 @@ class PTYShell:
             flags = fcntl.fcntl(self.master_fd, fcntl.F_GETFL)
             fcntl.fcntl(self.master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
+            print(f"[PTY] Shell configured: running={self.running}")  # DEBUG
             logger.info(f"Spawned shell process: pid={self.pid}, shell={shell}")
 
     def _set_winsize(self, cols: int, rows: int) -> None:

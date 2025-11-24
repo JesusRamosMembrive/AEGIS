@@ -36,12 +36,15 @@ async def terminal_websocket(websocket: WebSocket):
     """
     await websocket.accept()
     logger.info("Terminal WebSocket connection accepted")
+    print(f"[TERMINAL] WebSocket connection accepted")  # DEBUG
 
     # Spawn shell process
     shell = PTYShell(cols=80, rows=24)
 
     try:
+        print(f"[TERMINAL] Attempting to spawn shell...")  # DEBUG
         shell.spawn()
+        print(f"[TERMINAL] Shell spawned: PID={shell.pid}, FD={shell.master_fd}, running={shell.running}")  # DEBUG
         logger.info(f"Shell spawned successfully: PID={shell.pid}, FD={shell.master_fd}")
     except Exception as e:
         logger.error(f"Failed to spawn shell: {e}", exc_info=True)
