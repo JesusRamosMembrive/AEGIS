@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useClaudeSessionStore } from "../stores/claudeSessionStore";
+import { useSessionHistoryStore } from "../stores/sessionHistoryStore";
 import { useBackendStore } from "../state/useBackendStore";
 import { resolveBackendBaseUrl } from "../api/client";
 import {
@@ -14,6 +15,8 @@ import {
   getToolIcon,
   formatToolInput,
 } from "../types/claude-events";
+import { MarkdownRenderer } from "./MarkdownRenderer";
+import { SessionHistorySidebar } from "./SessionHistorySidebar";
 
 // ============================================================================
 // Main Component
@@ -34,6 +37,9 @@ export function ClaudeAgentView() {
     lastError,
     cwd,
     activeToolCalls,
+    continueSession,
+    totalInputTokens,
+    totalOutputTokens,
     connect,
     disconnect,
     sendPrompt,
@@ -41,6 +47,9 @@ export function ClaudeAgentView() {
     newSession,
     clearMessages,
   } = useClaudeSessionStore();
+
+  // Session history
+  const { saveSession, sidebarOpen } = useSessionHistoryStore();
 
   const backendUrl = useBackendStore((state) => state.backendUrl);
 
@@ -75,6 +84,32 @@ export function ClaudeAgentView() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Auto-save session when messages change (debounced)
+  useEffect(() => {
+    if (messages.length > 0 && !running) {
+      const timer = setTimeout(() => {
+        saveSession(sessionInfo.sessionId, sessionInfo.model, messages);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, running, sessionInfo.sessionId, sessionInfo.model, saveSession]);
+
+  // Handle loading a session from history
+  const handleLoadSession = useCallback(
+    (loadedMessages: ClaudeMessage[]) => {
+      // Clear current messages and load new ones
+      clearMessages();
+      // We need to set messages directly - this requires updating the store
+      useClaudeSessionStore.setState({ messages: loadedMessages });
+    },
+    [clearMessages]
+  );
+
+  // Handle new session from sidebar
+  const handleNewSessionFromSidebar = useCallback(() => {
+    newSession();
+  }, [newSession]);
+
   // Handle submit
   const handleSubmit = useCallback(
     (e?: React.FormEvent) => {
@@ -98,6 +133,35 @@ export function ClaudeAgentView() {
     [handleSubmit]
   );
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Escape to cancel running operation
+      if (e.key === "Escape" && running) {
+        e.preventDefault();
+        cancel();
+      }
+      // Ctrl+L to clear messages
+      if (e.key === "l" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        clearMessages();
+      }
+      // Ctrl+N for new session
+      if (e.key === "n" && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        newSession();
+      }
+      // Focus input with /
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [running, cancel, clearMessages, newSession]);
+
   // Reconnect
   const handleReconnect = useCallback(() => {
     disconnect();
@@ -108,7 +172,13 @@ export function ClaudeAgentView() {
   }, [disconnect, connect, getWsUrl]);
 
   return (
-    <div className="claude-agent-view">
+    <div className={`claude-agent-view ${sidebarOpen ? "sidebar-open" : ""}`}>
+      {/* Session History Sidebar */}
+      <SessionHistorySidebar
+        onLoadSession={handleLoadSession}
+        onNewSession={handleNewSessionFromSidebar}
+      />
+
       {/* Header */}
       <AgentHeader
         connected={connected}
@@ -116,6 +186,9 @@ export function ClaudeAgentView() {
         running={running}
         sessionInfo={sessionInfo}
         cwd={cwd}
+        continueSession={continueSession}
+        totalInputTokens={totalInputTokens}
+        totalOutputTokens={totalOutputTokens}
         onReconnect={handleReconnect}
         onNewSession={newSession}
         onClearMessages={clearMessages}
@@ -134,14 +207,20 @@ export function ClaudeAgentView() {
             {/* Running indicator */}
             {running && (
               <div className="claude-thinking">
-                <span className="thinking-icon">🤔</span>
-                <span className="thinking-text">Claude is thinking...</span>
-                {activeToolCalls.size > 0 && (
-                  <span className="active-tools">
-                    (Running {activeToolCalls.size} tool
-                    {activeToolCalls.size > 1 ? "s" : ""})
-                  </span>
-                )}
+                <div className="thinking-content">
+                  <span className="thinking-icon">🤔</span>
+                  <span className="thinking-text">Claude is thinking...</span>
+                  {activeToolCalls.size > 0 && (
+                    <span className="active-tools">
+                      Running {activeToolCalls.size} tool
+                      {activeToolCalls.size > 1 ? "s" : ""}
+                    </span>
+                  )}
+                  <span className="escape-hint">Press Esc to cancel</span>
+                </div>
+                <div className="thinking-progress">
+                  <div className="progress-bar" />
+                </div>
               </div>
             )}
 
@@ -216,6 +295,9 @@ interface AgentHeaderProps {
     mcpServers: Array<{ name: string; status: string }>;
   };
   cwd: string | null;
+  continueSession: boolean;
+  totalInputTokens: number;
+  totalOutputTokens: number;
   onReconnect: () => void;
   onNewSession: () => void;
   onClearMessages: () => void;
@@ -224,13 +306,24 @@ interface AgentHeaderProps {
 function AgentHeader({
   connected,
   connecting,
-  running,
   sessionInfo,
   cwd,
+  continueSession,
+  totalInputTokens,
+  totalOutputTokens,
   onReconnect,
   onNewSession,
   onClearMessages,
 }: AgentHeaderProps) {
+  const toggleContinueSession = useCallback(() => {
+    useClaudeSessionStore.setState((state) => ({
+      continueSession: !state.continueSession,
+    }));
+  }, []);
+
+  const totalTokens = totalInputTokens + totalOutputTokens;
+  const estimatedCost = ((totalInputTokens * 3 + totalOutputTokens * 15) / 1_000_000).toFixed(4);
+
   return (
     <div className="claude-header">
       <div className="claude-header-left">
@@ -246,14 +339,38 @@ function AgentHeader({
         {sessionInfo.model && (
           <span className="claude-model">{sessionInfo.model}</span>
         )}
+        <button
+          className={`continue-toggle ${continueSession ? "active" : ""}`}
+          onClick={toggleContinueSession}
+          title={
+            continueSession
+              ? "Continue mode: ON - Will resume previous Claude session"
+              : "Continue mode: OFF - Will start fresh session"
+          }
+        >
+          <span className="toggle-icon">{continueSession ? "⟳" : "○"}</span>
+          <span className="toggle-label">
+            {continueSession ? "Continue" : "Fresh"}
+          </span>
+        </button>
+        {totalTokens > 0 && (
+          <span
+            className="token-usage"
+            title={`Input: ${totalInputTokens.toLocaleString()} | Output: ${totalOutputTokens.toLocaleString()} | Est. cost: $${estimatedCost}`}
+          >
+            <span className="token-icon">⚡</span>
+            <span className="token-count">{totalTokens.toLocaleString()}</span>
+            <span className="token-cost">${estimatedCost}</span>
+          </span>
+        )}
       </div>
       <div className="claude-header-right">
         {cwd && <span className="claude-cwd" title={cwd}>{truncatePath(cwd, 40)}</span>}
         <div className="claude-header-actions">
-          <button onClick={onClearMessages} className="header-btn" title="Clear messages">
+          <button onClick={onClearMessages} className="header-btn" title="Clear messages (Ctrl+L)">
             Clear
           </button>
-          <button onClick={onNewSession} className="header-btn" title="Start new session">
+          <button onClick={onNewSession} className="header-btn" title="Start new session (Ctrl+Shift+N)">
             New Session
           </button>
           {!connected && !connecting && (
@@ -292,7 +409,7 @@ function MessageItem({ message }: MessageItemProps) {
       return (
         <div className="message message-text">
           <div className="message-content">
-            <pre className="message-text-content">{String(message.content)}</pre>
+            <MarkdownRenderer content={String(message.content)} />
           </div>
           <div className="message-meta">
             {message.timestamp.toLocaleTimeString()}
@@ -402,6 +519,73 @@ const styles = `
   background: #0a0e18;
   color: #e2e8f0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.claude-agent-view.sidebar-open {
+  padding-left: 280px;
+}
+
+/* Continue toggle */
+.continue-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.continue-toggle:hover {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.continue-toggle.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.toggle-icon {
+  font-size: 12px;
+}
+
+.toggle-label {
+  font-weight: 500;
+}
+
+/* Token usage display */
+.token-usage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #94a3b8;
+}
+
+.token-icon {
+  color: #f59e0b;
+}
+
+.token-count {
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.token-cost {
+  color: #10b981;
+  font-weight: 500;
 }
 
 /* Header */
@@ -752,12 +936,18 @@ const styles = `
 /* Thinking */
 .claude-thinking {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   padding: 12px;
   background: #1e293b;
   border-radius: 8px;
   color: #94a3b8;
+}
+
+.thinking-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .thinking-icon {
@@ -776,7 +966,38 @@ const styles = `
 
 .active-tools {
   font-size: 12px;
-  color: #64748b;
+  padding: 2px 8px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 4px;
+}
+
+.escape-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: #475569;
+}
+
+.thinking-progress {
+  height: 3px;
+  background: #0f172a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+  background-size: 200% 100%;
+  animation: progress-move 1.5s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+@keyframes progress-move {
+  0% { transform: translateX(-100%); background-position: 0% 0%; }
+  50% { background-position: 100% 0%; }
+  100% { transform: translateX(400%); background-position: 0% 0%; }
 }
 
 /* Error Display */

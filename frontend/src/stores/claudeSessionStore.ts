@@ -43,6 +43,11 @@ interface ClaudeSessionStore {
   activeToolCalls: Map<string, ToolCall>;
   completedToolCalls: ToolCall[];
 
+  // Token usage tracking
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  lastRequestDuration: number | null;
+
   // Error handling
   lastError: string | null;
 
@@ -97,6 +102,9 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       messages: [],
       activeToolCalls: new Map(),
       completedToolCalls: [],
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+      lastRequestDuration: null,
       lastError: null,
       _ws: null,
 
@@ -275,8 +283,13 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
               timestamp: new Date(),
               usage: event.usage,
             };
+            // Accumulate token usage if present
+            const inputTokens = event.usage?.input_tokens ?? 0;
+            const outputTokens = event.usage?.output_tokens ?? 0;
             return {
               messages: [...state.messages, message],
+              totalInputTokens: state.totalInputTokens + inputTokens,
+              totalOutputTokens: state.totalOutputTokens + outputTokens,
             };
           }
 

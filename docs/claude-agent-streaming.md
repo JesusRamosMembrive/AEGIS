@@ -1,7 +1,8 @@
 # Claude Agent JSON Streaming - Documentación Completa
 
 **Fecha de implementación:** 2025-11-26
-**Estado:** ✅ Fase 1 Completa - Listo para Testing
+**Última actualización:** 2025-11-26
+**Estado:** ✅ Fases 1-4 Completas
 **Branch:** develop
 
 ---
@@ -1044,34 +1045,53 @@ asyncio.run(main())
 
 ---
 
-## Fases Futuras
+## Progreso de Fases
 
-### Fase 2: UI Mejorada
-- [ ] Markdown rendering para respuestas (react-markdown)
-- [ ] Syntax highlighting para código (prism-react-renderer)
-- [ ] Botones de copiar para bloques de código
-- [ ] Mejorar estilos de tool cards (expandir/colapsar animado)
-- [ ] Theming (dark/light mode)
+### Fase 2: UI Mejorada ✅ COMPLETADA
+- [x] Markdown rendering para respuestas (react-markdown + remark-gfm)
+- [x] Syntax highlighting para código (prism-react-renderer con tema Night Owl)
+- [x] Botones de copiar para bloques de código con feedback visual
+- [x] Números de línea en bloques de código
+- [x] Soporte GFM: tablas, task lists, strikethrough
 
-### Fase 3: Gestión de Sesión
-- [ ] Implementar flag `--continue` para continuidad de sesión
-- [ ] Sidebar con historial de sesiones
-- [ ] Opción de limpiar/resetear sesión
-- [ ] Persistencia de sesiones en localStorage
+**Archivos creados:**
+- `frontend/src/components/MarkdownRenderer.tsx` - Componente de rendering markdown
 
-### Fase 4: Features Avanzados
-- [ ] Botón cancelar (kill subprocess)
-- [ ] Animación de texto streaming (typewriter effect)
-- [ ] Display de costo/tokens desde result events
-- [ ] Atajos de teclado (Esc para cancelar, etc.)
-- [ ] Múltiples sesiones en tabs
+### Fase 3: Gestión de Sesión ✅ COMPLETADA
+- [x] Implementar flag `--continue` para continuidad de sesión (toggle en header)
+- [x] Sidebar con historial de sesiones (colapsable)
+- [x] Opción de limpiar/resetear sesión
+- [x] Persistencia de sesiones en localStorage (máx 50 sesiones)
+- [x] Auto-save debounced cuando los mensajes cambian
+- [x] Cargar sesiones anteriores desde sidebar
 
-### Fase 5: Polish
-- [ ] Estados de loading más detallados
+**Archivos creados:**
+- `frontend/src/stores/sessionHistoryStore.ts` - Store Zustand con persist middleware
+- `frontend/src/components/SessionHistorySidebar.tsx` - Componente sidebar
+
+### Fase 4: Features Avanzados ✅ COMPLETADA
+- [x] Botón cancelar (kill subprocess) - funciona con Esc
+- [x] Display de costo/tokens desde result events (header)
+- [x] Atajos de teclado:
+  - `Esc` - Cancelar operación en curso
+  - `Ctrl+L` - Limpiar mensajes
+  - `Ctrl+Shift+N` - Nueva sesión
+  - `/` - Enfocar input (cuando no está en textarea)
+- [x] Barra de progreso animada durante "thinking"
+- [x] Badge visual para tools activos
+- [x] Hint "Press Esc to cancel" durante ejecución
+- [x] Token usage display con estimación de costo (Sonnet pricing: $3/M in, $15/M out)
+
+**Archivos modificados:**
+- `frontend/src/stores/claudeSessionStore.ts` - Añadido tracking de tokens
+- `frontend/src/components/ClaudeAgentView.tsx` - UI mejorada, shortcuts, token display
+
+### Fase 5: Polish (PENDIENTE)
 - [ ] UI de manejo de errores mejorada
 - [ ] Lógica de reconexión automática
 - [ ] Diseño responsive para móvil
 - [ ] Accesibilidad (ARIA labels, keyboard nav)
+- [ ] Theming (dark/light mode)
 
 ---
 
@@ -1193,5 +1213,24 @@ tail -f ~/.claude/logs/*.log                         # Logs de Claude
 
 ---
 
+## Resumen de Archivos (Actualizado)
+
+### Frontend - Nuevos
+| Archivo | Descripción |
+|---------|-------------|
+| `src/components/MarkdownRenderer.tsx` | Rendering markdown con syntax highlighting |
+| `src/components/SessionHistorySidebar.tsx` | Sidebar historial de sesiones |
+| `src/stores/sessionHistoryStore.ts` | Store persistencia sesiones |
+
+### Frontend - Modificados
+| Archivo | Cambios |
+|---------|---------|
+| `src/components/ClaudeAgentView.tsx` | Sidebar, shortcuts, token display, progress bar |
+| `src/components/HeaderBar.tsx` | Añadido link a `/agent` |
+| `src/stores/claudeSessionStore.ts` | Token tracking (input/output) |
+
+---
+
 *Documentación generada: 2025-11-26*
-*Versión: 1.0*
+*Última actualización: 2025-11-26*
+*Versión: 1.4*
