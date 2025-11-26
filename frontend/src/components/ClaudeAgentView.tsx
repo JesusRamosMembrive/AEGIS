@@ -18,6 +18,8 @@ import {
 } from "../types/claude-events";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { SessionHistorySidebar } from "./SessionHistorySidebar";
+import { FileStatusSidebar } from "./FileStatusSidebar";
+import { FileDiffModal } from "./FileDiffModal";
 
 // ============================================================================
 // Main Component
@@ -25,6 +27,8 @@ import { SessionHistorySidebar } from "./SessionHistorySidebar";
 
 export function ClaudeAgentView() {
   const [promptValue, setPromptValue] = useState("");
+  const [fileSidebarOpen, setFileSidebarOpen] = useState(false);
+  const [diffTarget, setDiffTarget] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -182,7 +186,7 @@ export function ClaudeAgentView() {
 
   return (
     <div
-      className={`claude-agent-view ${sidebarOpen ? "sidebar-open" : ""}`}
+      className={`claude-agent-view ${sidebarOpen || fileSidebarOpen ? "sidebar-open" : ""}`}
       role="main"
       aria-label="Claude Agent Interface"
     >
@@ -190,6 +194,13 @@ export function ClaudeAgentView() {
       <SessionHistorySidebar
         onLoadSession={handleLoadSession}
         onNewSession={handleNewSessionFromSidebar}
+      />
+
+      {/* File Status Sidebar */}
+      <FileStatusSidebar
+        isOpen={fileSidebarOpen}
+        onShowDiff={setDiffTarget}
+        onClose={() => setFileSidebarOpen(false)}
       />
 
       {/* Header */}
@@ -210,6 +221,8 @@ export function ClaudeAgentView() {
         onClearMessages={clearMessages}
         resolvedTheme={resolvedTheme}
         onToggleTheme={toggleTheme}
+        fileSidebarOpen={fileSidebarOpen}
+        onToggleFileSidebar={() => setFileSidebarOpen(!fileSidebarOpen)}
       />
 
       {/* Connection Error Banner */}
@@ -335,6 +348,9 @@ export function ClaudeAgentView() {
       </div>
 
       <style>{styles}</style>
+
+      {/* File Diff Modal */}
+      {diffTarget && <FileDiffModal path={diffTarget} onClose={() => setDiffTarget(null)} />}
     </div>
   );
 }
@@ -365,6 +381,8 @@ interface AgentHeaderProps {
   onClearMessages: () => void;
   resolvedTheme: "dark" | "light";
   onToggleTheme: () => void;
+  fileSidebarOpen: boolean;
+  onToggleFileSidebar: () => void;
 }
 
 function AgentHeader({
@@ -383,6 +401,8 @@ function AgentHeader({
   onClearMessages,
   resolvedTheme,
   onToggleTheme,
+  fileSidebarOpen,
+  onToggleFileSidebar,
 }: AgentHeaderProps) {
   const toggleContinueSession = useCallback(() => {
     useClaudeSessionStore.setState((state) => ({
@@ -442,6 +462,13 @@ function AgentHeader({
       <div className="claude-header-right">
         {cwd && <span className="claude-cwd" title={cwd}>{truncatePath(cwd, 40)}</span>}
         <div className="claude-header-actions">
+          <button
+            onClick={onToggleFileSidebar}
+            className={`header-btn ${fileSidebarOpen ? "active" : ""}`}
+            title="Toggle File Sidebar"
+          >
+            Files
+          </button>
           <button
             onClick={onToggleTheme}
             className="header-btn theme-toggle"
@@ -689,6 +716,23 @@ const styles = `
 .claude-agent-view.sidebar-open {
   padding-left: 280px;
 }
+
+/* Adjust padding when file sidebar is open. 
+   If both are open, we might need more space or they overlap. 
+   For now, let's assume they overlap or user toggles one. 
+   But if we want them side-by-side, we'd need dynamic padding.
+   Let's try to make the file sidebar sit ON TOP of the history sidebar if both are open,
+   so we don't need double padding. 
+   OR, we can make the file sidebar push content too.
+*/
+.claude-agent-view:has(.file-status-sidebar.open) {
+  /* If we want it to push content, we need to know if history is also open.
+     This is tricky with pure CSS unless we add a class to the parent.
+     Let's rely on the JS state to add classes if we want complex layout.
+     For now, let's just let it overlap or use the same padding-left if it's on top.
+  */
+}
+
 
 /* Connection Error Banner */
 .connection-error-banner {
