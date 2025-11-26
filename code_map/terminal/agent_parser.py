@@ -51,10 +51,16 @@ class AgentEventType(Enum):
     GIT_COMMIT = "git_commit"
 
     # General
+    # General
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"
     PROMPT = "prompt"
+    
+    # Claude Code specific
+    CLAUDE_RESPONSE = "claude_response"
+    CLAUDE_TOOL_USE = "claude_tool_use"
+    CLAUDE_THINKING = "claude_thinking"
 
 
 @dataclass
@@ -184,6 +190,16 @@ class AgentOutputParser:
             r'Enter (.+):': 'input',
             r'Choose \[(\d+-\d+)\]': 'choice',
         }
+        
+        # Claude Code specific patterns
+        self.claude_patterns = {
+            r'^Thinking\s+(off|on)': AgentEventType.CLAUDE_THINKING,
+            r'^>\s+Try\s+"': AgentEventType.CLAUDE_TOOL_USE, # Suggestion/Tool use
+            r'^>\s+': AgentEventType.CLAUDE_TOOL_USE, # General command execution
+            r'^\s*─────': AgentEventType.CLAUDE_THINKING, # Separator lines -> treat as thinking/TUI
+            r'^\s*\? for shortcuts': AgentEventType.CLAUDE_THINKING, # Footer help
+            r'^\s*ctrl-g to edit': AgentEventType.CLAUDE_THINKING, # Footer help
+        }
 
         # State tracking
         self.current_command = None
@@ -222,6 +238,18 @@ class AgentOutputParser:
                     if event:
                         events.append(event)
                         self.current_command = clean_line
+                    pattern_matched = True
+                    break
+
+        # Check for Claude Code patterns (high priority)
+        if not pattern_matched:
+            for pattern, event_type in self.claude_patterns.items():
+                if re.search(pattern, clean_line):
+                    events.append(self._create_event(
+                        event_type=event_type,
+                        line=line,
+                        clean_line=clean_line
+                    ))
                     pattern_matched = True
                     break
 

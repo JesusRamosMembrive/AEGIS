@@ -1296,14 +1296,21 @@
   {
     "path": "code_map/api/terminal.py",
     "relative": true,
-    "modified_at": "2025-11-25T06:29:11.969314+00:00",
+    "modified_at": "2025-11-26T16:07:44.863144+00:00",
     "symbols": [
       {
         "name": "terminal_websocket",
         "kind": "function",
-        "lineno": 22,
+        "lineno": 27,
         "parent": null,
         "docstring": "WebSocket endpoint for remote terminal access\n\nSpawns a shell process and provides bidirectional communication using text protocol.\n\nClient can send:\n- Raw text for shell input\n- \"__RESIZE__:cols:rows\" for terminal resize\n- \"__AGENT__:enable\" to enable agent parsing\n- \"__AGENT__:disable\" to disable agent parsing\n\nServer sends:\n- Raw text from shell output\n- \"__AGENT__:event:{json}\" for agent events (when enabled)"
+      },
+      {
+        "name": "agent_websocket",
+        "kind": "function",
+        "lineno": 272,
+        "parent": null,
+        "docstring": "WebSocket endpoint for Claude Code JSON streaming mode\n\nUses `claude -p --output-format stream-json --verbose` to get structured\noutput instead of TUI rendering.\n\nClient sends JSON commands:\n- {\"command\": \"run\", \"prompt\": \"...\", \"continue\": true}\n- {\"command\": \"cancel\"}\n- {\"command\": \"new_session\"}\n\nServer sends JSON events:\n- {\"type\": \"system\", \"subtype\": \"init\", ...}\n- {\"type\": \"assistant\", \"subtype\": \"text\", \"content\": \"...\"}\n- {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n- {\"type\": \"user\", \"subtype\": \"tool_result\", \"content\": {...}}\n- {\"type\": \"done\"}\n- {\"type\": \"error\", \"content\": \"...\"}"
       }
     ],
     "errors": []
@@ -4326,7 +4333,7 @@
   {
     "path": "code_map/terminal/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-24T10:07:22.612372+00:00",
+    "modified_at": "2025-11-26T16:07:55.759191+00:00",
     "symbols": [],
     "errors": []
   },
@@ -4488,7 +4495,7 @@
   {
     "path": "code_map/terminal/agent_parser.py",
     "relative": true,
-    "modified_at": "2025-11-25T06:35:00.781082+00:00",
+    "modified_at": "2025-11-26T09:43:45.022774+00:00",
     "symbols": [
       {
         "name": "AgentEventType",
@@ -4500,175 +4507,175 @@
       {
         "name": "AgentEvent",
         "kind": "class",
-        "lineno": 61,
+        "lineno": 67,
         "parent": null,
         "docstring": "Structured agent event extracted from terminal output"
       },
       {
         "name": "to_dict",
         "kind": "method",
-        "lineno": 71,
+        "lineno": 77,
         "parent": "AgentEvent",
         "docstring": "Convert to dictionary for JSON serialization"
       },
       {
         "name": "to_json",
         "kind": "method",
-        "lineno": 77,
+        "lineno": 83,
         "parent": "AgentEvent",
         "docstring": "Convert to JSON string"
       },
       {
         "name": "AgentOutputParser",
         "kind": "class",
-        "lineno": 82,
+        "lineno": 88,
         "parent": null,
         "docstring": "Parser for detecting patterns in agent terminal output"
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 85,
+        "lineno": 91,
         "parent": "AgentOutputParser",
         "docstring": "Initialize parser with pattern definitions"
       },
       {
         "name": "parse_line",
         "kind": "method",
-        "lineno": 193,
+        "lineno": 209,
         "parent": "AgentOutputParser",
         "docstring": "Parse a single line of terminal output\n\nArgs:\n    line: Raw line from terminal\n\nReturns:\n    List of detected events, or None if no events detected"
       },
       {
         "name": "parse_chunk",
         "kind": "method",
-        "lineno": 279,
+        "lineno": 307,
         "parent": "AgentOutputParser",
         "docstring": "Parse a chunk of terminal output\n\nArgs:\n    text: Multi-line terminal output\n\nReturns:\n    List of all detected events"
       },
       {
         "name": "_create_event",
         "kind": "method",
-        "lineno": 299,
+        "lineno": 327,
         "parent": "AgentOutputParser",
         "docstring": "Create an event from parsed data"
       },
       {
         "name": "_strip_ansi",
         "kind": "method",
-        "lineno": 323,
+        "lineno": 351,
         "parent": "AgentOutputParser",
         "docstring": "Remove ANSI escape codes from text"
       },
       {
         "name": "_extract_npm_command",
         "kind": "method",
-        "lineno": 330,
+        "lineno": 358,
         "parent": "AgentOutputParser",
         "docstring": "Extract details from npm commands"
       },
       {
         "name": "_extract_pip_command",
         "kind": "method",
-        "lineno": 339,
+        "lineno": 367,
         "parent": "AgentOutputParser",
         "docstring": "Extract details from pip commands"
       },
       {
         "name": "_extract_pytest_command",
         "kind": "method",
-        "lineno": 348,
+        "lineno": 376,
         "parent": "AgentOutputParser",
         "docstring": "Extract pytest command details"
       },
       {
         "name": "_extract_npm_test",
         "kind": "method",
-        "lineno": 355,
+        "lineno": 383,
         "parent": "AgentOutputParser",
         "docstring": "Extract npm test command details"
       },
       {
         "name": "_extract_git_status",
         "kind": "method",
-        "lineno": 363,
+        "lineno": 391,
         "parent": "AgentOutputParser",
         "docstring": "Extract git status command"
       },
       {
         "name": "_extract_git_diff",
         "kind": "method",
-        "lineno": 367,
+        "lineno": 395,
         "parent": "AgentOutputParser",
         "docstring": "Extract git diff command"
       },
       {
         "name": "_extract_git_command",
         "kind": "method",
-        "lineno": 371,
+        "lineno": 399,
         "parent": "AgentOutputParser",
         "docstring": "Extract git command details"
       },
       {
         "name": "_extract_file_read",
         "kind": "method",
-        "lineno": 380,
+        "lineno": 408,
         "parent": "AgentOutputParser",
         "docstring": "Extract file read operation"
       },
       {
         "name": "_extract_file_write",
         "kind": "method",
-        "lineno": 388,
+        "lineno": 416,
         "parent": "AgentOutputParser",
         "docstring": "Extract file write operation"
       },
       {
         "name": "_extract_file_delete",
         "kind": "method",
-        "lineno": 396,
+        "lineno": 424,
         "parent": "AgentOutputParser",
         "docstring": "Extract file delete operation"
       },
       {
         "name": "_extract_build_command",
         "kind": "method",
-        "lineno": 405,
+        "lineno": 433,
         "parent": "AgentOutputParser",
         "docstring": "Extract build command details"
       },
       {
         "name": "_parse_pytest_summary",
         "kind": "method",
-        "lineno": 415,
+        "lineno": 443,
         "parent": "AgentOutputParser",
         "docstring": "Parse pytest summary line"
       },
       {
         "name": "_parse_pytest_failure",
         "kind": "method",
-        "lineno": 429,
+        "lineno": 457,
         "parent": "AgentOutputParser",
         "docstring": "Parse pytest failure"
       },
       {
         "name": "_parse_jest_pass",
         "kind": "method",
-        "lineno": 444,
+        "lineno": 472,
         "parent": "AgentOutputParser",
         "docstring": "Parse Jest passing test"
       },
       {
         "name": "_parse_jest_fail",
         "kind": "method",
-        "lineno": 459,
+        "lineno": 487,
         "parent": "AgentOutputParser",
         "docstring": "Parse Jest failing test"
       },
       {
         "name": "_parse_jest_summary",
         "kind": "method",
-        "lineno": 474,
+        "lineno": 502,
         "parent": "AgentOutputParser",
         "docstring": "Parse Jest test summary"
       }
@@ -4676,21 +4683,184 @@
     "errors": []
   },
   {
+    "path": "code_map/terminal/claude_runner.py",
+    "relative": true,
+    "modified_at": "2025-11-26T16:06:22.917819+00:00",
+    "symbols": [
+      {
+        "name": "ClaudeRunnerConfig",
+        "kind": "class",
+        "lineno": 18,
+        "parent": null,
+        "docstring": "Configuration for Claude Code runner"
+      },
+      {
+        "name": "ClaudeAgentRunner",
+        "kind": "class",
+        "lineno": 26,
+        "parent": null,
+        "docstring": "Executes Claude Code in JSON streaming mode\n\nRuns `claude -p --output-format stream-json --verbose` and streams\nparsed JSON events line by line."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 34,
+        "parent": "ClaudeAgentRunner",
+        "docstring": null
+      },
+      {
+        "name": "run_prompt",
+        "kind": "method",
+        "lineno": 40,
+        "parent": "ClaudeAgentRunner",
+        "docstring": "Execute a prompt and stream JSON events\n\nArgs:\n    prompt: The prompt to send to Claude Code\n    on_event: Callback for each parsed JSON event\n    on_error: Optional callback for stderr output\n    on_done: Optional callback when process completes\n\nReturns:\n    Exit code from the process"
+      },
+      {
+        "name": "cancel",
+        "kind": "method",
+        "lineno": 191,
+        "parent": "ClaudeAgentRunner",
+        "docstring": "Cancel the running process"
+      },
+      {
+        "name": "is_running",
+        "kind": "method",
+        "lineno": 221,
+        "parent": "ClaudeAgentRunner",
+        "docstring": "Check if process is currently running"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/terminal/json_parser.py",
+    "relative": true,
+    "modified_at": "2025-11-26T16:06:57.026949+00:00",
+    "symbols": [
+      {
+        "name": "EventType",
+        "kind": "class",
+        "lineno": 17,
+        "parent": null,
+        "docstring": "Types of events from Claude Code JSON stream"
+      },
+      {
+        "name": "EventSubtype",
+        "kind": "class",
+        "lineno": 26,
+        "parent": null,
+        "docstring": "Subtypes for more specific event classification"
+      },
+      {
+        "name": "ClaudeEvent",
+        "kind": "class",
+        "lineno": 38,
+        "parent": null,
+        "docstring": "Parsed event from Claude Code JSON stream"
+      },
+      {
+        "name": "to_dict",
+        "kind": "method",
+        "lineno": 53,
+        "parent": "ClaudeEvent",
+        "docstring": "Convert to dictionary for JSON serialization"
+      },
+      {
+        "name": "to_json",
+        "kind": "method",
+        "lineno": 67,
+        "parent": "ClaudeEvent",
+        "docstring": "Convert to JSON string"
+      },
+      {
+        "name": "ContentBlock",
+        "kind": "class",
+        "lineno": 73,
+        "parent": null,
+        "docstring": "A content block from assistant messages"
+      },
+      {
+        "name": "JSONStreamParser",
+        "kind": "class",
+        "lineno": 82,
+        "parent": null,
+        "docstring": "Parser for Claude Code JSON streaming output\n\nHandles the line-by-line JSON format:\n- system: init info (session_id, tools, model)\n- assistant: text or tool_use content\n- user: tool_result content"
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 92,
+        "parent": "JSONStreamParser",
+        "docstring": null
+      },
+      {
+        "name": "parse_line",
+        "kind": "method",
+        "lineno": 98,
+        "parent": "JSONStreamParser",
+        "docstring": "Parse a single JSON line from Claude Code output\n\nArgs:\n    line: Raw JSON string (single line)\n\nReturns:\n    ClaudeEvent or None if parsing fails"
+      },
+      {
+        "name": "_parse_system",
+        "kind": "method",
+        "lineno": 140,
+        "parent": "JSONStreamParser",
+        "docstring": "Parse system events (init, config)"
+      },
+      {
+        "name": "_parse_assistant",
+        "kind": "method",
+        "lineno": 173,
+        "parent": "JSONStreamParser",
+        "docstring": "Parse assistant messages (text, tool_use)"
+      },
+      {
+        "name": "_parse_user",
+        "kind": "method",
+        "lineno": 230,
+        "parent": "JSONStreamParser",
+        "docstring": "Parse user messages (tool_result)"
+      },
+      {
+        "name": "_parse_result",
+        "kind": "method",
+        "lineno": 258,
+        "parent": "JSONStreamParser",
+        "docstring": "Parse result events (final output)"
+      },
+      {
+        "name": "get_session_info",
+        "kind": "method",
+        "lineno": 269,
+        "parent": "JSONStreamParser",
+        "docstring": "Get current session information"
+      },
+      {
+        "name": "reset",
+        "kind": "method",
+        "lineno": 278,
+        "parent": "JSONStreamParser",
+        "docstring": "Reset parser state for new session"
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "code_map/terminal/pty_shell.py",
     "relative": true,
-    "modified_at": "2025-11-25T14:12:18.901014+00:00",
+    "modified_at": "2025-11-26T13:50:49.850791+00:00",
     "symbols": [
       {
         "name": "PTYShell",
         "kind": "class",
-        "lineno": 27,
+        "lineno": 25,
         "parent": null,
         "docstring": "Manages a shell process with PTY (pseudo-terminal) support\n\nProvides async I/O handling for bidirectional communication\nwith a shell process running in a PTY."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 35,
+        "lineno": 33,
         "parent": "PTYShell",
         "docstring": "Initialize PTY shell\n\nArgs:\n    cols: Terminal width in columns\n    rows: Terminal height in rows\n    enable_agent_parsing: Enable agent output parsing for event detection"
       },
@@ -4702,58 +4872,65 @@
         "docstring": "Spawn shell process with PTY\n\nRaises:\n    OSError: If fork fails"
       },
       {
-        "name": "_filter_claude_code_output",
+        "name": "_process_output",
         "kind": "method",
         "lineno": 98,
         "parent": "PTYShell",
-        "docstring": "NO-OP filter - pass through all content unchanged.\n\nWith two-layer architecture (read-only terminal display + separate input),\nwe don't need to filter anything. The terminal shows raw output from Claude Code,\nand user input comes from a separate HTML input element.\n\nArgs:\n    text: Raw text from PTY\n\nReturns:\n    Unmodified text"
+        "docstring": "Process output before sending to frontend.\n\nCurrently just passes through - filtering is done in frontend\nfor better control over terminal rendering."
+      },
+      {
+        "name": "_filter_claude_code_output",
+        "kind": "method",
+        "lineno": 109,
+        "parent": "PTYShell",
+        "docstring": "Legacy filter - now delegates to _process_output"
       },
       {
         "name": "_set_winsize",
         "kind": "method",
-        "lineno": 114,
+        "lineno": 115,
         "parent": "PTYShell",
         "docstring": "Set terminal window size\n\nArgs:\n    cols: Terminal width\n    rows: Terminal height"
       },
       {
         "name": "set_agent_event_callback",
         "kind": "method",
-        "lineno": 128,
+        "lineno": 129,
         "parent": "PTYShell",
         "docstring": "Set callback for agent events\n\nArgs:\n    callback: Function to call with detected agent events"
       },
       {
         "name": "resize",
         "kind": "method",
-        "lineno": 137,
+        "lineno": 138,
         "parent": "PTYShell",
         "docstring": "Resize terminal\n\nArgs:\n    cols: New terminal width\n    rows: New terminal height"
       },
       {
         "name": "write",
         "kind": "method",
-        "lineno": 150,
+        "lineno": 151,
         "parent": "PTYShell",
         "docstring": "Write data to shell stdin\n\nArgs:\n    data: String to write to shell"
       },
       {
         "name": "read",
         "kind": "method",
-        "lineno": 166,
+        "lineno": 169,
         "parent": "PTYShell",
         "docstring": "Read shell output asynchronously\n\nContinuously reads from shell output and calls callback\nwith received data. Runs until shell process exits.\n\nArgs:\n    callback: Function to call with output data"
       },
       {
         "name": "close",
         "kind": "method",
-        "lineno": 245,
+        "lineno": 249,
         "parent": "PTYShell",
         "docstring": "Close shell process and cleanup resources"
       },
       {
         "name": "__del__",
         "kind": "method",
-        "lineno": 289,
+        "lineno": 293,
         "parent": "PTYShell",
         "docstring": "Cleanup on garbage collection"
       }
@@ -5325,6 +5502,13 @@
     "errors": []
   },
   {
+    "path": "frontend/dist/assets/index-C2ZommFS.js",
+    "relative": true,
+    "modified_at": "2025-11-26T16:16:41.572080+00:00",
+    "symbols": [],
+    "errors": []
+  },
+  {
     "path": "frontend/dist/assets/index-CJ22wpIM.js",
     "relative": true,
     "modified_at": "2025-11-24T17:20:34.267809+00:00",
@@ -5355,7 +5539,7 @@
   {
     "path": "frontend/dist/index.html",
     "relative": true,
-    "modified_at": "2025-11-25T08:25:21.844874+00:00",
+    "modified_at": "2025-11-26T16:16:41.571079+00:00",
     "symbols": [
       {
         "name": "root",
@@ -6540,7 +6724,7 @@
   {
     "path": "frontend/src/components/RemoteTerminalView.tsx",
     "relative": true,
-    "modified_at": "2025-11-25T14:10:51.073925+00:00",
+    "modified_at": "2025-11-26T13:49:56.826374+00:00",
     "symbols": [
       {
         "name": "RemoteTerminalView",
@@ -6552,49 +6736,49 @@
       {
         "name": "stripApi",
         "kind": "function",
-        "lineno": 45,
+        "lineno": 49,
         "parent": null,
         "docstring": null
       },
       {
         "name": "connectToShell",
         "kind": "function",
-        "lineno": 186,
+        "lineno": 190,
         "parent": null,
         "docstring": "Manual connection function - called by user clicking \"Connect\" button"
       },
       {
         "name": "sendResize",
         "kind": "function",
-        "lineno": 289,
+        "lineno": 322,
         "parent": null,
         "docstring": "User input is handled via separate HTML input element"
       },
       {
         "name": "handleInputSubmit",
         "kind": "function",
-        "lineno": 313,
+        "lineno": 346,
         "parent": null,
         "docstring": "Handle input submission"
       },
       {
         "name": "toggleAgentParsing",
         "kind": "function",
-        "lineno": 325,
+        "lineno": 362,
         "parent": null,
         "docstring": "Toggle agent parsing"
       },
       {
         "name": "requestAgentSummary",
         "kind": "function",
-        "lineno": 346,
+        "lineno": 383,
         "parent": null,
         "docstring": "Request agent summary"
       },
       {
         "name": "disconnectFromShell",
         "kind": "function",
-        "lineno": 354,
+        "lineno": 391,
         "parent": null,
         "docstring": "Disconnect function"
       }
@@ -8230,6 +8414,92 @@
     "relative": true,
     "modified_at": "2025-11-10T11:33:54.710177+00:00",
     "symbols": [],
+    "errors": []
+  },
+  {
+    "path": "test_dedup.py",
+    "relative": true,
+    "modified_at": "2025-11-26T09:23:37.728783+00:00",
+    "symbols": [
+      {
+        "name": "TestPTYShellDeduplication",
+        "kind": "class",
+        "lineno": 5,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "setUp",
+        "kind": "method",
+        "lineno": 6,
+        "parent": "TestPTYShellDeduplication",
+        "docstring": null
+      },
+      {
+        "name": "test_deduplication",
+        "kind": "method",
+        "lineno": 9,
+        "parent": "TestPTYShellDeduplication",
+        "docstring": "Test that repeated lines are filtered"
+      },
+      {
+        "name": "test_prompt_repetition",
+        "kind": "method",
+        "lineno": 23,
+        "parent": "TestPTYShellDeduplication",
+        "docstring": "Test prompt repetition scenario"
+      },
+      {
+        "name": "test_empty_lines",
+        "kind": "method",
+        "lineno": 31,
+        "parent": "TestPTYShellDeduplication",
+        "docstring": "Test that empty lines are skipped"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "test_structured.py",
+    "relative": true,
+    "modified_at": "2025-11-26T09:44:37.567727+00:00",
+    "symbols": [
+      {
+        "name": "TestStructuredOutput",
+        "kind": "class",
+        "lineno": 6,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "setUp",
+        "kind": "method",
+        "lineno": 7,
+        "parent": "TestStructuredOutput",
+        "docstring": null
+      },
+      {
+        "name": "test_thinking_filtering",
+        "kind": "method",
+        "lineno": 10,
+        "parent": "TestStructuredOutput",
+        "docstring": "Test that Thinking blocks are filtered"
+      },
+      {
+        "name": "test_prompt_filtering",
+        "kind": "method",
+        "lineno": 38,
+        "parent": "TestStructuredOutput",
+        "docstring": "Test that prompts are filtered"
+      },
+      {
+        "name": "test_tool_use_preservation",
+        "kind": "method",
+        "lineno": 45,
+        "parent": "TestStructuredOutput",
+        "docstring": "Test that tool use is preserved"
+      }
+    ],
     "errors": []
   },
   {

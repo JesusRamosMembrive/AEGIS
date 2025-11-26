@@ -40,6 +40,10 @@ export function RemoteTerminalView() {
   const fitAddonRef = useRef<FitAddon | null>(null);
   const disposablesRef = useRef<{ data?: any; resize?: any; observer?: ResizeObserver }>({});
 
+  // Claude Code redraw detection
+  const lastFrameRef = useRef<string>("");
+  const redrawPatternRef = useRef(new RegExp('\\x1b\\[2K.*\\x1b\\[1A', 'g'));
+
   const wsBaseUrl = useMemo(() => {
     console.log(`[WS] useMemo recomputing wsBaseUrl, backendUrl=${backendUrl}`);
     const stripApi = (value: string) =>
@@ -223,7 +227,16 @@ export function RemoteTerminalView() {
       // Clear terminal and show connected message
       terminal.clear();
       terminal.writeln("\x1b[1;32m✓ Connected to shell\x1b[0m");
+      terminal.writeln("\x1b[2mLaunching Claude Code...\x1b[0m");
       terminal.writeln("");
+
+      // Auto-launch Claude Code after a brief delay
+      setTimeout(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          console.log("[WS] Auto-launching Claude Code");
+          socket.send("claude\r");
+        }
+      }, 500);
     };
 
     socket.onmessage = (event) => {
@@ -257,8 +270,28 @@ export function RemoteTerminalView() {
         }
       }
 
-      // Regular terminal output
-      xtermRef.current?.write(message);
+      // Detect Claude Code redraw pattern (multiple line clears + cursor ups)
+      // When detected, clear terminal and write fresh content
+      const isRedraw = redrawPatternRef.current.test(message);
+      if (isRedraw) {
+        // This is a redraw frame from Claude Code
+        // Clear terminal to prevent duplicate/stacking content
+        xtermRef.current?.clear();
+
+        // Strip the redraw control sequences and write clean content
+        const cleanMessage = message
+          .replace(/\x1b\[2K/g, '')      // Remove "erase line"
+          .replace(/\x1b\[\d*A/g, '')    // Remove "cursor up"
+          .replace(/\x1b\[\d*G/g, '')    // Remove "cursor to column"
+          .replace(/\x1b\[\?2026[hl]/g, '') // Remove synchronized output
+          .replace(/\x1b\[\?25[hl]/g, '');  // Remove cursor visibility
+
+        lastFrameRef.current = cleanMessage;
+        xtermRef.current?.write(cleanMessage);
+      } else {
+        // Regular output - just write it
+        xtermRef.current?.write(message);
+      }
     };
 
     socket.onerror = (err) => {
@@ -316,8 +349,12 @@ export function RemoteTerminalView() {
       return;
     }
 
-    // Send the input followed by Enter
-    wsRef.current.send(inputValue + "\r");
+    // For Claude Code TUI: send text with Enter to submit
+    // Claude Code interprets each \r as "submit current input"
+    // We send the text followed by \r to write and confirm
+    const messageToSend = inputValue + "\r";
+    console.log(`[INPUT] Sending: ${JSON.stringify(messageToSend)}`);
+    wsRef.current.send(messageToSend);
     setInputValue("");
   };
 

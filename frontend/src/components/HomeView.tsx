@@ -200,6 +200,16 @@ export function HomeView({
           <span className="home-card-cta">Open Terminal →</span>
         </Link>
 
+        <Link to="/agent" className="home-card">
+          <div className="home-card-body">
+            <h3>Claude Agent</h3>
+            <p>
+              Interact with Claude Code through a structured UI. Send prompts, see tool calls and results in real-time without TUI rendering issues.
+            </p>
+          </div>
+          <span className="home-card-cta">Open Agent →</span>
+        </Link>
+
         <Link to="/linters" className="home-card">
           <div className="home-card-body">
             <h3>Linters</h3>

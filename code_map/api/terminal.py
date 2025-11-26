@@ -1,7 +1,9 @@
 """
 Terminal API endpoints
 
-Provides WebSocket endpoint for remote terminal access
+Provides WebSocket endpoints for:
+- /ws: Remote terminal access (PTY shell)
+- /ws/agent: Claude Code JSON streaming mode
 """
 
 import asyncio
@@ -12,6 +14,9 @@ from starlette.websockets import WebSocketState
 from code_map.terminal import PTYShell
 from code_map.terminal.agent_parser import AgentEvent
 from code_map.terminal.agent_events import AgentEventManager
+from code_map.terminal.claude_runner import ClaudeAgentRunner, ClaudeRunnerConfig
+from code_map.terminal.json_parser import JSONStreamParser
+from code_map.settings import load_settings
 
 logger = logging.getLogger(__name__)
 
@@ -261,3 +266,165 @@ async def terminal_websocket(websocket: WebSocket):
                 await websocket.close()
         except Exception:
             pass
+
+
+@router.websocket("/ws/agent")
+async def agent_websocket(websocket: WebSocket):
+    """
+    WebSocket endpoint for Claude Code JSON streaming mode
+
+    Uses `claude -p --output-format stream-json --verbose` to get structured
+    output instead of TUI rendering.
+
+    Client sends JSON commands:
+    - {"command": "run", "prompt": "...", "continue": true}
+    - {"command": "cancel"}
+    - {"command": "new_session"}
+
+    Server sends JSON events:
+    - {"type": "system", "subtype": "init", ...}
+    - {"type": "assistant", "subtype": "text", "content": "..."}
+    - {"type": "assistant", "subtype": "tool_use", "content": {...}}
+    - {"type": "user", "subtype": "tool_result", "content": {...}}
+    - {"type": "done"}
+    - {"type": "error", "content": "..."}
+    """
+    await websocket.accept()
+    logger.info("Agent WebSocket connection accepted")
+
+    # Load settings to get root path
+    settings = load_settings()
+    cwd = str(settings.root_path)
+
+    # Initialize parser and runner
+    parser = JSONStreamParser()
+    runner: ClaudeAgentRunner | None = None
+    continue_session = True  # Default: continue last session
+
+    async def send_event(event_data: dict):
+        """Send parsed event to WebSocket"""
+        try:
+            parsed = parser.parse_line(json.dumps(event_data))
+            if parsed:
+                await websocket.send_json(parsed.to_dict())
+            else:
+                # Send raw event if parsing fails
+                await websocket.send_json(event_data)
+        except Exception as e:
+            logger.error(f"Error sending event: {e}")
+
+    async def send_error(message: str):
+        """Send error event to WebSocket"""
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "content": message
+            })
+        except Exception as e:
+            logger.error(f"Error sending error message: {e}")
+
+    async def send_done():
+        """Send done event to WebSocket"""
+        try:
+            await websocket.send_json({"type": "done"})
+        except Exception as e:
+            logger.error(f"Error sending done message: {e}")
+
+    try:
+        # Send connected confirmation
+        await websocket.send_json({
+            "type": "connected",
+            "cwd": cwd
+        })
+
+        while True:
+            try:
+                # Wait for command from client
+                raw_message = await websocket.receive_text()
+                message = json.loads(raw_message)
+                command = message.get("command")
+
+                if command == "run":
+                    prompt = message.get("prompt", "")
+                    if not prompt:
+                        await send_error("Empty prompt")
+                        continue
+
+                    # Check if should continue session
+                    should_continue = message.get("continue", continue_session)
+
+                    # Create runner with current settings
+                    config = ClaudeRunnerConfig(
+                        cwd=cwd,
+                        continue_session=should_continue,
+                        verbose=True
+                    )
+                    runner = ClaudeAgentRunner(config)
+
+                    # Reset parser for potentially new session
+                    if not should_continue:
+                        parser.reset()
+
+                    logger.info(f"Running prompt (continue={should_continue}): {prompt[:50]}...")
+
+                    # Run the prompt and stream events
+                    exit_code = await runner.run_prompt(
+                        prompt=prompt,
+                        on_event=send_event,
+                        on_error=send_error,
+                        on_done=send_done
+                    )
+
+                    logger.info(f"Prompt completed with exit code {exit_code}")
+
+                elif command == "cancel":
+                    if runner and runner.is_running:
+                        await runner.cancel()
+                        await websocket.send_json({
+                            "type": "cancelled"
+                        })
+                    else:
+                        await websocket.send_json({
+                            "type": "cancelled",
+                            "note": "No running process"
+                        })
+
+                elif command == "new_session":
+                    # Mark next run as new session
+                    continue_session = False
+                    parser.reset()
+                    await websocket.send_json({
+                        "type": "session_reset"
+                    })
+
+                elif command == "status":
+                    # Return current session info
+                    await websocket.send_json({
+                        "type": "status",
+                        "session_info": parser.get_session_info(),
+                        "running": runner.is_running if runner else False,
+                        "continue_session": continue_session
+                    })
+
+                else:
+                    await send_error(f"Unknown command: {command}")
+
+            except json.JSONDecodeError as e:
+                await send_error(f"Invalid JSON: {e}")
+
+    except WebSocketDisconnect:
+        logger.info("Agent WebSocket disconnected")
+    except Exception as e:
+        logger.error(f"Error in agent session: {e}", exc_info=True)
+    finally:
+        # Cleanup
+        if runner and runner.is_running:
+            await runner.cancel()
+
+        try:
+            if websocket.application_state == WebSocketState.CONNECTED:
+                await websocket.close()
+        except Exception:
+            pass
+
+        logger.info("Agent session cleaned up")

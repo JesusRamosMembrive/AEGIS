@@ -7,14 +7,12 @@ Spawns and manages shell processes with pseudo-terminal support
 import os
 import pty
 import select
-import subprocess
 import struct
 import fcntl
 import termios
 import signal
 import threading
-import re
-from typing import Optional, Callable, Tuple
+from typing import Optional, Callable
 import asyncio
 import logging
 
@@ -56,8 +54,10 @@ class PTYShell:
         # Claude Code specific filtering
         self._is_claude_code_session = False
         self._claude_buffer = ""
+        self._last_printed_line = ""
 
-        if enable_agent_parsing:
+        # Always enable parser for filtering
+        if not self.agent_parser:
             self.agent_parser = AgentOutputParser()
 
     def spawn(self) -> None:
@@ -95,21 +95,22 @@ class PTYShell:
 
             logger.info(f"Spawned shell process: pid={self.pid}, shell={shell}")
 
+    def _process_output(self, text: str) -> str:
+        """
+        Process output before sending to frontend.
+
+        Currently just passes through - filtering is done in frontend
+        for better control over terminal rendering.
+        """
+        # Log raw output for debugging (comment out in production)
+        # print(f"RAW OUTPUT: {repr(text)}")
+        return text
+
     def _filter_claude_code_output(self, text: str) -> str:
         """
-        NO-OP filter - pass through all content unchanged.
-
-        With two-layer architecture (read-only terminal display + separate input),
-        we don't need to filter anything. The terminal shows raw output from Claude Code,
-        and user input comes from a separate HTML input element.
-
-        Args:
-            text: Raw text from PTY
-
-        Returns:
-            Unmodified text
+        Legacy filter - now delegates to _process_output
         """
-        return text
+        return self._process_output(text)
 
     def _set_winsize(self, cols: int, rows: int) -> None:
         """
@@ -158,6 +159,8 @@ class PTYShell:
             return
 
         try:
+            # PTY expects \r (carriage return) for Enter key
+            # Do NOT convert to \n - send exactly what terminal would send
             os.write(self.master_fd, data.encode("utf-8"))
         except OSError as e:
             logger.error(f"Failed to write to shell: {e}")
@@ -204,8 +207,8 @@ class PTYShell:
                         # Decode and call callback (thread-safe)
                         text = data.decode("utf-8", errors="replace")
 
-                        # Two-layer architecture: No filtering needed
-                        # Terminal is read-only display, input comes from separate HTML element
+                        # Process output (logging only)
+                        processed_text = self._process_output(text)
 
                         # Parse agent events if enabled
                         if self.enable_agent_parsing and self.agent_parser:
@@ -218,7 +221,8 @@ class PTYShell:
                                 logger.error(f"Error parsing agent output: {e}")
 
                         # Always call raw text callback
-                        callback(text)
+                        if processed_text:
+                            callback(processed_text)
 
                 except OSError as e:
                     logger.error(f"Error reading from shell: {e}")

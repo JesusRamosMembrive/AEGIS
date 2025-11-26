@@ -55,7 +55,9 @@
       "Bash(npm --prefix /home/jesusramos/Workspace/ATLAS/frontend run typecheck)",
       "Bash(npm run dev:*)",
       "Bash(ps:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(claude -p --output-format stream-json)",
+      "Bash(claude -p --output-format stream-json --verbose)"
     ],
     "deny": [],
     "ask": []
