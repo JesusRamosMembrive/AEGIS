@@ -117,6 +117,86 @@ class ApprovalBridge:
         self._notify_callback = callback
         logger.debug(f"Approval bridge notify callback set: {callback}")
 
+    # -------------------------------------------------------------------------
+    # Request Creation
+    # -------------------------------------------------------------------------
+
+    def _create_approval_request(
+        self,
+        tool_name: str,
+        tool_input: dict[str, Any],
+        context: str
+    ) -> ApprovalRequest:
+        """Create an ApprovalRequest with a unique ID."""
+        return ApprovalRequest(
+            request_id=str(uuid4()),
+            tool_name=tool_name,
+            tool_input=tool_input,
+            context=context,
+        )
+
+    def _auto_approve_response(self, tool_input: dict[str, Any]) -> dict[str, Any]:
+        """Create auto-approve response for safe tools."""
+        return {
+            "approved": True,
+            "message": "",
+            "updated_input": tool_input
+        }
+
+    def _denial_response(
+        self,
+        tool_input: dict[str, Any],
+        message: str
+    ) -> dict[str, Any]:
+        """Create denial response."""
+        return {
+            "approved": False,
+            "message": message,
+            "updated_input": tool_input
+        }
+
+    # -------------------------------------------------------------------------
+    # Response Handling
+    # -------------------------------------------------------------------------
+
+    async def _notify_and_wait(
+        self,
+        request: ApprovalRequest,
+        future: asyncio.Future,
+    ) -> dict[str, Any]:
+        """Notify frontend and wait for response."""
+        if self._notify_callback:
+            logger.debug(f"Calling notify callback for {request.request_id}")
+            try:
+                await self._notify_callback(request)
+                logger.debug(f"Notify callback completed for {request.request_id}")
+            except Exception as e:
+                logger.error(f"Error in notify callback: {e}", exc_info=True)
+                return self._denial_response(
+                    request.tool_input,
+                    f"Failed to notify frontend: {e}"
+                )
+        else:
+            logger.warning("No notify callback set, auto-approving")
+            return self._auto_approve_response(request.tool_input)
+
+        # Wait for response with timeout
+        logger.debug(f"Waiting for user response (timeout={self.timeout}s)")
+        try:
+            result = await asyncio.wait_for(future, timeout=self.timeout)
+            logger.debug(f"Got response for {request.request_id}: approved={result.get('approved')}")
+            return result
+        except asyncio.TimeoutError:
+            logger.warning(f"Approval request {request.request_id} timed out")
+            return self._denial_response(
+                request.tool_input,
+                "Approval timeout - no response from user"
+            )
+
+    # -------------------------------------------------------------------------
+    # Main API
+    # -------------------------------------------------------------------------
+
     async def request_approval(
         self,
         tool_name: str,
@@ -142,75 +222,27 @@ class ApprovalBridge:
         # Auto-approve safe tools if configured
         if self.auto_approve_safe and tool_name in SAFE_TOOLS:
             logger.info(f"Auto-approving safe tool: {tool_name}")
-            return {
-                "approved": True,
-                "message": "",
-                "updated_input": tool_input
-            }
+            return self._auto_approve_response(tool_input)
 
         async with self._lock:
-            request_id = str(uuid4())
-
             # Create request with preview
-            request = ApprovalRequest(
-                request_id=request_id,
-                tool_name=tool_name,
-                tool_input=tool_input,
-                context=context,
-            )
-
-            # Generate preview based on tool type
+            request = self._create_approval_request(tool_name, tool_input, context)
             await self._generate_preview(request)
 
             # Store request and create future
-            self._pending[request_id] = request
-            loop = asyncio.get_event_loop()
-            future = loop.create_future()
-            self._futures[request_id] = future
+            self._pending[request.request_id] = request
+            future = asyncio.get_event_loop().create_future()
+            self._futures[request.request_id] = future
 
-            logger.debug(f"Created approval request {request_id} for {tool_name}")
+            logger.debug(f"Created approval request {request.request_id} for {tool_name}")
 
             try:
-                # Notify frontend
-                if self._notify_callback:
-                    logger.debug(f"Calling notify callback for {request_id}")
-                    try:
-                        await self._notify_callback(request)
-                        logger.debug(f"Notify callback completed for {request_id}")
-                    except Exception as e:
-                        logger.error(f"Error in notify callback: {e}", exc_info=True)
-                        return {
-                            "approved": False,
-                            "message": f"Failed to notify frontend: {e}",
-                            "updated_input": tool_input
-                        }
-                else:
-                    logger.warning("No notify callback set, auto-approving")
-                    return {
-                        "approved": True,
-                        "message": "No frontend connected",
-                        "updated_input": tool_input
-                    }
-
-                # Wait for response with timeout
-                logger.debug(f"Waiting for user response (timeout={self.timeout}s)")
-                try:
-                    result = await asyncio.wait_for(future, timeout=self.timeout)
-                    logger.debug(f"Got response for {request_id}: approved={result.get('approved')}")
-                    return result
-                except asyncio.TimeoutError:
-                    logger.warning(f"Approval request {request_id} timed out")
-                    return {
-                        "approved": False,
-                        "message": "Approval timeout - no response from user",
-                        "updated_input": tool_input
-                    }
-
+                return await self._notify_and_wait(request, future)
             finally:
                 # Cleanup
-                self._pending.pop(request_id, None)
-                self._futures.pop(request_id, None)
-                logger.debug(f"Cleaned up request {request_id}")
+                self._pending.pop(request.request_id, None)
+                self._futures.pop(request.request_id, None)
+                logger.debug(f"Cleaned up request {request.request_id}")
 
     def respond(
         self,

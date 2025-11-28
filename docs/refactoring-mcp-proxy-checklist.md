@@ -156,19 +156,23 @@ class BaseAgentHandler(ABC):
 **Esfuerzo estimado**: 1 hora
 **Impacto**: Medio - mejora testabilidad
 
-### 4.1 `run_prompt` en mcp_proxy_runner.py (182 → ~50 líneas)
+### 4.1 `run_prompt` en mcp_proxy_runner.py (182 → ~65 líneas)
 
-- [ ] Extraer `_build_command() -> list[str]`
-- [ ] Extraer `_start_process() -> Process`
-- [ ] Extraer `_create_output_reader() -> Coroutine`
-- [ ] Extraer `_create_error_reader() -> Coroutine`
-- [ ] Refactorizar `run_prompt` para usar métodos extraídos
+- [x] Extraer `_build_command() -> list[str]` ✅
+- [x] Extraer `_start_process() -> Process` ✅
+- [x] Extraer `_create_stdout_reader() -> Coroutine` ✅
+- [x] Extraer `_create_stderr_reader() -> Coroutine` ✅
+- [x] Extraer `_send_initial_prompt()` ✅
+- [x] Extraer `_wait_for_process()` ✅
+- [x] Refactorizar `run_prompt` para usar métodos extraídos ✅
 
-### 4.2 `request_approval` en approval_bridge.py (97 → ~40 líneas)
+### 4.2 `request_approval` en approval_bridge.py (97 → ~45 líneas)
 
-- [ ] Extraer `_create_approval_request() -> ApprovalRequest`
-- [ ] Extraer `_wait_for_response() -> dict`
-- [ ] Refactorizar `request_approval` para usar métodos extraídos
+- [x] Extraer `_create_approval_request() -> ApprovalRequest` ✅
+- [x] Extraer `_auto_approve_response() -> dict` ✅
+- [x] Extraer `_denial_response() -> dict` ✅
+- [x] Extraer `_notify_and_wait() -> dict` ✅
+- [x] Refactorizar `request_approval` para usar métodos extraídos ✅
 
 ---
 
@@ -262,7 +266,7 @@ interface BasePendingApproval {
 | 2 | Fase 2: Constantes | 15 min | Medio | [x] Completada ✅ |
 | 3 | Fase 6: Limpieza | 15 min | Bajo | [x] Completada ✅ |
 | 4 | Fase 3: Handlers | 2 horas | Alto | [x] Completada ✅ |
-| 5 | Fase 4: Métodos largos | 1 hora | Medio | [ ] Pendiente |
+| 5 | Fase 4: Métodos largos | 1 hora | Medio | [x] Completada ✅ |
 | 6 | Fase 5: TypeScript | 1 hora | Medio | [ ] Pendiente |
 
 ---
@@ -284,5 +288,6 @@ interface BasePendingApproval {
 | 2025-11-28 | Fase 1 | Debug/Logging cleanup - 60+ prints eliminados | 0ed2973 |
 | 2025-11-28 | Fase 2 | Constantes compartidas - constants.py creado, 4 archivos actualizados | ead73be |
 | 2025-11-28 | Fase 6 | Limpieza código muerto - LEGACY_SOCKET_PATH, _pending, difflib imports, substr | c00c2bd |
-| 2025-11-28 | Fase 3 | Handler extraction - 7 archivos creados, terminal.py reducido ~40% | a6ed3b6 |
+| 2025-11-28 | Fase 3 | Handler extraction - 7 archivos creados, terminal.py reducido ~40% | 81edc75 |
+| 2025-11-28 | Fase 4 | Refactor métodos largos - run_prompt (~65%), request_approval (~55%) | Pendiente |
 

@@ -86,6 +86,143 @@ class MCPProxyRunner:
         self._cancelled = False
         self._mcp_config_file: Optional[str] = None
 
+    # -------------------------------------------------------------------------
+    # Command Building
+    # -------------------------------------------------------------------------
+
+    def _build_command(self, mcp_config_path: str) -> list[str]:
+        """Build the Claude CLI command with all necessary flags."""
+        claude_bin = find_claude_cli()
+        cmd = [
+            claude_bin, "-p",
+            "--output-format", "stream-json",
+            "--input-format", "stream-json",
+            "--verbose",
+        ]
+
+        if self.config.continue_session:
+            cmd.append("--continue")
+
+        # Disable native dangerous tools
+        disallowed = self.APPROVAL_REQUIRED_TOOLS.copy()
+        if self.config.extra_disallowed_tools:
+            disallowed.extend(self.config.extra_disallowed_tools)
+        cmd.extend(["--disallowed-tools", ",".join(disallowed)])
+
+        # Add MCP tool proxy and bypass permissions
+        cmd.extend(["--mcp-config", mcp_config_path])
+        cmd.append("--dangerously-skip-permissions")
+
+        if self.config.extra_allowed_tools:
+            cmd.extend(["--allowed-tools", ",".join(self.config.extra_allowed_tools)])
+
+        return cmd
+
+    # -------------------------------------------------------------------------
+    # Process I/O
+    # -------------------------------------------------------------------------
+
+    async def _start_process(self, cmd: list[str]) -> asyncio.subprocess.Process:
+        """Start the Claude subprocess."""
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=self.config.cwd
+        )
+        logger.info(f"Claude process started: PID={process.pid}")
+        return process
+
+    async def _send_initial_prompt(self, prompt: str) -> None:
+        """Send the initial prompt to Claude."""
+        if self.process is None or self.process.stdin is None:
+            raise RuntimeError("Process not started")
+
+        message = json.dumps({
+            "type": "user",
+            "message": {"role": "user", "content": prompt},
+            "session_id": "default",
+            "parent_tool_use_id": None
+        }) + "\n"
+
+        self.process.stdin.write(message.encode('utf-8'))
+        await self.process.stdin.drain()
+        logger.info("Initial prompt sent")
+
+    def _create_stdout_reader(
+        self,
+        on_event: Callable[[dict], Any],
+        on_error: Optional[Callable[[str], Any]]
+    ) -> Callable[[], Any]:
+        """Create coroutine for reading stdout."""
+        async def read_stdout():
+            if self.process is None or self.process.stdout is None:
+                return
+
+            while self.running and not self._cancelled:
+                try:
+                    line = await self.process.stdout.readline()
+                    if not line:
+                        break
+
+                    line_str = line.decode('utf-8').strip()
+                    if not line_str:
+                        continue
+
+                    try:
+                        event = json.loads(line_str)
+                        result = on_event(event)
+                        if asyncio.iscoroutine(result):
+                            await result
+                    except json.JSONDecodeError:
+                        logger.warning(f"Invalid JSON: {line_str[:100]}...")
+                        if on_error:
+                            result = on_error(f"[PARSE] {line_str}")
+                            if asyncio.iscoroutine(result):
+                                await result
+
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    logger.error(f"Error reading stdout: {e}")
+                    break
+
+        return read_stdout
+
+    def _create_stderr_reader(
+        self,
+        on_error: Optional[Callable[[str], Any]]
+    ) -> Callable[[], Any]:
+        """Create coroutine for reading stderr."""
+        async def read_stderr():
+            if self.process is None or self.process.stderr is None:
+                return
+
+            while self.running and not self._cancelled:
+                try:
+                    line = await self.process.stderr.readline()
+                    if not line:
+                        break
+
+                    line_str = line.decode('utf-8').strip()
+                    if line_str and on_error:
+                        result = on_error(line_str)
+                        if asyncio.iscoroutine(result):
+                            await result
+
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    logger.error(f"Error reading stderr: {e}")
+                    break
+
+        return read_stderr
+
+    # -------------------------------------------------------------------------
+    # MCP Configuration
+    # -------------------------------------------------------------------------
+
     def _create_mcp_config(self) -> str:
         """Create temporary MCP config file for the tool proxy server"""
         import sys
@@ -152,145 +289,31 @@ class MCPProxyRunner:
         Returns:
             Exit code from the process
         """
-        # Create MCP config
         mcp_config_path = self._create_mcp_config()
 
         try:
-            # Build command
-            claude_bin = find_claude_cli()
-            cmd = [
-                claude_bin, "-p",
-                "--output-format", "stream-json",
-                "--input-format", "stream-json",
-                "--verbose",
-            ]
-
-            # Continue session if configured
-            if self.config.continue_session:
-                cmd.append("--continue")
-
-            # Disable native dangerous tools
-            disallowed = self.APPROVAL_REQUIRED_TOOLS.copy()
-            if self.config.extra_disallowed_tools:
-                disallowed.extend(self.config.extra_disallowed_tools)
-            cmd.extend(["--disallowed-tools", ",".join(disallowed)])
-
-            # Add our MCP tool proxy
-            cmd.extend(["--mcp-config", mcp_config_path])
-
-            # Use bypass permissions so MCP tools don't prompt
-            # (our MCP server handles approval internally)
-            cmd.append("--dangerously-skip-permissions")
-
-            # Add extra allowed tools if specified
-            if self.config.extra_allowed_tools:
-                cmd.extend(["--allowed-tools", ",".join(self.config.extra_allowed_tools)])
-
+            # Build command and start process
+            cmd = self._build_command(mcp_config_path)
             logger.info(f"Starting Claude with MCP proxy: {' '.join(cmd[:8])}...")
 
             self.running = True
             self._cancelled = False
-
-            # Create subprocess
-            self.process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=self.config.cwd
-            )
-
-            logger.info(f"Claude process started: PID={self.process.pid}")
+            self.process = await self._start_process(cmd)
 
             # Send initial prompt
-            initial_message = json.dumps({
-                "type": "user",
-                "message": {
-                    "role": "user",
-                    "content": prompt
-                },
-                "session_id": "default",
-                "parent_tool_use_id": None
-            }) + "\n"
+            await self._send_initial_prompt(prompt)
 
-            self.process.stdin.write(initial_message.encode('utf-8'))
-            await self.process.stdin.drain()
-            logger.info("Initial prompt sent")
+            # Create and run I/O readers
+            stdout_reader = self._create_stdout_reader(on_event, on_error)
+            stderr_reader = self._create_stderr_reader(on_error)
 
-            # Read stdout
-            async def read_stdout():
-                if self.process.stdout is None:
-                    return
+            stdout_task = asyncio.create_task(stdout_reader())
+            stderr_task = asyncio.create_task(stderr_reader())
 
-                while self.running and not self._cancelled:
-                    try:
-                        line = await self.process.stdout.readline()
-                        if not line:
-                            break
+            # Wait for process with optional timeout
+            await self._wait_for_process()
 
-                        line_str = line.decode('utf-8').strip()
-                        if not line_str:
-                            continue
-
-                        try:
-                            event = json.loads(line_str)
-                            result = on_event(event)
-                            if asyncio.iscoroutine(result):
-                                await result
-                        except json.JSONDecodeError as e:
-                            logger.warning(f"Invalid JSON: {line_str[:100]}...")
-                            if on_error:
-                                result = on_error(f"[PARSE] {line_str}")
-                                if asyncio.iscoroutine(result):
-                                    await result
-
-                    except asyncio.CancelledError:
-                        break
-                    except Exception as e:
-                        logger.error(f"Error reading stdout: {e}")
-                        break
-
-            # Read stderr
-            async def read_stderr():
-                if self.process.stderr is None:
-                    return
-
-                while self.running and not self._cancelled:
-                    try:
-                        line = await self.process.stderr.readline()
-                        if not line:
-                            break
-
-                        line_str = line.decode('utf-8').strip()
-                        if line_str and on_error:
-                            result = on_error(line_str)
-                            if asyncio.iscoroutine(result):
-                                await result
-
-                    except asyncio.CancelledError:
-                        break
-                    except Exception as e:
-                        logger.error(f"Error reading stderr: {e}")
-                        break
-
-            # Run readers
-            stdout_task = asyncio.create_task(read_stdout())
-            stderr_task = asyncio.create_task(read_stderr())
-
-            # Wait for process
-            try:
-                if self.config.timeout:
-                    await asyncio.wait_for(
-                        self.process.wait(),
-                        timeout=self.config.timeout
-                    )
-                else:
-                    await self.process.wait()
-            except asyncio.TimeoutError:
-                logger.warning("Process timed out")
-                await self.cancel()
-
-            # Wait for readers
+            # Wait for readers to finish
             await asyncio.gather(stdout_task, stderr_task, return_exceptions=True)
 
             exit_code = self.process.returncode or 0
@@ -316,6 +339,23 @@ class MCPProxyRunner:
             self.running = False
             self.process = None
             self._cleanup_mcp_config()
+
+    async def _wait_for_process(self) -> None:
+        """Wait for process to complete, handling timeout."""
+        if self.process is None:
+            return
+
+        try:
+            if self.config.timeout:
+                await asyncio.wait_for(
+                    self.process.wait(),
+                    timeout=self.config.timeout
+                )
+            else:
+                await self.process.wait()
+        except asyncio.TimeoutError:
+            logger.warning("Process timed out")
+            await self.cancel()
 
     async def send_user_input(self, content: str):
         """Send additional user input to the running process"""
