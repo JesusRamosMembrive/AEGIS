@@ -39,8 +39,26 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Socket path for communication with ATLAS backend
-DEFAULT_SOCKET_PATH = "/tmp/atlas_tool_approval.sock"
+# Import shared constants
+try:
+    from .constants import (
+        DEFAULT_SOCKET_PATH,
+        APPROVAL_TIMEOUT,
+        PREVIEW_LINE_LIMIT,
+        PREVIEW_CHAR_LIMIT,
+        COMMAND_TIMEOUT_MS,
+        ENV_TOOL_SOCKET,
+        ENV_CWD,
+    )
+except ImportError:
+    # Fallback for standalone execution
+    DEFAULT_SOCKET_PATH = "/tmp/atlas_tool_approval.sock"
+    APPROVAL_TIMEOUT = 300.0
+    PREVIEW_LINE_LIMIT = 50
+    PREVIEW_CHAR_LIMIT = 200
+    COMMAND_TIMEOUT_MS = 120000
+    ENV_TOOL_SOCKET = "ATLAS_TOOL_SOCKET"
+    ENV_CWD = "ATLAS_CWD"
 
 
 class ToolProxyServer:
@@ -56,7 +74,7 @@ class ToolProxyServer:
     def __init__(
         self,
         socket_path: str = DEFAULT_SOCKET_PATH,
-        timeout: float = 300.0,  # 5 minutes to approve
+        timeout: float = APPROVAL_TIMEOUT,
         cwd: str = "",
     ):
         self.socket_path = socket_path
@@ -138,9 +156,9 @@ class ToolProxyServer:
             path = Path(self.cwd) / path
 
         lines = content.split("\n")
-        preview_lines = lines[:50]  # First 50 lines
-        if len(lines) > 50:
-            preview_lines.append(f"... ({len(lines) - 50} more lines)")
+        preview_lines = lines[:PREVIEW_LINE_LIMIT]
+        if len(lines) > PREVIEW_LINE_LIMIT:
+            preview_lines.append(f"... ({len(lines) - PREVIEW_LINE_LIMIT} more lines)")
 
         if path.exists():
             return f"OVERWRITE {file_path}\n\n" + "\n".join(f"+ {line}" for line in preview_lines)
@@ -285,7 +303,7 @@ class ToolProxyServer:
     async def atlas_bash(
         self,
         command: str,
-        timeout: int = 120000,
+        timeout: int = COMMAND_TIMEOUT_MS,
         description: str = ""
     ) -> str:
         """
@@ -356,8 +374,8 @@ def get_server() -> ToolProxyServer:
     """Get or create the global ToolProxyServer instance"""
     global _server
     if _server is None:
-        socket_path = os.environ.get("ATLAS_TOOL_SOCKET", DEFAULT_SOCKET_PATH)
-        cwd = os.environ.get("ATLAS_CWD", os.getcwd())
+        socket_path = os.environ.get(ENV_TOOL_SOCKET, DEFAULT_SOCKET_PATH)
+        cwd = os.environ.get(ENV_CWD, os.getcwd())
         _server = ToolProxyServer(socket_path=socket_path, cwd=cwd)
     return _server
 

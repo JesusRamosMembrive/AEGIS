@@ -17,6 +17,15 @@ from pathlib import Path
 from typing import Any, Callable, Optional, Awaitable
 from uuid import uuid4
 
+from .constants import (
+    APPROVAL_TIMEOUT,
+    PREVIEW_CHAR_LIMIT,
+    SUMMARY_CHAR_LIMIT,
+    FILE_TOOLS,
+    COMMAND_TOOLS,
+    SAFE_TOOLS,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -74,19 +83,10 @@ class ApprovalBridge:
     5. Bridge resolves the future, MCP Server gets result
     """
 
-    # Tools that modify files
-    FILE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
-
-    # Tools that execute commands
-    COMMAND_TOOLS = {"Bash"}
-
-    # Tools that are generally safe
-    SAFE_TOOLS = {"Read", "Glob", "Grep", "TodoWrite", "WebFetch", "WebSearch", "Task"}
-
     def __init__(
         self,
         cwd: str = ".",
-        timeout: float = 300.0,  # 5 minutes
+        timeout: float = APPROVAL_TIMEOUT,
         auto_approve_safe: bool = False,
     ):
         self.cwd = cwd
@@ -139,7 +139,7 @@ class ApprovalBridge:
                 - updated_input: dict (possibly modified input)
         """
         # Auto-approve safe tools if configured
-        if self.auto_approve_safe and tool_name in self.SAFE_TOOLS:
+        if self.auto_approve_safe and tool_name in SAFE_TOOLS:
             logger.info(f"Auto-approving safe tool: {tool_name}")
             return {
                 "approved": True,
@@ -265,9 +265,9 @@ class ApprovalBridge:
         tool_name = request.tool_name
         tool_input = request.tool_input
 
-        if tool_name in self.FILE_TOOLS:
+        if tool_name in FILE_TOOLS:
             await self._generate_file_preview(request)
-        elif tool_name in self.COMMAND_TOOLS:
+        elif tool_name in COMMAND_TOOLS:
             self._generate_command_preview(request)
         else:
             self._generate_generic_preview(request)
@@ -338,8 +338,8 @@ class ApprovalBridge:
                     occurrences = original.count(old_string)
                     request.preview_data = {
                         "file_path": file_path,
-                        "old_string_preview": old_string[:200] + ("..." if len(old_string) > 200 else ""),
-                        "new_string_preview": new_string[:200] + ("..." if len(new_string) > 200 else ""),
+                        "old_string_preview": old_string[:PREVIEW_CHAR_LIMIT] + ("..." if len(old_string) > PREVIEW_CHAR_LIMIT else ""),
+                        "new_string_preview": new_string[:PREVIEW_CHAR_LIMIT] + ("..." if len(new_string) > PREVIEW_CHAR_LIMIT else ""),
                         "replace_all": replace_all,
                         "occurrences": occurrences,
                         "will_replace": occurrences if replace_all else min(1, occurrences),
@@ -401,7 +401,7 @@ class ApprovalBridge:
             return path
         return Path(self.cwd) / path
 
-    def _summarize_input(self, tool_input: dict[str, Any], max_length: int = 500) -> str:
+    def _summarize_input(self, tool_input: dict[str, Any], max_length: int = SUMMARY_CHAR_LIMIT) -> str:
         """Create summary of tool input"""
         try:
             json_str = json.dumps(tool_input, indent=2)

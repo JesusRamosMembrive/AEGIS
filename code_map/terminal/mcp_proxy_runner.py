@@ -49,11 +49,9 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 from .claude_runner import find_claude_cli
+from ..mcp.constants import DEFAULT_SOCKET_PATH, CANCEL_TIMEOUT
 
 logger = logging.getLogger(__name__)
-
-# Socket path for tool approval communication
-DEFAULT_SOCKET_PATH = "/tmp/atlas_tool_approval.sock"
 
 
 @dataclass
@@ -358,7 +356,7 @@ class MCPProxyRunner:
             self.process.terminate()
 
             try:
-                await asyncio.wait_for(self.process.wait(), timeout=2.0)
+                await asyncio.wait_for(self.process.wait(), timeout=CANCEL_TIMEOUT)
             except asyncio.TimeoutError:
                 logger.warning("Force killing process")
                 self.process.kill()

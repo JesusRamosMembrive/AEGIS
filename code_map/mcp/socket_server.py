@@ -19,12 +19,9 @@ from pathlib import Path
 from typing import Optional, Callable, Awaitable, Any
 
 from .approval_bridge import ApprovalBridge, ApprovalRequest
+from .constants import DEFAULT_SOCKET_PATH, APPROVAL_TIMEOUT
 
 logger = logging.getLogger(__name__)
-
-# Socket paths - use the tool proxy socket as default
-DEFAULT_SOCKET_PATH = "/tmp/atlas_tool_approval.sock"
-LEGACY_SOCKET_PATH = "/tmp/atlas_mcp_approval.sock"
 
 
 class MCPSocketServer:
@@ -42,7 +39,7 @@ class MCPSocketServer:
         self,
         socket_path: str = DEFAULT_SOCKET_PATH,
         cwd: str = ".",
-        timeout: float = 300.0,
+        timeout: float = APPROVAL_TIMEOUT,
         auto_approve_safe: bool = False,
     ):
         self.socket_path = socket_path
@@ -244,7 +241,7 @@ def get_socket_server() -> Optional[MCPSocketServer]:
 def create_socket_server(
     socket_path: str = DEFAULT_SOCKET_PATH,
     cwd: str = ".",
-    timeout: float = 300.0,
+    timeout: float = APPROVAL_TIMEOUT,
     auto_approve_safe: bool = False,
 ) -> MCPSocketServer:
     """Create and set the global socket server instance"""

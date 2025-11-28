@@ -93,27 +93,11 @@ debug("[ClaudeSession] WebSocket connected");
 **Esfuerzo estimado**: 15 min
 **Impacto**: Medio - elimina duplicación
 
-- [ ] Crear `code_map/mcp/constants.py` con:
-  ```python
-  # Socket paths
-  DEFAULT_SOCKET_PATH = "/tmp/atlas_tool_approval.sock"
-
-  # Timeouts (seconds)
-  APPROVAL_TIMEOUT = 300.0
-  CANCEL_TIMEOUT = 2.0
-  COMMAND_TIMEOUT_MS = 120000
-
-  # Preview limits
-  PREVIEW_LINE_LIMIT = 50
-  PREVIEW_CHAR_LIMIT = 200
-  SUMMARY_CHAR_LIMIT = 500
-  FILE_LINE_LIMIT = 2000
-  ```
-
-- [ ] Actualizar imports en `socket_server.py`
-- [ ] Actualizar imports en `tool_proxy_server.py`
-- [ ] Actualizar imports en `mcp_proxy_runner.py`
-- [ ] Actualizar imports en `terminal.py`
+- [x] Crear `code_map/mcp/constants.py` ✅
+- [x] Actualizar imports en `socket_server.py` ✅
+- [x] Actualizar imports en `tool_proxy_server.py` ✅
+- [x] Actualizar imports en `mcp_proxy_runner.py` ✅
+- [x] Actualizar imports en `approval_bridge.py` ✅
 
 ---
 
@@ -270,7 +254,7 @@ interface BasePendingApproval {
 | Prioridad | Fase | Esfuerzo | Impacto | Estado |
 |-----------|------|----------|---------|--------|
 | 1 | Fase 1: Debug/Logging | 30 min | Alto | [x] Completada ✅ |
-| 2 | Fase 2: Constantes | 15 min | Medio | [ ] Pendiente |
+| 2 | Fase 2: Constantes | 15 min | Medio | [x] Completada ✅ |
 | 3 | Fase 6: Limpieza | 15 min | Bajo | [ ] Pendiente |
 | 4 | Fase 3: Handlers | 2 horas | Alto | [ ] Pendiente |
 | 5 | Fase 4: Métodos largos | 1 hora | Medio | [ ] Pendiente |
@@ -292,5 +276,6 @@ interface BasePendingApproval {
 
 | Fecha | Fase | Cambios | Commit |
 |-------|------|---------|--------|
-| 2025-11-28 | Fase 1 | Debug/Logging cleanup - 60+ prints eliminados | Pendiente |
+| 2025-11-28 | Fase 1 | Debug/Logging cleanup - 60+ prints eliminados | 0ed2973 |
+| 2025-11-28 | Fase 2 | Constantes compartidas - constants.py creado, 4 archivos actualizados | Pendiente |
 
