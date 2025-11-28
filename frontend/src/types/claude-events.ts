@@ -22,7 +22,18 @@ export type ClaudeEventType =
   | "error"
   | "cancelled"
   | "session_reset"
+  | "session_broken"
   | "status"
+  | "permission_request"
+  | "tool_approval_request"
+  | "mcp_approval_request"
+  // PTY mode events
+  | "session_started"
+  | "session_ended"
+  | "thinking"
+  | "message"
+  | "completion"
+  | "pty_permission_request"
   | "unknown";
 
 /**
@@ -35,6 +46,7 @@ export type ClaudeEventSubtype =
   | "tool_result"
   | "thinking"
   | "error"
+  | "success"
   | "unknown";
 
 // ============================================================================
@@ -144,6 +156,14 @@ export interface ClaudeSessionResetEvent extends ClaudeBaseEvent {
 }
 
 /**
+ * Session broken event - tools executed locally, session cannot be continued
+ */
+export interface ClaudeSessionBrokenEvent extends ClaudeBaseEvent {
+  type: "session_broken";
+  reason?: string;
+}
+
+/**
  * Status event
  */
 export interface ClaudeStatusEvent extends ClaudeBaseEvent {
@@ -159,6 +179,138 @@ export interface ClaudeStatusEvent extends ClaudeBaseEvent {
 }
 
 /**
+ * Permission request event - Claude needs user approval for an action
+ */
+export interface ClaudePermissionRequestEvent extends ClaudeBaseEvent {
+  type: "permission_request";
+  request_id: string;
+  tool: string;
+  input: Record<string, unknown>;
+  raw_event?: Record<string, unknown>;
+}
+
+/**
+ * Tool approval request event - requires user approval before tool execution
+ * Used in toolApproval mode for interactive approval with preview/diff
+ */
+export interface ClaudeToolApprovalRequestEvent extends ClaudeBaseEvent {
+  type: "tool_approval_request";
+  request_id: string;
+  tool_name: string;
+  tool_input: Record<string, unknown>;
+  tool_use_id: string;
+  preview_type: "diff" | "multi_diff" | "command" | "generic";
+  preview_data: Record<string, unknown>;
+  file_path?: string;
+  original_content?: string;
+  new_content?: string;
+  diff_lines: string[];
+}
+
+/**
+ * MCP approval request event - requires user approval via MCP permission server
+ * Used in mcpApproval mode for real tool interception with --permission-prompt-tool
+ *
+ * This is the RECOMMENDED approach as it uses Claude Code's native permission system
+ * instead of trying to intercept tool calls via plan mode.
+ */
+export interface ClaudeMCPApprovalRequestEvent extends ClaudeBaseEvent {
+  type: "mcp_approval_request";
+  request_id: string;
+  tool_name: string;
+  tool_input: Record<string, unknown>;
+  context?: string;
+  preview_type: "diff" | "multi_diff" | "command" | "generic";
+  preview_data: Record<string, unknown>;
+  file_path?: string;
+  original_content?: string;
+  new_content?: string;
+  diff_lines: string[];
+}
+
+/**
+ * PTY permission request event - permission request from PTY mode
+ * Used when running Claude in a real pseudo-terminal with Ink UI
+ */
+export interface ClaudePTYPermissionRequestEvent extends ClaudeBaseEvent {
+  type: "permission_request";
+  data: {
+    permission_type: string;
+    target?: string;
+    full_text: string;
+  };
+  raw_text?: string;
+}
+
+/**
+ * PTY session started event
+ */
+export interface ClaudePTYSessionStartedEvent extends ClaudeBaseEvent {
+  type: "session_started";
+}
+
+/**
+ * PTY session ended event
+ */
+export interface ClaudePTYSessionEndedEvent extends ClaudeBaseEvent {
+  type: "session_ended";
+}
+
+/**
+ * PTY thinking event - Claude is processing
+ */
+export interface ClaudePTYThinkingEvent extends ClaudeBaseEvent {
+  type: "thinking";
+  data?: {
+    indicator?: string;
+  };
+}
+
+/**
+ * PTY message event - text output from Claude
+ */
+export interface ClaudePTYMessageEvent extends ClaudeBaseEvent {
+  type: "message";
+  data: {
+    content: string;
+  };
+  raw_text?: string;
+}
+
+/**
+ * PTY completion event - task completed
+ */
+export interface ClaudePTYCompletionEvent extends ClaudeBaseEvent {
+  type: "completion";
+  data?: {
+    tool_type?: string;
+    message?: string;
+  };
+}
+
+/**
+ * Permission denial info - tool blocked due to missing permission
+ */
+export interface PermissionDenial {
+  tool_name: string;
+  tool_use_id: string;
+  tool_input: Record<string, unknown>;
+}
+
+/**
+ * Result event - final result with potential permission denials
+ */
+export interface ClaudeResultEvent extends ClaudeBaseEvent {
+  type: "result";
+  subtype: "success" | "error";
+  result: string;
+  is_error: boolean;
+  duration_ms?: number;
+  permission_denials?: PermissionDenial[];
+  usage?: ClaudeUsage;
+}
+
+/**
  * Union type of all Claude events
  */
 export type ClaudeEvent =
@@ -171,7 +323,12 @@ export type ClaudeEvent =
   | ClaudeErrorEvent
   | ClaudeCancelledEvent
   | ClaudeSessionResetEvent
-  | ClaudeStatusEvent;
+  | ClaudeSessionBrokenEvent
+  | ClaudeStatusEvent
+  | ClaudePermissionRequestEvent
+  | ClaudeToolApprovalRequestEvent
+  | ClaudeMCPApprovalRequestEvent
+  | ClaudeResultEvent;
 
 // ============================================================================
 // Supporting Types
@@ -233,9 +390,39 @@ export interface ClaudeSessionInfo {
  * Commands to send to the agent WebSocket
  */
 export interface AgentCommand {
-  command: "run" | "cancel" | "new_session" | "status";
+  command: "run" | "cancel" | "new_session" | "status" | "permission_response" | "tool_approval_response" | "mcp_approval_response";
   prompt?: string;
   continue?: boolean;
+  permission_mode?: string;
+  auto_approve_safe?: boolean;
+  // For permission_response command
+  approved?: boolean;
+  always?: boolean;
+  // For tool_approval_response command
+  request_id?: string;
+  feedback?: string;
+  // For mcp_approval_response command
+  message?: string;
+  updated_input?: Record<string, unknown>;
+}
+
+/**
+ * Commands to send to the PTY agent WebSocket
+ */
+export interface PTYAgentCommand {
+  command: "start" | "run" | "approve" | "deny" | "always_allow" | "cancel" | "stop" | "status";
+  prompt?: string;
+  timeout?: number;
+  init_wait?: number;
+}
+
+/**
+ * Type guard for PTY permission request event
+ */
+export function isPTYPermissionRequestEvent(
+  event: ClaudeEvent
+): event is ClaudePTYPermissionRequestEvent {
+  return event.type === "permission_request" && "data" in event;
 }
 
 // ============================================================================
@@ -288,6 +475,53 @@ export function isDoneEvent(event: ClaudeEvent): event is ClaudeDoneEvent {
  */
 export function isErrorEvent(event: ClaudeEvent): event is ClaudeErrorEvent {
   return event.type === "error";
+}
+
+/**
+ * Type guard for permission request event
+ */
+export function isPermissionRequestEvent(
+  event: ClaudeEvent
+): event is ClaudePermissionRequestEvent {
+  return event.type === "permission_request";
+}
+
+/**
+ * Type guard for tool approval request event
+ */
+export function isToolApprovalRequestEvent(
+  event: ClaudeEvent
+): event is ClaudeToolApprovalRequestEvent {
+  return event.type === "tool_approval_request";
+}
+
+/**
+ * Type guard for MCP approval request event
+ */
+export function isMCPApprovalRequestEvent(
+  event: ClaudeEvent
+): event is ClaudeMCPApprovalRequestEvent {
+  return event.type === "mcp_approval_request";
+}
+
+/**
+ * Type guard for result event
+ */
+export function isResultEvent(
+  event: ClaudeEvent
+): event is ClaudeResultEvent {
+  return event.type === "result";
+}
+
+/**
+ * Check if result event has permission denials
+ */
+export function hasPermissionDenials(
+  event: ClaudeEvent
+): event is ClaudeResultEvent & { permission_denials: PermissionDenial[] } {
+  return isResultEvent(event) &&
+    Array.isArray(event.permission_denials) &&
+    event.permission_denials.length > 0;
 }
 
 /**

@@ -19,8 +19,104 @@ import {
   isToolResultEvent,
   isDoneEvent,
   isErrorEvent,
+  isPermissionRequestEvent,
+  isToolApprovalRequestEvent,
+  isMCPApprovalRequestEvent,
+  isResultEvent,
+  hasPermissionDenials,
   generateMessageId,
+  ClaudePermissionRequestEvent,
+  ClaudeToolApprovalRequestEvent,
+  ClaudeMCPApprovalRequestEvent,
+  PermissionDenial,
 } from "../types/claude-events";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+// Permission modes supported
+// - bypassPermissions: Uses Claude CLI with --dangerously-skip-permissions
+// - mcpProxy: Uses Claude CLI with MCP tool proxy for approval (RECOMMENDED - uses your CLI subscription)
+// - toolApproval: Uses Claude CLI in plan mode (may not emit tool_use events reliably)
+// - sdk: Uses Anthropic Python SDK directly (requires separate API key with separate billing)
+export type PermissionMode = "bypassPermissions" | "mcpProxy" | "toolApproval" | "sdk";
+
+export const PERMISSION_MODES: PermissionMode[] = ["bypassPermissions", "mcpProxy", "toolApproval", "sdk"];
+
+export const PERMISSION_MODE_LABELS: Record<PermissionMode, string> = {
+  bypassPermissions: "Auto Execute",
+  mcpProxy: "Review & Approve (CLI)",
+  toolApproval: "Review & Approve (Plan)",
+  sdk: "Review & Approve (SDK)",
+};
+
+export const PERMISSION_MODE_DESCRIPTIONS: Record<PermissionMode, string> = {
+  bypassPermissions: "Claude executes all actions automatically without asking",
+  mcpProxy: "Review and approve each change with diff preview (uses your Claude CLI subscription)",
+  toolApproval: "Review and approve changes via plan mode (may be unreliable)",
+  sdk: "Review and approve changes (requires separate Anthropic API key with separate billing)",
+};
+
+// ============================================================================
+// Permission Request Types
+// ============================================================================
+
+export interface PendingPermission {
+  requestId: string;
+  tool: string;
+  input: Record<string, unknown>;
+  timestamp: Date;
+}
+
+// ============================================================================
+// Tool Approval Types (for toolApproval mode)
+// ============================================================================
+
+export interface PendingToolApproval {
+  requestId: string;
+  toolName: string;
+  toolInput: Record<string, unknown>;
+  toolUseId: string;
+  previewType: "diff" | "multi_diff" | "command" | "generic";
+  previewData: Record<string, unknown>;
+  filePath?: string;
+  originalContent?: string;
+  newContent?: string;
+  diffLines: string[];
+  timestamp: Date;
+}
+
+// ============================================================================
+// MCP Approval Types (DEPRECATED - --permission-prompt-tool doesn't exist in Claude Code v2.x)
+// Kept for future compatibility if/when Claude Code adds this feature
+// ============================================================================
+
+export interface PendingMCPApproval {
+  requestId: string;
+  toolName: string;
+  toolInput: Record<string, unknown>;
+  context?: string;
+  previewType: "diff" | "multi_diff" | "command" | "generic";
+  previewData: Record<string, unknown>;
+  filePath?: string;
+  originalContent?: string;
+  newContent?: string;
+  diffLines: string[];
+  timestamp: Date;
+}
+
+// ============================================================================
+// PTY Mode Types
+// ============================================================================
+
+export interface PendingPTYPermission {
+  permissionType: string;
+  target?: string;
+  fullText: string;
+  rawText?: string;
+  timestamp: Date;
+}
 
 // ============================================================================
 // Store Interface
@@ -43,6 +139,7 @@ interface ClaudeSessionStore {
   running: boolean;
   sessionInfo: ClaudeSessionInfo;
   continueSession: boolean;
+  permissionMode: PermissionMode;
 
   // Messages and tool calls
   messages: ClaudeMessage[];
@@ -58,6 +155,31 @@ interface ClaudeSessionStore {
   lastError: string | null;
   connectionError: string | null;
 
+  // Permission request handling
+  pendingPermission: PendingPermission | null;
+
+  // Permission denials - tools that were blocked
+  permissionDenials: PermissionDenial[];
+
+  // Tool approval state (for toolApproval mode)
+  pendingToolApproval: PendingToolApproval | null;
+
+  // MCP approval state (DEPRECATED - kept for future compatibility)
+  pendingMCPApproval: PendingMCPApproval | null;
+
+  // PTY mode state
+  ptySessionActive: boolean;
+  pendingPTYPermission: PendingPTYPermission | null;
+  ptyThinking: boolean;
+  ptyMessages: string[];
+
+  // Plan execution state (for toolApproval mode)
+  // Tracks when Claude describes actions without emitting tool_use events
+  toolUseCountInResponse: number;
+  writeToolUseCountInResponse: number; // Tracks Write/Edit/Bash tool_use events specifically
+  planDescriptionOnly: boolean;
+  executePlanAttempted: boolean; // Prevents showing banner again after clicking Execute Plan
+
   // WebSocket instance (internal)
   _ws: WebSocket | null;
   _reconnectTimeout: ReturnType<typeof setTimeout> | null;
@@ -72,6 +194,31 @@ interface ClaudeSessionStore {
   clearMessages: () => void;
   setError: (error: string | null) => void;
   clearConnectionError: () => void;
+  setPermissionMode: (mode: PermissionMode) => void;
+
+  // Permission actions
+  respondToPermission: (approved: boolean, always?: boolean) => void;
+  clearPermissionDenials: () => void;
+
+  // Tool approval actions (for toolApproval mode)
+  respondToToolApproval: (approved: boolean, feedback?: string) => void;
+  clearPendingToolApproval: () => void;
+
+  // MCP approval actions (DEPRECATED - kept for future compatibility)
+  respondToMCPApproval: (approved: boolean, message?: string, updatedInput?: Record<string, unknown>) => void;
+  clearPendingMCPApproval: () => void;
+
+  // PTY mode actions
+  startPTYSession: () => void;
+  stopPTYSession: () => void;
+  sendPTYPrompt: (prompt: string) => void;
+  respondToPTYPermission: (response: "approve" | "deny" | "always_allow") => void;
+  cancelPTY: () => void;
+  clearPTYMessages: () => void;
+
+  // Plan execution actions (for toolApproval mode)
+  executePlan: () => void;
+  clearPlanDescriptionOnly: () => void;
 
   // Event processing
   processEvent: (event: ClaudeEvent) => void;
@@ -120,6 +267,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       running: false,
       sessionInfo: { ...initialSessionInfo },
       continueSession: true,
+      permissionMode: "mcpProxy" as PermissionMode,
       messages: [],
       activeToolCalls: new Map(),
       completedToolCalls: [],
@@ -128,6 +276,18 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       lastRequestDuration: null,
       lastError: null,
       connectionError: null,
+      pendingPermission: null,
+      permissionDenials: [],
+      pendingToolApproval: null,
+      pendingMCPApproval: null,
+      ptySessionActive: false,
+      pendingPTYPermission: null,
+      ptyThinking: false,
+      ptyMessages: [],
+      toolUseCountInResponse: 0,
+      writeToolUseCountInResponse: 0,
+      planDescriptionOnly: false,
+      executePlanAttempted: false,
       _ws: null,
       _reconnectTimeout: null,
 
@@ -176,6 +336,10 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
             connecting: false,
             running: false,
             _ws: null,
+            // Reset PTY state on disconnect to ensure clean slate for reconnection
+            ptySessionActive: false,
+            ptyThinking: false,
+            pendingPTYPermission: null,
           });
 
           // Auto-reconnect if not intentionally disconnected (code 1000)
@@ -254,20 +418,23 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
       // Send a prompt
       sendPrompt: (prompt: string) => {
-        const { _ws, connected, running, continueSession } = get();
+        const { _ws, connected, running, continueSession, permissionMode } = get();
         if (!_ws || !connected || running) {
           console.warn("[ClaudeSession] Cannot send prompt: not ready");
           return;
         }
 
-        const command: AgentCommand = {
+        const command: AgentCommand & { permission_mode?: string } = {
           command: "run",
           prompt,
           continue: continueSession,
+          permission_mode: permissionMode,
         };
 
         _ws.send(JSON.stringify(command));
-        set({ running: true, lastError: null });
+        // Reset tool tracking for new response
+        // Also reset executePlanAttempted since user is sending a new prompt
+        set({ running: true, lastError: null, toolUseCountInResponse: 0, writeToolUseCountInResponse: 0, planDescriptionOnly: false, executePlanAttempted: false });
 
         // Add user message to history
         const userMessage: ClaudeMessage = {
@@ -337,6 +504,229 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         set({ connectionError: null });
       },
 
+      // Set permission mode
+      setPermissionMode: (mode: PermissionMode) => {
+        set({ permissionMode: mode });
+      },
+
+      // Respond to a permission request
+      respondToPermission: (approved: boolean, always: boolean = false) => {
+        const { _ws, connected, pendingPermission } = get();
+        if (!_ws || !connected || !pendingPermission) {
+          console.warn("[ClaudeSession] Cannot respond to permission: not ready or no pending request");
+          return;
+        }
+
+        const command: AgentCommand = {
+          command: "permission_response",
+          approved,
+          always,
+        };
+
+        _ws.send(JSON.stringify(command));
+        console.log(`[ClaudeSession] Permission response sent: approved=${approved}, always=${always}`);
+
+        // Clear pending permission
+        set({ pendingPermission: null });
+      },
+
+      // Clear permission denials
+      clearPermissionDenials: () => {
+        set({ permissionDenials: [] });
+      },
+
+      // Respond to a tool approval request
+      respondToToolApproval: (approved: boolean, feedback?: string) => {
+        const { _ws, connected, pendingToolApproval } = get();
+        if (!_ws || !connected || !pendingToolApproval) {
+          console.warn("[ClaudeSession] Cannot respond to tool approval: not ready or no pending request");
+          return;
+        }
+
+        const command: AgentCommand = {
+          command: "tool_approval_response",
+          request_id: pendingToolApproval.requestId,
+          approved,
+          feedback,
+        };
+
+        _ws.send(JSON.stringify(command));
+        console.log(`[ClaudeSession] Tool approval response sent: approved=${approved}, feedback=${feedback}`);
+
+        // Clear pending approval
+        set({ pendingToolApproval: null });
+      },
+
+      // Clear pending tool approval (e.g., on cancel)
+      clearPendingToolApproval: () => {
+        set({ pendingToolApproval: null });
+      },
+
+      // Respond to an MCP approval request (DEPRECATED - kept for future compatibility)
+      respondToMCPApproval: (approved: boolean, message?: string, updatedInput?: Record<string, unknown>) => {
+        const { _ws, connected, pendingMCPApproval } = get();
+        if (!_ws || !connected || !pendingMCPApproval) {
+          console.warn("[ClaudeSession] Cannot respond to MCP approval: not ready or no pending request");
+          return;
+        }
+
+        const command: AgentCommand = {
+          command: "mcp_approval_response",
+          request_id: pendingMCPApproval.requestId,
+          approved,
+          message,
+          updated_input: updatedInput,
+        };
+
+        _ws.send(JSON.stringify(command));
+        console.log(`[ClaudeSession] MCP approval response sent: approved=${approved}, message=${message}`);
+
+        // Clear pending approval
+        set({ pendingMCPApproval: null });
+      },
+
+      // Clear pending MCP approval (e.g., on cancel)
+      clearPendingMCPApproval: () => {
+        set({ pendingMCPApproval: null });
+      },
+
+      // PTY Mode Actions
+      startPTYSession: () => {
+        const { _ws, connected } = get();
+        if (!_ws || !connected) {
+          console.warn("[ClaudeSession] Cannot start PTY session: not connected");
+          return;
+        }
+
+        _ws.send(JSON.stringify({ command: "start" }));
+        console.log("[ClaudeSession] PTY session start requested");
+      },
+
+      stopPTYSession: () => {
+        const { _ws, connected } = get();
+        if (!_ws || !connected) return;
+
+        _ws.send(JSON.stringify({ command: "stop" }));
+        set({
+          ptySessionActive: false,
+          ptyThinking: false,
+          pendingPTYPermission: null,
+        });
+        console.log("[ClaudeSession] PTY session stop requested");
+      },
+
+      sendPTYPrompt: (prompt: string) => {
+        const { _ws, connected, ptySessionActive, running } = get();
+        if (!_ws || !connected) {
+          console.warn("[ClaudeSession] Cannot send PTY prompt: not connected");
+          return;
+        }
+        if (!ptySessionActive) {
+          console.warn("[ClaudeSession] Cannot send PTY prompt: no active PTY session");
+          return;
+        }
+        if (running) {
+          console.warn("[ClaudeSession] Cannot send PTY prompt: already running");
+          return;
+        }
+
+        _ws.send(JSON.stringify({ command: "run", prompt }));
+        set({ running: true, ptyThinking: true, lastError: null });
+
+        // Add user message to history
+        const userMessage: ClaudeMessage = {
+          id: generateMessageId(),
+          type: "text",
+          content: prompt,
+          timestamp: new Date(),
+        };
+
+        set((state) => ({
+          messages: [...state.messages, userMessage],
+        }));
+
+        console.log("[ClaudeSession] PTY prompt sent");
+      },
+
+      respondToPTYPermission: (response: "approve" | "deny" | "always_allow") => {
+        const { _ws, connected, pendingPTYPermission } = get();
+        if (!_ws || !connected) {
+          console.warn("[ClaudeSession] Cannot respond to PTY permission: not connected");
+          return;
+        }
+
+        // Map response to command
+        const command = response === "approve" ? "approve"
+          : response === "deny" ? "deny"
+          : "always_allow";
+
+        _ws.send(JSON.stringify({ command }));
+        set({ pendingPTYPermission: null });
+        console.log(`[ClaudeSession] PTY permission response sent: ${response}`);
+      },
+
+      cancelPTY: () => {
+        const { _ws, connected } = get();
+        if (!_ws || !connected) return;
+
+        _ws.send(JSON.stringify({ command: "cancel" }));
+        console.log("[ClaudeSession] PTY cancel requested");
+      },
+
+      clearPTYMessages: () => {
+        set({ ptyMessages: [] });
+      },
+
+      // Execute Plan action (for toolApproval mode)
+      // Sends a message to Claude asking it to execute the described changes
+      // IMPORTANT: We switch to bypassPermissions mode for execution because
+      // plan mode doesn't emit tool_use events for write operations
+      executePlan: () => {
+        const { _ws, connected, running, continueSession } = get();
+        if (!_ws || !connected || running) {
+          console.warn("[ClaudeSession] Cannot execute plan: not ready");
+          return;
+        }
+
+        // Clear the plan description flag and reset tool tracking
+        // Mark that we attempted to execute so we don't show banner again if Claude still describes
+        set({ planDescriptionOnly: false, toolUseCountInResponse: 0, writeToolUseCountInResponse: 0, executePlanAttempted: true });
+
+        // Send a prompt asking Claude to execute
+        // Use bypassPermissions mode so Claude actually executes the tools
+        const executePrompt = "Please proceed with the changes you described. Execute the tools now.";
+
+        const command: AgentCommand & { permission_mode?: string } = {
+          command: "run",
+          prompt: executePrompt,
+          continue: continueSession,
+          // Switch to bypassPermissions for actual execution
+          permission_mode: "bypassPermissions",
+        };
+
+        _ws.send(JSON.stringify(command));
+        set({ running: true, lastError: null });
+
+        // Add the execute prompt to message history
+        const userMessage: ClaudeMessage = {
+          id: generateMessageId(),
+          type: "system",
+          content: "⚡ Executing plan with auto-approve mode...",
+          timestamp: new Date(),
+        };
+
+        set((state) => ({
+          messages: [...state.messages, userMessage],
+        }));
+
+        console.log("[ClaudeSession] Execute plan command sent");
+      },
+
+      // Clear plan description only flag
+      clearPlanDescriptionOnly: () => {
+        set({ planDescriptionOnly: false, toolUseCountInResponse: 0, writeToolUseCountInResponse: 0, executePlanAttempted: false });
+      },
+
       // Process incoming event
       processEvent: (event: ClaudeEvent) => {
         set((state) => {
@@ -403,9 +793,16 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
             const newActiveToolCalls = new Map(state.activeToolCalls);
             newActiveToolCalls.set(toolCall.id, toolCall);
 
+            // Track tool_use events in this response
+            // Also track specifically Write/Edit/Bash tools for plan execution detection
+            const WRITE_TOOLS = ['Write', 'Edit', 'Bash', 'MultiEdit', 'NotebookEdit'];
+            const isWriteTool = WRITE_TOOLS.includes(event.content.name);
+
             return {
               messages: [...state.messages, message],
               activeToolCalls: newActiveToolCalls,
+              toolUseCountInResponse: state.toolUseCountInResponse + 1,
+              writeToolUseCountInResponse: state.writeToolUseCountInResponse + (isWriteTool ? 1 : 0),
             };
           }
 
@@ -447,23 +844,39 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
           // Handle done
           if (isDoneEvent(event)) {
+            // Check if we're in toolApproval mode and no WRITE tool_use events were emitted
+            // This means Claude read files but only described modifications (didn't emit Edit/Write)
+            // We track Write/Edit/Bash specifically because Read tools work fine in plan mode
+            // IMPORTANT: Don't show banner if we already attempted to execute (prevents infinite loop)
+            const inToolApprovalMode = state.permissionMode === "toolApproval";
+            const noWriteToolsUsed = state.writeToolUseCountInResponse === 0;
+            const alreadyAttempted = state.executePlanAttempted;
+            const shouldShowExecutePlan = inToolApprovalMode && noWriteToolsUsed && !alreadyAttempted;
+
+            console.log(`[ClaudeSession] Done event: toolApprovalMode=${inToolApprovalMode}, totalToolUseCount=${state.toolUseCountInResponse}, writeToolUseCount=${state.writeToolUseCountInResponse}, alreadyAttempted=${alreadyAttempted}, planDescriptionOnly=${shouldShowExecutePlan}`);
+
             return {
               running: false,
+              planDescriptionOnly: shouldShowExecutePlan,
             };
           }
 
           // Handle error
           if (isErrorEvent(event)) {
+            // Support both standard format (content) and legacy PTY format (data.message)
+            const errorContent = event.content ||
+              ((event as unknown as { data?: { message?: string } }).data?.message) ||
+              "Unknown error";
             const message: ClaudeMessage = {
               id: generateMessageId(),
               type: "error",
-              content: event.content,
+              content: errorContent,
               timestamp: new Date(),
               isError: true,
             };
             return {
               messages: [...state.messages, message],
-              lastError: event.content,
+              lastError: errorContent,
               running: false,
             };
           }
@@ -479,6 +892,17 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
           if (event.type === "session_reset") {
             return {
               sessionInfo: { ...initialSessionInfo },
+              continueSession: false,
+            };
+          }
+
+          // Handle session broken (tools executed locally in toolApproval mode)
+          // This means we cannot continue the session - need to start fresh
+          if (event.type === "session_broken") {
+            console.log("[ClaudeSession] Session broken:", (event as { reason?: string }).reason);
+            // Note: We set continueSession to false, and the backend already
+            // resets its continue_session flag. This ensures next prompt starts fresh.
+            return {
               continueSession: false,
             };
           }
@@ -504,6 +928,182 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
               },
               running: statusEvent.running,
               continueSession: statusEvent.continue_session,
+            };
+          }
+
+          // Handle permission request
+          if (isPermissionRequestEvent(event)) {
+            console.log("[ClaudeSession] Permission request received:", event);
+            return {
+              pendingPermission: {
+                requestId: event.request_id,
+                tool: event.tool,
+                input: event.input,
+                timestamp: new Date(),
+              },
+            };
+          }
+
+          // Handle tool approval request (toolApproval mode)
+          if (isToolApprovalRequestEvent(event)) {
+            console.log("[ClaudeSession] Tool approval request received:", event);
+            return {
+              pendingToolApproval: {
+                requestId: event.request_id,
+                toolName: event.tool_name,
+                toolInput: event.tool_input,
+                toolUseId: event.tool_use_id,
+                previewType: event.preview_type,
+                previewData: event.preview_data,
+                filePath: event.file_path,
+                originalContent: event.original_content,
+                newContent: event.new_content,
+                diffLines: event.diff_lines,
+                timestamp: new Date(),
+              },
+            };
+          }
+
+          // Handle MCP approval request (DEPRECATED - kept for future compatibility)
+          if (isMCPApprovalRequestEvent(event)) {
+            console.log("[ClaudeSession] MCP approval request received:", event);
+            return {
+              pendingMCPApproval: {
+                requestId: event.request_id,
+                toolName: event.tool_name,
+                toolInput: event.tool_input,
+                context: event.context,
+                previewType: event.preview_type,
+                previewData: event.preview_data,
+                filePath: event.file_path,
+                originalContent: event.original_content,
+                newContent: event.new_content,
+                diffLines: event.diff_lines,
+                timestamp: new Date(),
+              },
+            };
+          }
+
+          // Handle result event with permission denials
+          if (isResultEvent(event)) {
+            const updates: Partial<ClaudeSessionStore> = {
+              running: false,
+            };
+
+            // Track duration if available
+            if (event.duration_ms) {
+              updates.lastRequestDuration = event.duration_ms;
+            }
+
+            // Accumulate token usage if present
+            if (event.usage) {
+              const inputTokens = event.usage.input_tokens ?? 0;
+              const outputTokens = event.usage.output_tokens ?? 0;
+              updates.totalInputTokens = state.totalInputTokens + inputTokens;
+              updates.totalOutputTokens = state.totalOutputTokens + outputTokens;
+            }
+
+            // Capture permission denials
+            if (hasPermissionDenials(event)) {
+              console.log("[ClaudeSession] Permission denials detected:", event.permission_denials);
+              // Add new denials to existing list, avoiding duplicates by tool_use_id
+              const existingIds = new Set(state.permissionDenials.map(d => d.tool_use_id));
+              const newDenials = event.permission_denials.filter(d => !existingIds.has(d.tool_use_id));
+              updates.permissionDenials = [...state.permissionDenials, ...newDenials];
+            }
+
+            // Handle error result
+            if (event.is_error) {
+              const message: ClaudeMessage = {
+                id: generateMessageId(),
+                type: "error",
+                content: event.result,
+                timestamp: new Date(),
+                isError: true,
+              };
+              updates.messages = [...state.messages, message];
+              updates.lastError = event.result;
+            }
+
+            return updates;
+          }
+
+          // Handle PTY session started
+          if (event.type === "session_started") {
+            console.log("[ClaudeSession] PTY session started");
+            return {
+              ptySessionActive: true,
+              ptyThinking: false,
+            };
+          }
+
+          // Handle PTY session ended
+          if (event.type === "session_ended") {
+            console.log("[ClaudeSession] PTY session ended");
+            return {
+              ptySessionActive: false,
+              ptyThinking: false,
+              running: false,
+              pendingPTYPermission: null,
+            };
+          }
+
+          // Handle PTY thinking
+          if (event.type === "thinking") {
+            return {
+              ptyThinking: true,
+              running: true,
+            };
+          }
+
+          // Handle PTY message
+          if (event.type === "message") {
+            const ptyEvent = event as { data?: { content?: string }; raw_text?: string };
+            const content = ptyEvent.data?.content || ptyEvent.raw_text || "";
+            if (content) {
+              // Add as a regular text message
+              const message: ClaudeMessage = {
+                id: generateMessageId(),
+                type: "text",
+                content: content,
+                timestamp: new Date(),
+              };
+              return {
+                messages: [...state.messages, message],
+                ptyMessages: [...state.ptyMessages, content],
+              };
+            }
+            return {};
+          }
+
+          // Handle PTY completion
+          if (event.type === "completion") {
+            console.log("[ClaudeSession] PTY completion received");
+            return {
+              ptyThinking: false,
+              running: false,
+            };
+          }
+
+          // Handle PTY permission request (from PTY mode with data field)
+          if (event.type === "permission_request" && "data" in event) {
+            const ptyEvent = event as {
+              data?: {
+                permission_type?: string;
+                target?: string;
+                full_text?: string;
+              };
+              raw_text?: string;
+            };
+            console.log("[ClaudeSession] PTY permission request received:", ptyEvent);
+            return {
+              pendingPTYPermission: {
+                permissionType: ptyEvent.data?.permission_type || "generic",
+                target: ptyEvent.data?.target,
+                fullText: ptyEvent.data?.full_text || ptyEvent.raw_text || "Permission required",
+                rawText: ptyEvent.raw_text,
+                timestamp: new Date(),
+              },
             };
           }
 
@@ -549,3 +1149,23 @@ export const selectSessionInfo = (state: ClaudeSessionStore) =>
 export const selectLastError = (state: ClaudeSessionStore) => state.lastError;
 export const selectActiveToolCalls = (state: ClaudeSessionStore) =>
   state.activeToolCalls;
+export const selectPendingPermission = (state: ClaudeSessionStore) =>
+  state.pendingPermission;
+export const selectPermissionDenials = (state: ClaudeSessionStore) =>
+  state.permissionDenials;
+export const selectPendingToolApproval = (state: ClaudeSessionStore) =>
+  state.pendingToolApproval;
+export const selectPendingMCPApproval = (state: ClaudeSessionStore) =>
+  state.pendingMCPApproval;
+export const selectPTYSessionActive = (state: ClaudeSessionStore) =>
+  state.ptySessionActive;
+export const selectPendingPTYPermission = (state: ClaudeSessionStore) =>
+  state.pendingPTYPermission;
+export const selectPTYThinking = (state: ClaudeSessionStore) =>
+  state.ptyThinking;
+export const selectPermissionMode = (state: ClaudeSessionStore) =>
+  state.permissionMode;
+export const selectPlanDescriptionOnly = (state: ClaudeSessionStore) =>
+  state.planDescriptionOnly;
+export const selectToolUseCountInResponse = (state: ClaudeSessionStore) =>
+  state.toolUseCountInResponse;

@@ -6,18 +6,22 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useClaudeSessionStore } from "../stores/claudeSessionStore";
+import { useClaudeSessionStore, PERMISSION_MODES, PERMISSION_MODE_LABELS, PERMISSION_MODE_DESCRIPTIONS, type PermissionMode } from "../stores/claudeSessionStore";
 import { useSessionHistoryStore } from "../stores/sessionHistoryStore";
 import { useBackendStore } from "../state/useBackendStore";
 import { resolveBackendBaseUrl } from "../api/client";
 import {
   ClaudeMessage,
+  PermissionDenial,
   getToolIcon,
   formatToolInput,
 } from "../types/claude-events";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { AgentSidebar } from "./AgentSidebar";
 import { FileDiffModal } from "./FileDiffModal";
+import { ToolPermissionModal } from "./ToolPermissionModal";
+import { ConnectedToolApprovalModal } from "./ToolApprovalModal";
+import "./ToolApprovalModal.css";
 
 // ============================================================================
 // Main Component
@@ -27,6 +31,7 @@ export function ClaudeAgentView() {
   const [promptValue, setPromptValue] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [diffTarget, setDiffTarget] = useState<string | null>(null);
+  const [addingPermissions, setAddingPermissions] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -42,11 +47,16 @@ export function ClaudeAgentView() {
     cwd,
     activeToolCalls,
     continueSession,
+    permissionMode,
     totalInputTokens,
     totalOutputTokens,
     isReconnecting,
     reconnectAttempts,
     maxReconnectAttempts,
+    pendingPermission,
+    permissionDenials,
+    // Plan execution state (for toolApproval mode)
+    planDescriptionOnly,
     connect,
     disconnect,
     sendPrompt,
@@ -54,6 +64,11 @@ export function ClaudeAgentView() {
     newSession,
     clearMessages,
     clearConnectionError,
+    setPermissionMode,
+    respondToPermission,
+    clearPermissionDenials,
+    // Plan execution action
+    executePlan,
   } = useClaudeSessionStore();
 
   // Session history
@@ -75,6 +90,7 @@ export function ClaudeAgentView() {
     const sanitized = base.replace(/\/+$/, "");
     const httpBase = stripApi(sanitized);
     const wsBase = httpBase.replace(/^http/, "ws");
+
     return `${wsBase}/api/terminal/ws/agent`;
   }, [backendUrl]);
 
@@ -141,13 +157,18 @@ export function ClaudeAgentView() {
     [handleSubmit]
   );
 
+  // Handle cancel
+  const handleCancel = useCallback(() => {
+    cancel();
+  }, [cancel]);
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       // Escape to cancel running operation
       if (e.key === "Escape" && running) {
         e.preventDefault();
-        cancel();
+        handleCancel();
       }
       // Ctrl+L to clear messages
       if (e.key === "l" && (e.ctrlKey || e.metaKey)) {
@@ -168,7 +189,7 @@ export function ClaudeAgentView() {
 
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [running, cancel, clearMessages, newSession]);
+  }, [running, handleCancel, clearMessages, newSession]);
 
   // Reconnect
   const handleReconnect = useCallback(() => {
@@ -178,6 +199,42 @@ export function ClaudeAgentView() {
       connect(wsUrl);
     }, 100);
   }, [disconnect, connect, getWsUrl]);
+
+  // Add permission to settings.local.json
+  const handleAddPermission = useCallback(
+    async (toolName: string) => {
+      setAddingPermissions((prev) => new Set(prev).add(toolName));
+      try {
+        const baseUrl = resolveBackendBaseUrl(backendUrl) ?? "http://127.0.0.1:8010";
+        const response = await fetch(`${baseUrl}/api/claude-permissions/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ permissions: [toolName] }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to add permission: ${response.statusText}`);
+        }
+        const result = await response.json();
+        console.log("[ClaudeAgent] Permission added:", result);
+        // Remove this denial from the list
+        useClaudeSessionStore.setState((state) => ({
+          permissionDenials: state.permissionDenials.filter(
+            (d) => d.tool_name !== toolName
+          ),
+        }));
+      } catch (error) {
+        console.error("[ClaudeAgent] Failed to add permission:", error);
+        alert(`Failed to add permission: ${error}`);
+      } finally {
+        setAddingPermissions((prev) => {
+          const next = new Set(prev);
+          next.delete(toolName);
+          return next;
+        });
+      }
+    },
+    [backendUrl]
+  );
 
   return (
     <div
@@ -204,6 +261,8 @@ export function ClaudeAgentView() {
         sessionInfo={sessionInfo}
         cwd={cwd}
         continueSession={continueSession}
+        permissionMode={permissionMode}
+        onPermissionModeChange={setPermissionMode}
         totalInputTokens={totalInputTokens}
         totalOutputTokens={totalOutputTokens}
         isReconnecting={isReconnecting}
@@ -275,12 +334,41 @@ export function ClaudeAgentView() {
               </div>
             )}
 
+            {/* Execute Plan button - shown when Claude only described actions */}
+            {planDescriptionOnly && !running && (
+              <div className="execute-plan-banner" role="status">
+                <div className="plan-banner-content">
+                  <span className="plan-banner-icon" aria-hidden="true">📋</span>
+                  <span className="plan-banner-text">
+                    Claude described changes above. Click "Execute Plan" to apply them automatically.
+                  </span>
+                </div>
+                <button
+                  className="execute-plan-btn"
+                  onClick={executePlan}
+                  aria-label="Execute the described plan automatically"
+                >
+                  ⚡ Execute Plan
+                </button>
+              </div>
+            )}
+
             {/* Error display */}
             {lastError && (
               <div className="claude-error" role="alert" aria-live="assertive">
                 <span className="error-icon" aria-hidden="true">!</span>
                 <span className="error-text">{lastError}</span>
               </div>
+            )}
+
+            {/* Permission denials - tools that were blocked */}
+            {permissionDenials.length > 0 && (
+              <PermissionDenialsBanner
+                denials={permissionDenials}
+                onAddPermission={handleAddPermission}
+                onClear={clearPermissionDenials}
+                addingPermissions={addingPermissions}
+              />
             )}
 
             <div ref={messagesEndRef} />
@@ -325,7 +413,7 @@ export function ClaudeAgentView() {
             {running && (
               <button
                 type="button"
-                onClick={cancel}
+                onClick={handleCancel}
                 className="claude-cancel-btn"
                 aria-label="Cancel current operation"
               >
@@ -340,6 +428,18 @@ export function ClaudeAgentView() {
 
       {/* File Diff Modal */}
       {diffTarget && <FileDiffModal path={diffTarget} onClose={() => setDiffTarget(null)} />}
+
+      {/* Tool Permission Modal */}
+      {pendingPermission && (
+        <ToolPermissionModal
+          permission={pendingPermission}
+          onApprove={(always) => respondToPermission(true, always)}
+          onDeny={() => respondToPermission(false)}
+        />
+      )}
+
+      {/* Tool Approval Modal (for toolApproval mode) */}
+      <ConnectedToolApprovalModal />
     </div>
   );
 }
@@ -360,6 +460,8 @@ interface AgentHeaderProps {
   };
   cwd: string | null;
   continueSession: boolean;
+  permissionMode: PermissionMode;
+  onPermissionModeChange: (mode: PermissionMode) => void;
   totalInputTokens: number;
   totalOutputTokens: number;
   isReconnecting: boolean;
@@ -376,6 +478,8 @@ function AgentHeader({
   sessionInfo,
   cwd,
   continueSession,
+  permissionMode,
+  onPermissionModeChange,
   totalInputTokens,
   totalOutputTokens,
   isReconnecting,
@@ -429,6 +533,18 @@ function AgentHeader({
             {continueSession ? "Continue" : "Fresh"}
           </span>
         </button>
+        <select
+          className="permission-mode-select"
+          value={permissionMode}
+          onChange={(e) => onPermissionModeChange(e.target.value as PermissionMode)}
+          title={`Permission mode: ${PERMISSION_MODE_DESCRIPTIONS[permissionMode]}\n\nNote: Stream mode doesn't support interactive prompts. Use 'Bypass All' for full autonomy or configure allowed tools in .claude/settings.local.json`}
+        >
+          {PERMISSION_MODES.map((mode) => (
+            <option key={mode} value={mode} title={PERMISSION_MODE_DESCRIPTIONS[mode]}>
+              {PERMISSION_MODE_LABELS[mode]}
+            </option>
+          ))}
+        </select>
         {totalTokens > 0 && (
           <span
             className="token-usage"
@@ -482,10 +598,12 @@ function MessageItem({ message }: MessageItemProps) {
 
   switch (message.type) {
     case "text":
+      // Ensure content is never undefined/null to avoid rendering "undefined"
+      const textContent = message.content != null ? String(message.content) : "";
       return (
         <div className="message message-text" role="listitem" aria-label="Claude response">
           <div className="message-content">
-            <MarkdownRenderer content={String(message.content)} />
+            <MarkdownRenderer content={textContent} />
           </div>
           <div className="message-meta" aria-label={`Sent at ${message.timestamp.toLocaleTimeString()}`}>
             {message.timestamp.toLocaleTimeString()}
@@ -525,7 +643,7 @@ function MessageItem({ message }: MessageItemProps) {
       );
 
     case "tool_result":
-      const resultContent = String(message.content);
+      const resultContent = message.content != null ? String(message.content) : "";
       const isLong = resultContent.length > 300;
       return (
         <div
@@ -560,24 +678,103 @@ function MessageItem({ message }: MessageItemProps) {
       );
 
     case "error":
+      const errorMsgContent = message.content != null ? String(message.content) : "Unknown error";
       return (
         <div className="message message-error" role="listitem" aria-label="Error message">
           <span className="error-icon" aria-hidden="true">!</span>
-          <span className="error-content">{String(message.content)}</span>
+          <span className="error-content">{errorMsgContent}</span>
         </div>
       );
 
     case "system":
+      const systemMsgContent = message.content != null ? String(message.content) : "";
       return (
         <div className="message message-system" role="listitem" aria-label="System message">
           <span className="system-icon" aria-hidden="true">i</span>
-          <span className="system-content">{String(message.content)}</span>
+          <span className="system-content">{systemMsgContent}</span>
         </div>
       );
 
     default:
       return null;
   }
+}
+
+// ============================================================================
+// Permission Denials Banner
+// ============================================================================
+
+interface PermissionDenialsBannerProps {
+  denials: PermissionDenial[];
+  onAddPermission: (toolName: string) => void;
+  onClear: () => void;
+  addingPermissions: Set<string>;
+}
+
+function PermissionDenialsBanner({
+  denials,
+  onAddPermission,
+  onClear,
+  addingPermissions,
+}: PermissionDenialsBannerProps) {
+  // Group denials by tool name to avoid duplicates
+  const uniqueTools = Array.from(new Set(denials.map((d) => d.tool_name)));
+
+  return (
+    <div className="permission-denials-banner" role="alert">
+      <div className="denials-header">
+        <span className="denials-icon" aria-hidden="true">🔒</span>
+        <span className="denials-title">
+          {uniqueTools.length} tool{uniqueTools.length > 1 ? "s" : ""} blocked due to missing permissions
+        </span>
+        <button
+          className="denials-clear"
+          onClick={onClear}
+          title="Dismiss"
+          aria-label="Dismiss blocked tools notification"
+        >
+          ×
+        </button>
+      </div>
+      <div className="denials-list">
+        {uniqueTools.map((toolName) => {
+          const denial = denials.find((d) => d.tool_name === toolName);
+          const isAdding = addingPermissions.has(toolName);
+          return (
+            <div key={toolName} className="denial-item">
+              <span className="denial-tool-icon" aria-hidden="true">
+                {getToolIcon(toolName)}
+              </span>
+              <span className="denial-tool-name">{toolName}</span>
+              {denial?.tool_input && (
+                <span className="denial-tool-hint" title={JSON.stringify(denial.tool_input, null, 2)}>
+                  {truncateInput(denial.tool_input)}
+                </span>
+              )}
+              <button
+                className="denial-add-btn"
+                onClick={() => onAddPermission(toolName)}
+                disabled={isAdding}
+                title={`Add "${toolName}" to .claude/settings.local.json`}
+              >
+                {isAdding ? "Adding..." : "Add Permission"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="denials-help">
+        Click "Add Permission" to allow this tool in future requests.
+        Changes are saved to <code>.claude/settings.local.json</code>
+      </div>
+    </div>
+  );
+}
+
+function truncateInput(input: Record<string, unknown>): string {
+  const str = JSON.stringify(input);
+  if (str.length <= 50) return str;
+  return str.substring(0, 47) + "...";
 }
 
 // ============================================================================
@@ -771,6 +968,33 @@ const styles = `
 
 .toggle-label {
   font-weight: 500;
+}
+
+/* Permission mode select */
+.permission-mode-select {
+  padding: 4px 8px;
+  font-size: 11px;
+  background: var(--agent-bg-tertiary);
+  border: 1px solid var(--agent-border-secondary);
+  border-radius: 4px;
+  color: var(--agent-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.permission-mode-select:hover {
+  background: var(--agent-border-secondary);
+  color: var(--agent-text-primary);
+}
+
+.permission-mode-select:focus {
+  border-color: var(--agent-accent-blue);
+}
+
+.permission-mode-select option {
+  background: var(--agent-bg-secondary);
+  color: var(--agent-text-primary);
 }
 
 /* Token usage display */
@@ -1206,6 +1430,19 @@ const styles = `
   border-radius: 4px;
 }
 
+.pty-indicator {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--agent-accent-purple);
+  color: white;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.claude-thinking.pty-mode {
+  border-left: 3px solid var(--agent-accent-purple);
+}
+
 .escape-hint {
   margin-left: auto;
   font-size: 11px;
@@ -1232,6 +1469,58 @@ const styles = `
   0% { transform: translateX(-100%); background-position: 0% 0%; }
   50% { background-position: 100% 0%; }
   100% { transform: translateX(400%); background-position: 0% 0%; }
+}
+
+/* Execute Plan Banner */
+.execute-plan-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--agent-info-bg), var(--agent-bg-tertiary));
+  border: 1px solid var(--agent-accent-blue);
+  border-radius: 8px;
+  margin: 8px 0;
+  animation: slideDown 0.3s ease-out;
+}
+
+.plan-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plan-banner-icon {
+  font-size: 20px;
+}
+
+.plan-banner-text {
+  font-size: 13px;
+  color: var(--agent-text-secondary);
+}
+
+.execute-plan-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--agent-accent-green);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.execute-plan-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.execute-plan-btn:active {
+  transform: translateY(0);
 }
 
 /* Error Display */
@@ -1423,6 +1712,12 @@ const styles = `
     display: none;
   }
 
+  .permission-mode-select {
+    padding: 3px 6px;
+    font-size: 10px;
+    max-width: 100px;
+  }
+
   .token-usage .token-cost {
     display: none;
   }
@@ -1553,6 +1848,145 @@ const styles = `
 
   .message-meta {
     font-size: 9px;
+  }
+}
+
+/* ============================================================================
+   PERMISSION DENIALS BANNER
+   ============================================================================ */
+
+.permission-denials-banner {
+  background: var(--agent-bg-tertiary);
+  border: 1px solid var(--agent-accent-yellow);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  animation: slideDown 0.3s ease-out;
+}
+
+.denials-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.denials-icon {
+  font-size: 18px;
+}
+
+.denials-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--agent-accent-yellow);
+}
+
+.denials-clear {
+  background: transparent;
+  border: none;
+  color: var(--agent-text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.denials-clear:hover {
+  background: var(--agent-bg-accent);
+  color: var(--agent-text-primary);
+}
+
+.denials-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.denial-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--agent-bg-accent);
+  border-radius: 6px;
+  border: 1px solid var(--agent-border-secondary);
+}
+
+.denial-tool-icon {
+  font-size: 16px;
+}
+
+.denial-tool-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--agent-text-primary);
+}
+
+.denial-tool-hint {
+  flex: 1;
+  font-size: 11px;
+  color: var(--agent-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.denial-add-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--agent-accent-green);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.denial-add-btn:hover:not(:disabled) {
+  background: #059669;
+}
+
+.denial-add-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.denials-help {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--agent-border-secondary);
+  font-size: 11px;
+  color: var(--agent-text-muted);
+}
+
+.denials-help code {
+  background: var(--agent-bg-primary);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+
+/* Mobile adjustments for permission banner */
+@media (max-width: 480px) {
+  .denial-item {
+    flex-wrap: wrap;
+  }
+
+  .denial-tool-hint {
+    flex-basis: 100%;
+    order: 3;
+    margin-top: 4px;
+  }
+
+  .denial-add-btn {
+    margin-left: auto;
   }
 }
 `;
