@@ -9,6 +9,7 @@ via the existing WebSocket infrastructure.
 from __future__ import annotations
 
 import asyncio
+import difflib
 import json
 import logging
 import os
@@ -274,8 +275,6 @@ class ApprovalBridge:
 
     async def _generate_file_preview(self, request: ApprovalRequest) -> None:
         """Generate diff preview for file modification tools"""
-        import difflib
-
         tool_input = request.tool_input
 
         if request.tool_name == "Write":
@@ -379,8 +378,6 @@ class ApprovalBridge:
 
     def _generate_diff(self, original: str, modified: str, file_path: str) -> list[str]:
         """Generate unified diff"""
-        import difflib
-
         original_lines = original.splitlines(keepends=True)
         modified_lines = modified.splitlines(keepends=True)
 

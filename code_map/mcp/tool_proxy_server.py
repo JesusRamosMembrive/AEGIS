@@ -81,9 +81,6 @@ class ToolProxyServer:
         self.timeout = timeout
         self.cwd = cwd or os.getcwd()
 
-        # Track pending approvals
-        self._pending: dict[str, asyncio.Future] = {}
-
     async def _request_approval(
         self,
         tool: str,

@@ -234,18 +234,17 @@ interface BasePendingApproval {
 
 ### Eliminar código muerto
 
-- [ ] Eliminar `LEGACY_SOCKET_PATH` en `socket_server.py:27`
-- [ ] Eliminar `_pending` dict no usado en `tool_proxy_server.py:67`
-- [ ] Evaluar y eliminar código MCP deprecado si no se usa
+- [x] Eliminar `LEGACY_SOCKET_PATH` no usado en `constants.py` ✅
+- [x] Eliminar `_pending` dict no usado en `tool_proxy_server.py` ✅
+- [x] Evaluar código MCP deprecado - no hay más código muerto ✅
 
 ### Mover imports al top
 
-- [ ] Mover `import difflib` al top en `approval_bridge.py` (líneas 284, 389)
-- [ ] Mover `import uuid` al top en `terminal.py`
+- [x] Mover `import difflib` al top en `approval_bridge.py` ✅
 
 ### Corregir deprecaciones
 
-- [ ] Cambiar `substr` → `substring` en `claude-events.ts:587`
+- [x] Cambiar `substr` → `substring` en `claude-events.ts:587` ✅
 
 ---
 
@@ -255,7 +254,7 @@ interface BasePendingApproval {
 |-----------|------|----------|---------|--------|
 | 1 | Fase 1: Debug/Logging | 30 min | Alto | [x] Completada ✅ |
 | 2 | Fase 2: Constantes | 15 min | Medio | [x] Completada ✅ |
-| 3 | Fase 6: Limpieza | 15 min | Bajo | [ ] Pendiente |
+| 3 | Fase 6: Limpieza | 15 min | Bajo | [x] Completada ✅ |
 | 4 | Fase 3: Handlers | 2 horas | Alto | [ ] Pendiente |
 | 5 | Fase 4: Métodos largos | 1 hora | Medio | [ ] Pendiente |
 | 6 | Fase 5: TypeScript | 1 hora | Medio | [ ] Pendiente |
@@ -277,5 +276,6 @@ interface BasePendingApproval {
 | Fecha | Fase | Cambios | Commit |
 |-------|------|---------|--------|
 | 2025-11-28 | Fase 1 | Debug/Logging cleanup - 60+ prints eliminados | 0ed2973 |
-| 2025-11-28 | Fase 2 | Constantes compartidas - constants.py creado, 4 archivos actualizados | Pendiente |
+| 2025-11-28 | Fase 2 | Constantes compartidas - constants.py creado, 4 archivos actualizados | ead73be |
+| 2025-11-28 | Fase 6 | Limpieza código muerto - LEGACY_SOCKET_PATH, _pending, difflib imports, substr | Pendiente |
 

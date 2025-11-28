@@ -13,9 +13,6 @@ to eliminate duplication and ensure consistency.
 # Primary socket path for tool approval communication
 DEFAULT_SOCKET_PATH = "/tmp/atlas_tool_approval.sock"
 
-# Legacy socket path (deprecated, kept for backwards compatibility)
-LEGACY_SOCKET_PATH = "/tmp/atlas_mcp_approval.sock"
-
 # Environment variable names for socket configuration
 ENV_TOOL_SOCKET = "ATLAS_TOOL_SOCKET"
 ENV_MCP_SOCKET = "ATLAS_MCP_SOCKET"
