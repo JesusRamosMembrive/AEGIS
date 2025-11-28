@@ -12,6 +12,7 @@ import { AppLayout } from "./components/AppLayout";
 import { OllamaInsightsView } from "./components/OllamaInsightsView";
 import { RemoteTerminalView } from "./components/RemoteTerminalView";
 import { ClaudeAgentView } from "./components/ClaudeAgentView";
+import { GeminiAgentView } from "./components/GeminiAgentView";
 import CodeTimelineView from "./components/CodeTimelineView";
 import { DocsLibraryView } from "./components/DocsLibraryView";
 import { useEventStream } from "./hooks/useEventStream";
@@ -55,9 +56,9 @@ export function App(): JSX.Element {
             path="/"
             element={withLayout("Stage-Aware Workspace", <HomeView statusQuery={statusQuery} />)}
           />
-      <Route
-        path="/overview"
-        element={withLayout("Workspace Overview", <OverviewDashboard statusQuery={statusQuery} />)}
+          <Route
+            path="/overview"
+            element={withLayout("Workspace Overview", <OverviewDashboard statusQuery={statusQuery} />)}
           />
           <Route
             path="/code-map"
@@ -83,9 +84,9 @@ export function App(): JSX.Element {
             path="/prompts"
             element={withLayout("Prompt Library", <PromptLibraryView />)}
           />
-      <Route
-        path="/linters"
-        element={withLayout("Linters & Quality", <LintersView />)}
+          <Route
+            path="/linters"
+            element={withLayout("Linters & Quality", <LintersView />)}
           />
           <Route
             path="/timeline"
@@ -98,6 +99,10 @@ export function App(): JSX.Element {
           <Route
             path="/agent"
             element={withLayout("Claude Agent", <ClaudeAgentView />)}
+          />
+          <Route
+            path="/gemini-agent"
+            element={withLayout("Gemini Agent", <GeminiAgentView />)}
           />
           <Route
             path="/settings"

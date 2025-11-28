@@ -4,9 +4,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { useBackendStore } from "../state/useBackendStore";
 import { resolveBackendBaseUrl } from "../api/client";
-import { useAgentStore } from "../stores/agentStore";
-import { parseAgentMessage, parseAgentStatus, parseAgentSummary } from "../types/agent";
-import { AgentOverlay } from "./terminal/AgentOverlay";
+
 import "@xterm/xterm/css/xterm.css";
 
 /**
@@ -21,18 +19,11 @@ export function RemoteTerminalView() {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [agentParsingEnabled, setAgentParsingEnabled] = useState(false);
-  const [showAgentOverlay, setShowAgentOverlay] = useState(false);
-  const [inputValue, setInputValue] = useState("");
+
+
   const backendUrl = useBackendStore((state) => state.backendUrl);
 
-  // Agent store
-  const {
-    enableAgentParsing,
-    disableAgentParsing,
-    processAgentEvent,
-    updateSessionSummary,
-  } = useAgentStore();
+
 
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
@@ -106,7 +97,7 @@ export function RemoteTerminalView() {
       },
       rows: 30,
       scrollback: 10000,
-      disableStdin: true, // Make terminal read-only
+      disableStdin: false, // Enable terminal input
     });
 
     const fitAddon = new FitAddon();
@@ -231,44 +222,13 @@ export function RemoteTerminalView() {
       terminal.writeln("");
 
       // Auto-launch Claude Code after a brief delay
-      setTimeout(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          console.log("[WS] Auto-launching Claude Code");
-          socket.send("claude\r");
-        }
-      }, 500);
+
     };
 
     socket.onmessage = (event) => {
       const message = event.data;
 
-      // Check for agent protocol messages
-      if (message.startsWith("__AGENT__:")) {
-        // Parse agent event
-        const agentEvent = parseAgentMessage(message);
-        if (agentEvent) {
-          processAgentEvent(agentEvent);
-          return; // Don't write to terminal
-        }
 
-        // Parse agent status
-        const status = parseAgentStatus(message);
-        if (status) {
-          if (status === "enabled") {
-            xtermRef.current?.writeln("\x1b[1;36m✓ Agent parsing enabled\x1b[0m");
-          } else if (status === "disabled") {
-            xtermRef.current?.writeln("\x1b[1;36m✓ Agent parsing disabled\x1b[0m");
-          }
-          return; // Don't write raw status to terminal
-        }
-
-        // Parse agent summary
-        const summary = parseAgentSummary(message);
-        if (summary) {
-          updateSessionSummary(summary);
-          return; // Don't write to terminal
-        }
-      }
 
       // Detect Claude Code redraw pattern (multiple line clears + cursor ups)
       // When detected, clear terminal and write fresh content
@@ -316,8 +276,12 @@ export function RemoteTerminalView() {
     // Now save to ref after all handlers are configured
     wsRef.current = socket;
 
-    // NOTE: Terminal is read-only, no onData binding needed
-    // User input is handled via separate HTML input element
+    // Handle terminal input
+    disposablesRef.current.data = xtermRef.current.onData((data) => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(data);
+      }
+    });
 
     const sendResize = () => {
       if (socket?.readyState === WebSocket.OPEN && xtermRef.current) {
@@ -342,60 +306,15 @@ export function RemoteTerminalView() {
     }
   };
 
-  // Handle input submission
-  const handleInputSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN || !inputValue.trim()) {
-      return;
-    }
 
-    // For Claude Code TUI: send text with Enter to submit
-    // Claude Code interprets each \r as "submit current input"
-    // We send the text followed by \r to write and confirm
-    const messageToSend = inputValue + "\r";
-    console.log(`[INPUT] Sending: ${JSON.stringify(messageToSend)}`);
-    wsRef.current.send(messageToSend);
-    setInputValue("");
-  };
 
-  // Toggle agent parsing
-  const toggleAgentParsing = () => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      return;
-    }
 
-    if (agentParsingEnabled) {
-      // Disable agent parsing
-      wsRef.current.send("__AGENT__:disable");
-      disableAgentParsing();
-      setAgentParsingEnabled(false);
-      setShowAgentOverlay(false);
-    } else {
-      // Enable agent parsing
-      wsRef.current.send("__AGENT__:enable");
-      enableAgentParsing();
-      setAgentParsingEnabled(true);
-      setShowAgentOverlay(true);
-    }
-  };
-
-  // Request agent summary
-  const requestAgentSummary = () => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      return;
-    }
-    wsRef.current.send("__AGENT__:summary");
-  };
 
   // Disconnect function
   const disconnectFromShell = () => {
     console.log("[WS] Manual disconnect triggered");
 
-    // Disable agent parsing if enabled
-    if (agentParsingEnabled) {
-      disableAgentParsing();
-      setAgentParsingEnabled(false);
-    }
+
 
     // Clean up disposables
     if (disposablesRef.current.data) {
@@ -427,14 +346,7 @@ export function RemoteTerminalView() {
 
   return (
     <div className="terminal-view">
-      {/* Agent Overlay */}
-      {showAgentOverlay && (
-        <AgentOverlay
-          visible={showAgentOverlay}
-          position="right"
-          onClose={() => setShowAgentOverlay(false)}
-        />
-      )}
+
 
       {/* Terminal Container */}
       <div className="terminal-container">
@@ -460,39 +372,8 @@ export function RemoteTerminalView() {
               <>
                 <span className="terminal-status">
                   <span className="terminal-status-dot" />
-                  Active {agentParsingEnabled && "(Agent Mode)"}
+                  Active
                 </span>
-                <button
-                  onClick={toggleAgentParsing}
-                  className="secondary-btn"
-                  style={{
-                    marginLeft: "0.5rem",
-                    backgroundColor: agentParsingEnabled ? "#3b82f6" : undefined
-                  }}
-                  title={agentParsingEnabled ? "Disable agent parsing" : "Enable agent parsing"}
-                >
-                  {agentParsingEnabled ? "🤖 Agent ON" : "🤖 Agent OFF"}
-                </button>
-                {agentParsingEnabled && (
-                  <>
-                    <button
-                      onClick={() => setShowAgentOverlay(!showAgentOverlay)}
-                      className="secondary-btn"
-                      style={{ marginLeft: "0.5rem" }}
-                      title={showAgentOverlay ? "Hide agent overlay" : "Show agent overlay"}
-                    >
-                      {showAgentOverlay ? "👁️ Hide" : "👁️ Show"}
-                    </button>
-                    <button
-                      onClick={requestAgentSummary}
-                      className="secondary-btn"
-                      style={{ marginLeft: "0.5rem" }}
-                      title="Get agent session summary"
-                    >
-                      📊 Summary
-                    </button>
-                  </>
-                )}
                 <button
                   onClick={disconnectFromShell}
                   className="secondary-btn"
@@ -511,65 +392,10 @@ export function RemoteTerminalView() {
         </div>
         <div ref={terminalRef} className="terminal-content" />
 
-        {/* Separate input for sending commands */}
-        {connected && (
-          <form onSubmit={handleInputSubmit} className="terminal-input-form">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Type command and press Enter..."
-              className="terminal-input"
-              autoFocus
-            />
-            <button type="submit" className="terminal-input-btn">
-              Send
-            </button>
-          </form>
-        )}
+
       </div>
 
-      {/* Help Section */}
-      <section className="terminal-help-section">
-        <h2>Terminal Features</h2>
-        <div className="terminal-help-grid">
-          <div className="terminal-help-card">
-            <div className="terminal-help-icon">💻</div>
-            <h3>Full Shell Access</h3>
-            <p>
-              Complete shell environment with all your system commands available.
-              Navigate directories, edit files, run scripts.
-            </p>
-          </div>
 
-          <div className="terminal-help-card">
-            <div className="terminal-help-icon">🔗</div>
-            <h3>Persistent Session</h3>
-            <p>
-              Working directory and environment variables persist across commands.
-              Just like a local terminal.
-            </p>
-          </div>
-
-          <div className="terminal-help-card">
-            <div className="terminal-help-icon">⚡</div>
-            <h3>Real-Time</h3>
-            <p>
-              See command output as it happens. WebSocket connection provides
-              instant feedback for all operations.
-            </p>
-          </div>
-
-          <div className="terminal-help-card">
-            <div className="terminal-help-icon">🎨</div>
-            <h3>Rich Text Support</h3>
-            <p>
-              Full ANSI color support, clickable URLs, and smooth scrollback.
-              Professional terminal experience.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* Security Warning */}
       <section className="terminal-warning-section">

@@ -33,6 +33,7 @@ export function HeaderBar({
     { to: "/linters", label: "Linters" },
     { to: "/terminal", label: "Terminal" },
     { to: "/agent", label: "Agent" },
+    { to: "/gemini-agent", label: "Gemini" },
     { to: "/timeline", label: "Timeline" },
     { to: "/ollama", label: "AI Insights" },
     { to: "/overview", label: "Overview" },
