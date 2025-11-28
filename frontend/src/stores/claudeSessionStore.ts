@@ -7,6 +7,7 @@
 
 import { create } from "zustand";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
+import { createLogger } from "../utils/logger";
 import {
   ClaudeEvent,
   ClaudeMessage,
@@ -30,6 +31,9 @@ import {
   ClaudeMCPApprovalRequestEvent,
   PermissionDenial,
 } from "../types/claude-events";
+
+// Create namespaced logger
+const log = createLogger("ClaudeSession");
 
 // ============================================================================
 // Types
@@ -315,7 +319,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log("[ClaudeSession] WebSocket connected");
+          log.info("WebSocket connected");
           set({
             connected: true,
             connecting: false,
@@ -328,7 +332,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         };
 
         ws.onclose = (event) => {
-          console.log("[ClaudeSession] WebSocket closed:", event.code, event.reason);
+          log.info("WebSocket closed:", event.code, event.reason);
           const currentState = get();
 
           set({
@@ -352,7 +356,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
                 RECONNECT_CONFIG.maxDelay
               );
 
-              console.log(`[ClaudeSession] Reconnecting in ${delay}ms (attempt ${attempts + 1}/${RECONNECT_CONFIG.maxAttempts})`);
+              log.info(`Reconnecting in ${delay}ms (attempt ${attempts + 1}/${RECONNECT_CONFIG.maxAttempts})`);
 
               set({
                 isReconnecting: true,
@@ -379,7 +383,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         };
 
         ws.onerror = (error) => {
-          console.error("[ClaudeSession] WebSocket error:", error);
+          log.error("WebSocket error:", error);
           // Don't set error here - let onclose handle reconnection
           // Only set if we're not already in a reconnection cycle
           const currentState = get();
@@ -395,7 +399,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
             const data = JSON.parse(event.data) as ClaudeEvent;
             get().processEvent(data);
           } catch (e) {
-            console.error("[ClaudeSession] Failed to parse message:", e);
+            log.error("Failed to parse message:", e);
           }
         };
 
@@ -420,7 +424,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       sendPrompt: (prompt: string) => {
         const { _ws, connected, running, continueSession, permissionMode } = get();
         if (!_ws || !connected || running) {
-          console.warn("[ClaudeSession] Cannot send prompt: not ready");
+          log.warn("Cannot send prompt: not ready");
           return;
         }
 
@@ -513,7 +517,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       respondToPermission: (approved: boolean, always: boolean = false) => {
         const { _ws, connected, pendingPermission } = get();
         if (!_ws || !connected || !pendingPermission) {
-          console.warn("[ClaudeSession] Cannot respond to permission: not ready or no pending request");
+          log.warn("Cannot respond to permission: not ready or no pending request");
           return;
         }
 
@@ -524,7 +528,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         };
 
         _ws.send(JSON.stringify(command));
-        console.log(`[ClaudeSession] Permission response sent: approved=${approved}, always=${always}`);
+        log.debug(`Permission response sent: approved=${approved}, always=${always}`);
 
         // Clear pending permission
         set({ pendingPermission: null });
@@ -539,7 +543,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       respondToToolApproval: (approved: boolean, feedback?: string) => {
         const { _ws, connected, pendingToolApproval } = get();
         if (!_ws || !connected || !pendingToolApproval) {
-          console.warn("[ClaudeSession] Cannot respond to tool approval: not ready or no pending request");
+          log.warn("Cannot respond to tool approval: not ready or no pending request");
           return;
         }
 
@@ -551,7 +555,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         };
 
         _ws.send(JSON.stringify(command));
-        console.log(`[ClaudeSession] Tool approval response sent: approved=${approved}, feedback=${feedback}`);
+        log.debug(`Tool approval response sent: approved=${approved}, feedback=${feedback}`);
 
         // Clear pending approval
         set({ pendingToolApproval: null });
@@ -566,7 +570,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       respondToMCPApproval: (approved: boolean, message?: string, updatedInput?: Record<string, unknown>) => {
         const { _ws, connected, pendingMCPApproval } = get();
         if (!_ws || !connected || !pendingMCPApproval) {
-          console.warn("[ClaudeSession] Cannot respond to MCP approval: not ready or no pending request");
+          log.warn("Cannot respond to MCP approval: not ready or no pending request");
           return;
         }
 
@@ -579,7 +583,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         };
 
         _ws.send(JSON.stringify(command));
-        console.log(`[ClaudeSession] MCP approval response sent: approved=${approved}, message=${message}`);
+        log.debug(`MCP approval response sent: approved=${approved}, message=${message}`);
 
         // Clear pending approval
         set({ pendingMCPApproval: null });
@@ -594,12 +598,12 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       startPTYSession: () => {
         const { _ws, connected } = get();
         if (!_ws || !connected) {
-          console.warn("[ClaudeSession] Cannot start PTY session: not connected");
+          log.warn("Cannot start PTY session: not connected");
           return;
         }
 
         _ws.send(JSON.stringify({ command: "start" }));
-        console.log("[ClaudeSession] PTY session start requested");
+        log.debug("PTY session start requested");
       },
 
       stopPTYSession: () => {
@@ -612,21 +616,21 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
           ptyThinking: false,
           pendingPTYPermission: null,
         });
-        console.log("[ClaudeSession] PTY session stop requested");
+        log.debug("PTY session stop requested");
       },
 
       sendPTYPrompt: (prompt: string) => {
         const { _ws, connected, ptySessionActive, running } = get();
         if (!_ws || !connected) {
-          console.warn("[ClaudeSession] Cannot send PTY prompt: not connected");
+          log.warn("Cannot send PTY prompt: not connected");
           return;
         }
         if (!ptySessionActive) {
-          console.warn("[ClaudeSession] Cannot send PTY prompt: no active PTY session");
+          log.warn("Cannot send PTY prompt: no active PTY session");
           return;
         }
         if (running) {
-          console.warn("[ClaudeSession] Cannot send PTY prompt: already running");
+          log.warn("Cannot send PTY prompt: already running");
           return;
         }
 
@@ -645,13 +649,13 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
           messages: [...state.messages, userMessage],
         }));
 
-        console.log("[ClaudeSession] PTY prompt sent");
+        log.debug("PTY prompt sent");
       },
 
       respondToPTYPermission: (response: "approve" | "deny" | "always_allow") => {
         const { _ws, connected, pendingPTYPermission } = get();
         if (!_ws || !connected) {
-          console.warn("[ClaudeSession] Cannot respond to PTY permission: not connected");
+          log.warn("Cannot respond to PTY permission: not connected");
           return;
         }
 
@@ -662,7 +666,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
         _ws.send(JSON.stringify({ command }));
         set({ pendingPTYPermission: null });
-        console.log(`[ClaudeSession] PTY permission response sent: ${response}`);
+        log.debug(`PTY permission response sent: ${response}`);
       },
 
       cancelPTY: () => {
@@ -670,7 +674,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         if (!_ws || !connected) return;
 
         _ws.send(JSON.stringify({ command: "cancel" }));
-        console.log("[ClaudeSession] PTY cancel requested");
+        log.debug("PTY cancel requested");
       },
 
       clearPTYMessages: () => {
@@ -684,7 +688,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       executePlan: () => {
         const { _ws, connected, running, continueSession } = get();
         if (!_ws || !connected || running) {
-          console.warn("[ClaudeSession] Cannot execute plan: not ready");
+          log.warn("Cannot execute plan: not ready");
           return;
         }
 
@@ -719,7 +723,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
           messages: [...state.messages, userMessage],
         }));
 
-        console.log("[ClaudeSession] Execute plan command sent");
+        log.debug("Execute plan command sent");
       },
 
       // Clear plan description only flag
@@ -853,7 +857,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
             const alreadyAttempted = state.executePlanAttempted;
             const shouldShowExecutePlan = inToolApprovalMode && noWriteToolsUsed && !alreadyAttempted;
 
-            console.log(`[ClaudeSession] Done event: toolApprovalMode=${inToolApprovalMode}, totalToolUseCount=${state.toolUseCountInResponse}, writeToolUseCount=${state.writeToolUseCountInResponse}, alreadyAttempted=${alreadyAttempted}, planDescriptionOnly=${shouldShowExecutePlan}`);
+            log.debug(`Done event: toolApprovalMode=${inToolApprovalMode}, totalToolUseCount=${state.toolUseCountInResponse}, writeToolUseCount=${state.writeToolUseCountInResponse}, alreadyAttempted=${alreadyAttempted}, planDescriptionOnly=${shouldShowExecutePlan}`);
 
             return {
               running: false,
@@ -899,7 +903,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
           // Handle session broken (tools executed locally in toolApproval mode)
           // This means we cannot continue the session - need to start fresh
           if (event.type === "session_broken") {
-            console.log("[ClaudeSession] Session broken:", (event as { reason?: string }).reason);
+            log.info("Session broken:", (event as { reason?: string }).reason);
             // Note: We set continueSession to false, and the backend already
             // resets its continue_session flag. This ensures next prompt starts fresh.
             return {
@@ -933,7 +937,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
           // Handle permission request
           if (isPermissionRequestEvent(event)) {
-            console.log("[ClaudeSession] Permission request received:", event);
+            log.debug("Permission request received:", event);
             return {
               pendingPermission: {
                 requestId: event.request_id,
@@ -946,7 +950,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
           // Handle tool approval request (toolApproval mode)
           if (isToolApprovalRequestEvent(event)) {
-            console.log("[ClaudeSession] Tool approval request received:", event);
+            log.debug("Tool approval request received:", event);
             return {
               pendingToolApproval: {
                 requestId: event.request_id,
@@ -966,7 +970,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
           // Handle MCP approval request (DEPRECATED - kept for future compatibility)
           if (isMCPApprovalRequestEvent(event)) {
-            console.log("[ClaudeSession] MCP approval request received:", event);
+            log.debug("MCP approval request received:", event);
             return {
               pendingMCPApproval: {
                 requestId: event.request_id,
@@ -1005,7 +1009,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
             // Capture permission denials
             if (hasPermissionDenials(event)) {
-              console.log("[ClaudeSession] Permission denials detected:", event.permission_denials);
+              log.debug("Permission denials detected:", event.permission_denials);
               // Add new denials to existing list, avoiding duplicates by tool_use_id
               const existingIds = new Set(state.permissionDenials.map(d => d.tool_use_id));
               const newDenials = event.permission_denials.filter(d => !existingIds.has(d.tool_use_id));
@@ -1030,7 +1034,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
           // Handle PTY session started
           if (event.type === "session_started") {
-            console.log("[ClaudeSession] PTY session started");
+            log.debug("PTY session started");
             return {
               ptySessionActive: true,
               ptyThinking: false,
@@ -1039,7 +1043,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
           // Handle PTY session ended
           if (event.type === "session_ended") {
-            console.log("[ClaudeSession] PTY session ended");
+            log.debug("PTY session ended");
             return {
               ptySessionActive: false,
               ptyThinking: false,
@@ -1078,7 +1082,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
           // Handle PTY completion
           if (event.type === "completion") {
-            console.log("[ClaudeSession] PTY completion received");
+            log.debug("PTY completion received");
             return {
               ptyThinking: false,
               running: false,
@@ -1095,7 +1099,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
               };
               raw_text?: string;
             };
-            console.log("[ClaudeSession] PTY permission request received:", ptyEvent);
+            log.debug("PTY permission request received:", ptyEvent);
             return {
               pendingPTYPermission: {
                 permissionType: ptyEvent.data?.permission_type || "generic",

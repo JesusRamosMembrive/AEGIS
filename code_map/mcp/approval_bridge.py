@@ -114,8 +114,7 @@ class ApprovalBridge:
         to the frontend via WebSocket.
         """
         self._notify_callback = callback
-        logger.info("Approval bridge notify callback set")
-        print(f"DEBUG: [ApprovalBridge] Notify callback SET: {callback}", flush=True)
+        logger.debug(f"Approval bridge notify callback set: {callback}")
 
     async def request_approval(
         self,
@@ -168,19 +167,17 @@ class ApprovalBridge:
             future = loop.create_future()
             self._futures[request_id] = future
 
-            logger.info(f"Created approval request {request_id} for {tool_name}")
-            print(f"DEBUG: [ApprovalBridge] Created request {request_id} for {tool_name}", flush=True)
+            logger.debug(f"Created approval request {request_id} for {tool_name}")
 
             try:
                 # Notify frontend
                 if self._notify_callback:
-                    print(f"DEBUG: [ApprovalBridge] Calling notify callback...", flush=True)
+                    logger.debug(f"Calling notify callback for {request_id}")
                     try:
                         await self._notify_callback(request)
-                        print(f"DEBUG: [ApprovalBridge] Notify callback completed", flush=True)
+                        logger.debug(f"Notify callback completed for {request_id}")
                     except Exception as e:
                         logger.error(f"Error in notify callback: {e}", exc_info=True)
-                        print(f"DEBUG: [ApprovalBridge] Notify callback FAILED: {e}", flush=True)
                         return {
                             "approved": False,
                             "message": f"Failed to notify frontend: {e}",
@@ -188,7 +185,6 @@ class ApprovalBridge:
                         }
                 else:
                     logger.warning("No notify callback set, auto-approving")
-                    print(f"DEBUG: [ApprovalBridge] No callback set, auto-approving", flush=True)
                     return {
                         "approved": True,
                         "message": "No frontend connected",
@@ -196,14 +192,13 @@ class ApprovalBridge:
                     }
 
                 # Wait for response with timeout
-                print(f"DEBUG: [ApprovalBridge] Waiting for user response (timeout={self.timeout}s)...", flush=True)
+                logger.debug(f"Waiting for user response (timeout={self.timeout}s)")
                 try:
                     result = await asyncio.wait_for(future, timeout=self.timeout)
-                    print(f"DEBUG: [ApprovalBridge] Got response: approved={result.get('approved')}", flush=True)
+                    logger.debug(f"Got response for {request_id}: approved={result.get('approved')}")
                     return result
                 except asyncio.TimeoutError:
                     logger.warning(f"Approval request {request_id} timed out")
-                    print(f"DEBUG: [ApprovalBridge] Request timed out", flush=True)
                     return {
                         "approved": False,
                         "message": "Approval timeout - no response from user",
@@ -214,7 +209,7 @@ class ApprovalBridge:
                 # Cleanup
                 self._pending.pop(request_id, None)
                 self._futures.pop(request_id, None)
-                print(f"DEBUG: [ApprovalBridge] Cleaned up request {request_id}", flush=True)
+                logger.debug(f"Cleaned up request {request_id}")
 
     def respond(
         self,
@@ -242,7 +237,6 @@ class ApprovalBridge:
 
         if future is None or future.done():
             logger.warning(f"No pending approval for request_id={request_id}")
-            print(f"DEBUG: [ApprovalBridge] Response failed - request not found: {request_id}", flush=True)
             return False
 
         # Use original input if no updated input provided
@@ -254,8 +248,7 @@ class ApprovalBridge:
             "updated_input": updated_input or original_input
         })
 
-        logger.info(f"Approval response for {request_id}: approved={approved}")
-        print(f"DEBUG: [ApprovalBridge] Response set for {request_id}: approved={approved}", flush=True)
+        logger.debug(f"Approval response for {request_id}: approved={approved}")
         return True
 
     def get_pending_requests(self) -> list[ApprovalRequest]:

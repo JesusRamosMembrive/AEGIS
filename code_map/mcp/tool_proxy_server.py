@@ -89,16 +89,15 @@ class ToolProxyServer:
         }
 
         try:
-            print(f"[ToolProxy] Connecting to socket {self.socket_path}...", file=sys.stderr, flush=True)
+            logger.debug(f"Connecting to socket {self.socket_path}")
             reader, writer = await asyncio.open_unix_connection(self.socket_path)
-            print(f"[ToolProxy] Connected to socket", file=sys.stderr, flush=True)
+            logger.debug("Connected to socket")
 
             # Send request
             writer.write((json.dumps(request) + "\n").encode())
             await writer.drain()
 
-            print(f"[ToolProxy] Sent approval request {request_id} for {tool}", file=sys.stderr, flush=True)
-            logger.info(f"[ToolProxy] Sent approval request {request_id} for {tool}")
+            logger.debug(f"Sent approval request {request_id} for {tool}")
 
             # Wait for response
             try:
@@ -111,12 +110,11 @@ class ToolProxyServer:
                 approved = response.get("approved", False)
                 feedback = response.get("feedback", "")
 
-                logger.info(f"[ToolProxy] Got response for {request_id}: approved={approved}")
+                logger.debug(f"Got response for {request_id}: approved={approved}")
                 return (approved, feedback)
 
             except asyncio.TimeoutError:
-                print(f"[ToolProxy] TIMEOUT waiting for approval {request_id}", file=sys.stderr, flush=True)
-                logger.warning(f"[ToolProxy] Approval timeout for {request_id}")
+                logger.warning(f"Approval timeout for {request_id}")
                 return (False, "Approval request timed out")
 
             finally:
@@ -126,11 +124,11 @@ class ToolProxyServer:
         except FileNotFoundError:
             # Socket not found - ATLAS backend not running
             # In development, we could auto-approve, but for safety we deny
-            logger.warning(f"[ToolProxy] Socket not found: {self.socket_path}")
+            logger.warning(f"Socket not found: {self.socket_path}")
             return (False, "ATLAS backend not connected. Cannot approve tools.")
 
         except Exception as e:
-            logger.error(f"[ToolProxy] Error requesting approval: {e}")
+            logger.error(f"Error requesting approval: {e}")
             return (False, f"Error: {e}")
 
     def _generate_write_preview(self, file_path: str, content: str) -> str:

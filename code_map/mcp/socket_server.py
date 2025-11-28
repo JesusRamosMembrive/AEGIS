@@ -89,7 +89,6 @@ class MCPSocketServer:
 
         self._running = True
         logger.info(f"MCP Socket Server started on {self.socket_path}")
-        print(f"DEBUG: [MCPSocketServer] Started on {self.socket_path}", flush=True)
 
     async def stop(self) -> None:
         """Stop the socket server"""
@@ -105,7 +104,6 @@ class MCPSocketServer:
             socket_path.unlink()
 
         logger.info("MCP Socket Server stopped")
-        print(f"DEBUG: [MCPSocketServer] Stopped", flush=True)
 
     async def _handle_client(
         self,
@@ -114,8 +112,7 @@ class MCPSocketServer:
     ) -> None:
         """Handle a client connection from MCP server"""
         peer = writer.get_extra_info('peername')
-        print(f"DEBUG: [MCPSocketServer] Client connected: {peer}", flush=True)
-        logger.info(f"MCP client connected: {peer}")
+        logger.debug(f"MCP client connected: {peer}")
 
         try:
             while self._running:
@@ -126,7 +123,7 @@ class MCPSocketServer:
 
                 try:
                     request = json.loads(line.decode())
-                    print(f"DEBUG: [MCPSocketServer] Received request: {request.get('type')}", flush=True)
+                    logger.debug(f"Received request: {request.get('type')}")
 
                     # Process request
                     response = await self._process_request(request)
@@ -136,7 +133,7 @@ class MCPSocketServer:
                     writer.write(response_json.encode())
                     await writer.drain()
 
-                    print(f"DEBUG: [MCPSocketServer] Sent response: approved={response.get('approved')}", flush=True)
+                    logger.debug(f"Sent response: approved={response.get('approved')}")
 
                 except json.JSONDecodeError as e:
                     logger.error(f"Invalid JSON from MCP client: {e}")
@@ -154,7 +151,7 @@ class MCPSocketServer:
         finally:
             writer.close()
             await writer.wait_closed()
-            print(f"DEBUG: [MCPSocketServer] Client disconnected: {peer}", flush=True)
+            logger.debug(f"MCP client disconnected: {peer}")
 
     async def _process_request(self, request: dict[str, Any]) -> dict[str, Any]:
         """Process a request from MCP server"""
@@ -193,9 +190,7 @@ class MCPSocketServer:
             }
             tool_name = tool_name_map.get(tool, tool.title())
 
-            print(f"DEBUG: [MCPSocketServer] Received tool_approval_request for {tool_name}", flush=True)
-            print(f"DEBUG: [MCPSocketServer] request_id={request_id}, params keys={list(params.keys())}", flush=True)
-            logger.info(f"Processing tool proxy approval for {tool_name} (request_id={request_id})")
+            logger.debug(f"Received tool_approval_request for {tool_name}, request_id={request_id}")
 
             # Use bridge to get approval
             result = await self.bridge.request_approval(

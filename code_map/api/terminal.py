@@ -92,7 +92,6 @@ async def terminal_websocket(websocket: WebSocket):
     """
     try:
         await websocket.accept()
-        print("[TERMINAL] WebSocket connection accepted")  # DEBUG
         logger.info("Terminal WebSocket connection accepted")
 
         # Track agent parsing state
@@ -104,16 +103,13 @@ async def terminal_websocket(websocket: WebSocket):
 
         try:
             shell.spawn()
-            print(f"[TERMINAL] Shell spawned: PID={shell.pid}, FD={shell.master_fd}")  # DEBUG
             logger.info(f"Shell spawned successfully: PID={shell.pid}, FD={shell.master_fd}")
         except Exception as e:
-            print(f"[TERMINAL] ERROR spawning shell: {e}")  # DEBUG
             logger.error(f"Failed to spawn shell: {e}", exc_info=True)
             await websocket.send_text(f"Failed to spawn shell: {str(e)}\r\n")
             await websocket.close()
             return
     except Exception as e:
-        print(f"[TERMINAL] ERROR during initialization: {e}")  # DEBUG
         logger.error(f"Error during WebSocket initialization: {e}", exc_info=True)
         try:
             await websocket.close()
@@ -154,15 +150,12 @@ async def terminal_websocket(websocket: WebSocket):
             pass
 
     # Start reading shell output
-    print("[TERMINAL] Creating read task")  # DEBUG
     read_task = asyncio.create_task(read_output())
-    print("[TERMINAL] Read task created")  # DEBUG
+    logger.debug("Shell read task created")
 
     try:
         # Send initial welcome message
-        print("[TERMINAL] Sending welcome message")  # DEBUG
         await websocket.send_text("Connected to shell. Type commands.\r\n")
-        print("[TERMINAL] Welcome message sent")  # DEBUG
 
         # Main event loop - handle both input and output
         while True:
@@ -366,11 +359,10 @@ async def agent_websocket(websocket: WebSocket):
         try:
             parsed = parser.parse_line(json.dumps(event_data))
             if parsed:
-                # print(f"DEBUG: Sending parsed event to WS: {parsed.to_dict().get('type')}")
                 await websocket.send_json(parsed.to_dict())
             else:
                 # Send raw event if parsing fails
-                print(f"DEBUG: Sending raw event to WS: {event_data.get('type')}")
+                logger.debug(f"Sending raw event to WS: {event_data.get('type')}")
                 await websocket.send_json(event_data)
         except Exception as e:
             logger.error(f"Error sending event: {e}")
@@ -464,7 +456,7 @@ async def agent_websocket(websocket: WebSocket):
                 raw_message = await websocket.receive_text()
                 message = json.loads(raw_message)
                 command = message.get("command")
-                print(f"DEBUG: Received WS command: {command}")
+                logger.debug(f"Received WS command: {command}")
 
                 if command == "run":
                     prompt = message.get("prompt", "")
@@ -504,7 +496,7 @@ async def agent_websocket(websocket: WebSocket):
                         # Handler for SDK tool approval requests
                         async def handle_sdk_tool_approval(request):
                             """Send SDK tool approval request to frontend"""
-                            print(f"DEBUG: [SDK] Tool approval request for {request.tool_name}", flush=True)
+                            logger.debug(f"SDK tool approval request for {request.tool_name}")
                             try:
                                 approval_event = {
                                     "type": "tool_approval_request",
@@ -556,8 +548,7 @@ async def agent_websocket(websocket: WebSocket):
                         # Set the frontend callback for approval requests
                         async def send_mcp_proxy_approval_request(request: ApprovalRequest):
                             """Forward MCP proxy approval request to frontend via WebSocket"""
-                            print(f"DEBUG: [mcpProxy] Approval request for {request.tool_name}", flush=True)
-                            print(f"DEBUG: [mcpProxy] request_id={request.request_id}, file_path={request.file_path}", flush=True)
+                            logger.debug(f"mcpProxy approval request for {request.tool_name}, request_id={request.request_id}")
                             try:
                                 approval_event = {
                                     "type": "tool_approval_request",
@@ -574,12 +565,9 @@ async def agent_websocket(websocket: WebSocket):
                                     "new_content": request.new_content,
                                     "diff_lines": request.diff_lines,
                                 }
-                                print(f"DEBUG: [mcpProxy] Sending approval_event to WebSocket...", flush=True)
                                 await websocket.send_json(approval_event)
-                                print(f"DEBUG: [mcpProxy] approval_event SENT successfully", flush=True)
-                                logger.info(f"MCP proxy approval request sent: {request.tool_name}")
+                                logger.debug(f"mcpProxy approval_event sent for {request.tool_name}")
                             except Exception as e:
-                                print(f"DEBUG: [mcpProxy] EXCEPTION sending approval_event: {e}", flush=True)
                                 logger.error(f"Error sending MCP proxy approval request: {e}")
                                 raise
 
@@ -633,7 +621,7 @@ async def agent_websocket(websocket: WebSocket):
                         # Set the frontend callback to forward approval requests via WebSocket
                         async def send_mcp_approval_request(request: ApprovalRequest):
                             """Forward MCP approval request to frontend via WebSocket"""
-                            print(f"DEBUG: [send_mcp_approval_request] ENTERED for {request.tool_name}", flush=True)
+                            logger.debug(f"MCP approval request for {request.tool_name}")
                             try:
                                 approval_event = {
                                     "type": "mcp_approval_request",
@@ -648,12 +636,9 @@ async def agent_websocket(websocket: WebSocket):
                                     "new_content": request.new_content,
                                     "diff_lines": request.diff_lines,
                                 }
-                                print(f"DEBUG: [send_mcp_approval_request] Sending to WebSocket...", flush=True)
                                 await websocket.send_json(approval_event)
-                                print(f"DEBUG: [send_mcp_approval_request] WebSocket message SENT", flush=True)
-                                logger.info(f"MCP approval request sent to frontend: {request.tool_name}")
+                                logger.debug(f"MCP approval request sent to frontend: {request.tool_name}")
                             except Exception as e:
-                                print(f"DEBUG: [send_mcp_approval_request] EXCEPTION: {e}", flush=True)
                                 logger.error(f"Error sending MCP approval request: {e}")
                                 raise
 
@@ -679,7 +664,7 @@ async def agent_websocket(websocket: WebSocket):
                     # Handler for tool approval requests (toolApproval mode)
                     async def handle_tool_approval_request(request):
                         """Send tool approval request to frontend"""
-                        print(f"DEBUG: [handle_tool_approval_request] ENTERED for {request.tool_name}", flush=True)
+                        logger.debug(f"Tool approval request for {request.tool_name}")
                         try:
                             approval_event = {
                                 "type": "tool_approval_request",
@@ -694,12 +679,9 @@ async def agent_websocket(websocket: WebSocket):
                                 "new_content": request.new_content,
                                 "diff_lines": request.diff_lines,
                             }
-                            print(f"DEBUG: [handle_tool_approval_request] About to send WebSocket message...", flush=True)
                             await websocket.send_json(approval_event)
-                            print(f"DEBUG: [handle_tool_approval_request] WebSocket message SENT for {request.tool_name}", flush=True)
-                            logger.info(f"Tool approval request sent: {request.tool_name}")
+                            logger.debug(f"Tool approval request sent: {request.tool_name}")
                         except Exception as e:
-                            print(f"DEBUG: [handle_tool_approval_request] EXCEPTION: {e}", flush=True)
                             logger.error(f"Error sending tool approval request: {e}")
 
                     # Run the prompt in a task so we can handle permission responses
@@ -750,11 +732,11 @@ async def agent_websocket(websocket: WebSocket):
                     approved = message.get("approved", False)
                     feedback = message.get("feedback", "")
 
-                    print(f"DEBUG: tool_approval_response: request_id={request_id}, approved={approved}, mcp_using={mcp_state['using_mcp']}", flush=True)
+                    logger.debug(f"tool_approval_response: request_id={request_id}, approved={approved}, mcp_using={mcp_state['using_mcp']}")
 
                     # Try mcpProxy mode first (via socket server)
                     if mcp_state["using_mcp"] and mcp_state["socket_server"]:
-                        print(f"DEBUG: Using MCP socket server for approval response", flush=True)
+                        logger.debug("Using MCP socket server for approval response")
                         success = mcp_state["socket_server"].respond_to_approval(
                             request_id=request_id,
                             approved=approved,
@@ -762,25 +744,20 @@ async def agent_websocket(websocket: WebSocket):
                             updated_input=None,
                         )
                         if success:
-                            logger.info(f"Tool approval response (mcpProxy) processed: approved={approved}")
-                            print(f"DEBUG: Tool approval response (mcpProxy) processed successfully", flush=True)
+                            logger.debug(f"Tool approval response (mcpProxy) processed: approved={approved}")
                         else:
                             logger.warning(f"Tool approval response (mcpProxy) failed: request_id={request_id}")
-                            print(f"DEBUG: Tool approval response (mcpProxy) FAILED for request_id={request_id}", flush=True)
 
                     # Fallback to toolApproval mode (via runner)
                     elif runner and hasattr(runner, 'respond_to_tool_approval'):
-                        print(f"DEBUG: Using runner for approval response", flush=True)
+                        logger.debug("Using runner for approval response")
                         success = runner.respond_to_tool_approval(request_id, approved, feedback)
                         if success:
-                            logger.info(f"Tool approval response processed: approved={approved}")
-                            print(f"DEBUG: Tool approval response processed successfully")
+                            logger.debug(f"Tool approval response processed: approved={approved}")
                         else:
                             logger.warning(f"Tool approval response failed: request_id={request_id}")
-                            print(f"DEBUG: Tool approval response FAILED for request_id={request_id}")
                     else:
-                        logger.warning("Received tool_approval_response but no handler available")
-                        print(f"DEBUG: No handler for tool_approval_response! mcp_using={mcp_state['using_mcp']}, runner={runner}", flush=True)
+                        logger.warning(f"Received tool_approval_response but no handler available (mcp_using={mcp_state['using_mcp']})")
 
                 elif command == "mcp_approval_response":
                     # Handle MCP approval response from frontend (mcpApproval mode)
@@ -790,7 +767,7 @@ async def agent_websocket(websocket: WebSocket):
                         user_message = message.get("message", "")
                         updated_input = message.get("updated_input")
 
-                        print(f"DEBUG: MCP approval response: request_id={request_id}, approved={approved}", flush=True)
+                        logger.debug(f"MCP approval response: request_id={request_id}, approved={approved}")
 
                         success = mcp_state["socket_server"].respond_to_approval(
                             request_id=request_id,
@@ -800,14 +777,11 @@ async def agent_websocket(websocket: WebSocket):
                         )
 
                         if success:
-                            logger.info(f"MCP approval response processed: approved={approved}")
-                            print(f"DEBUG: MCP approval response processed successfully")
+                            logger.debug(f"MCP approval response processed: approved={approved}")
                         else:
                             logger.warning(f"MCP approval response failed: request_id={request_id}")
-                            print(f"DEBUG: MCP approval response FAILED for request_id={request_id}")
                     else:
                         logger.warning("Received mcp_approval_response but no MCP socket server")
-                        print(f"DEBUG: MCP approval response but no socket server!")
 
                 elif command == "cancel":
                     if runner and runner.is_running:
@@ -950,8 +924,7 @@ async def agent_pty_websocket(websocket: WebSocket):
 
                 if command == "start":
                     # Start PTY session
-                    logger.info("PTY WebSocket: start command received")
-                    print(f"DEBUG: PTY start command received, cwd={cwd}", flush=True)
+                    logger.info(f"PTY WebSocket: start command received, cwd={cwd}")
 
                     if runner is not None:
                         await runner.stop_session()

@@ -11,6 +11,10 @@ import {
   PendingToolApproval,
 } from "../stores/claudeSessionStore";
 import { getToolIcon } from "../types/claude-events";
+import { createLogger } from "../utils/logger";
+
+// Create namespaced logger
+const log = createLogger("ToolApprovalModal");
 
 // ============================================================================
 // Diff Viewer Component
@@ -325,13 +329,13 @@ export const ConnectedToolApprovalModal: React.FC = () => {
   );
 
   // Debug log for modal visibility
-  console.log("[ConnectedToolApprovalModal] pendingToolApproval:", pendingToolApproval);
+  log.debug("pendingToolApproval:", pendingToolApproval);
 
   if (!pendingToolApproval) {
     return null;
   }
 
-  console.log("[ConnectedToolApprovalModal] SHOWING MODAL for:", pendingToolApproval.toolName);
+  log.debug("SHOWING MODAL for:", pendingToolApproval.toolName);
 
   const handleApprove = () => {
     respondToToolApproval(true);
