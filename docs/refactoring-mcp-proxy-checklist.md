@@ -184,18 +184,19 @@ class BaseAgentHandler(ABC):
 
 ### 5.1 Crear tipos seguros para preview data
 
-- [ ] Crear `frontend/src/types/approval.ts`
-- [ ] Definir `DiffPreviewData` interface
-- [ ] Definir `CommandPreviewData` interface
-- [ ] Definir `PreviewData` discriminated union type
-- [ ] Definir `BasePendingApproval` interface
+- [x] Crear `frontend/src/types/approval.ts` ✅
+- [x] Definir `DiffPreviewData` interface ✅
+- [x] Definir `CommandPreviewData` interface ✅
+- [x] Definir `MultiDiffPreviewData` interface ✅
+- [x] Añadir type guards y helper functions ✅
 
 ### 5.2 Refactorizar componentes
 
-- [ ] Actualizar `ToolApprovalModal.tsx` para usar tipos seguros
-- [ ] Eliminar `as unknown as` assertions en `claudeSessionStore.ts`
-- [ ] Eliminar `as boolean` assertions inseguras
-- [ ] Añadir type guards donde sea necesario
+- [x] Actualizar `ToolApprovalModal.tsx` para usar tipos seguros ✅
+- [x] Eliminar `as boolean` assertions con `extractCommandPreview()` ✅
+- [x] Eliminar `as Array<...>` assertions con `extractMultiDiffEdits()` ✅
+- [x] Mejorar extracción de errores legacy en `claudeSessionStore.ts` ✅
+- [x] Mejorar extracción de errores legacy en `geminiSessionStore.ts` ✅
 
 ### Tipos esperados
 ```typescript
@@ -267,7 +268,7 @@ interface BasePendingApproval {
 | 3 | Fase 6: Limpieza | 15 min | Bajo | [x] Completada ✅ |
 | 4 | Fase 3: Handlers | 2 horas | Alto | [x] Completada ✅ |
 | 5 | Fase 4: Métodos largos | 1 hora | Medio | [x] Completada ✅ |
-| 6 | Fase 5: TypeScript | 1 hora | Medio | [ ] Pendiente |
+| 6 | Fase 5: TypeScript | 1 hora | Medio | [x] Completada ✅ |
 
 ---
 
@@ -289,5 +290,6 @@ interface BasePendingApproval {
 | 2025-11-28 | Fase 2 | Constantes compartidas - constants.py creado, 4 archivos actualizados | ead73be |
 | 2025-11-28 | Fase 6 | Limpieza código muerto - LEGACY_SOCKET_PATH, _pending, difflib imports, substr | c00c2bd |
 | 2025-11-28 | Fase 3 | Handler extraction - 7 archivos creados, terminal.py reducido ~40% | 81edc75 |
-| 2025-11-28 | Fase 4 | Refactor métodos largos - run_prompt (~65%), request_approval (~55%) | Pendiente |
+| 2025-11-28 | Fase 4 | Refactor métodos largos - run_prompt (~65%), request_approval (~55%) | cd5dd6c |
+| 2025-11-28 | Fase 5 | TypeScript types - approval.ts, type guards, helper functions | Pendiente |
 

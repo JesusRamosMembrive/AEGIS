@@ -12,6 +12,12 @@ import {
 } from "../stores/claudeSessionStore";
 import { getToolIcon } from "../types/claude-events";
 import { createLogger } from "../utils/logger";
+import {
+  extractCommandPreview,
+  extractMultiDiffEdits,
+  getPreviewBoolean,
+  getPreviewString,
+} from "../types/approval";
 
 // Create namespaced logger
 const log = createLogger("ToolApprovalModal");
@@ -114,10 +120,12 @@ const CommandPreview: React.FC<CommandPreviewProps> = ({
   description,
   previewData,
 }) => {
-  const hasSudo = previewData.has_sudo as boolean;
-  const hasRm = previewData.has_rm as boolean;
-  const hasPipe = previewData.has_pipe as boolean;
-  const hasRedirect = previewData.has_redirect as boolean;
+  // Use type-safe extraction instead of unsafe `as boolean` casts
+  const cmdPreview = extractCommandPreview(previewData);
+  const hasSudo = cmdPreview.has_sudo ?? false;
+  const hasRm = cmdPreview.has_rm ?? false;
+  const hasPipe = cmdPreview.has_pipe ?? false;
+  const hasRedirect = cmdPreview.has_redirect ?? false;
 
   return (
     <div className="tool-approval-command-preview">
@@ -222,28 +230,26 @@ export const ToolApprovalModal: React.FC<ToolApprovalModalProps> = ({
             <DiffViewer
               diffLines={approval.diffLines}
               filePath={approval.filePath}
-              isNewFile={approval.previewData.is_new_file as boolean}
+              isNewFile={getPreviewBoolean(approval.previewData, "is_new_file")}
             />
           )}
 
           {approval.previewType === "multi_diff" && (
             <div className="tool-approval-multi-diff">
-              {(approval.previewData.edits as Array<{ file_path: string; diff: string[]; error?: string }>)?.map(
-                (edit, idx) => (
-                  <DiffViewer
-                    key={idx}
-                    diffLines={edit.diff || []}
-                    filePath={edit.file_path}
-                  />
-                )
-              )}
+              {extractMultiDiffEdits(approval.previewData).map((edit, idx) => (
+                <DiffViewer
+                  key={idx}
+                  diffLines={edit.diff}
+                  filePath={edit.file_path}
+                />
+              ))}
             </div>
           )}
 
           {approval.previewType === "command" && (
             <CommandPreview
-              command={approval.toolInput.command as string}
-              description={approval.toolInput.description as string}
+              command={getPreviewString(approval.toolInput, "command")}
+              description={getPreviewString(approval.toolInput, "description")}
               previewData={approval.previewData}
             />
           )}

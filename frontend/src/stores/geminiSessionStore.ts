@@ -861,8 +861,14 @@ export const useGeminiSessionStore = create<GeminiSessionStore>()(
           // Handle error
           if (isErrorEvent(event)) {
             // Support both standard format (content) and legacy PTY format (data.message)
+            // Use type-safe extraction for legacy format compatibility
+            const eventRecord = event as unknown as Record<string, unknown>;
+            const legacyData = eventRecord.data;
+            const legacyMessage = typeof legacyData === "object" && legacyData !== null
+              ? (legacyData as Record<string, unknown>).message
+              : undefined;
             const errorContent = event.content ||
-              ((event as unknown as { data?: { message?: string } }).data?.message) ||
+              (typeof legacyMessage === "string" ? legacyMessage : undefined) ||
               "Unknown error";
             const message: ClaudeMessage = {
               id: generateMessageId(),
