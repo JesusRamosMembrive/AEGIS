@@ -103,43 +103,49 @@ debug("[ClaudeSession] WebSocket connected");
 
 ## Fase 3: Extraer Handlers de terminal.py
 
-**Objetivo**: Reducir `agent_websocket` de 540 líneas a ~100 líneas
+**Objetivo**: Reducir `agent_websocket` de 540 líneas a ~320 líneas
 **Esfuerzo estimado**: 2 horas
 **Impacto**: Alto - mejora mantenibilidad
 
 ### Estructura de archivos
 
-- [ ] Crear directorio `code_map/api/handlers/`
-- [ ] Crear `code_map/api/handlers/__init__.py`
-- [ ] Crear `code_map/api/handlers/base.py` - BaseAgentHandler ABC
-- [ ] Crear `code_map/api/handlers/sdk_handler.py` - SDKModeHandler
-- [ ] Crear `code_map/api/handlers/mcp_proxy_handler.py` - MCPProxyModeHandler
-- [ ] Crear `code_map/api/handlers/cli_handler.py` - CLIModeHandler
-- [ ] Crear `code_map/api/handlers/approval.py` - Shared approval utilities
+- [x] Crear directorio `code_map/api/handlers/` ✅
+- [x] Crear `code_map/api/handlers/__init__.py` ✅
+- [x] Crear `code_map/api/handlers/base.py` - BaseAgentHandler ABC ✅
+- [x] Crear `code_map/api/handlers/sdk_handler.py` - SDKModeHandler ✅
+- [x] Crear `code_map/api/handlers/mcp_proxy_handler.py` - MCPProxyModeHandler ✅
+- [x] Crear `code_map/api/handlers/cli_handler.py` - CLIModeHandler ✅
+- [x] Crear `code_map/api/handlers/approval.py` - Shared approval utilities ✅
+- [x] Crear `code_map/api/handlers/factory.py` - Handler factory function ✅
 
 ### Implementación
 
-- [ ] Implementar `BaseAgentHandler` ABC con métodos abstractos
-- [ ] Migrar lógica SDK a `SDKModeHandler`
-- [ ] Migrar lógica MCP proxy a `MCPProxyModeHandler`
-- [ ] Migrar lógica CLI a `CLIModeHandler`
-- [ ] Crear función factory `create_handler(mode, websocket, cwd)`
-- [ ] Refactorizar `agent_websocket` para usar handlers
-- [ ] Unificar código duplicado de approval en `approval.py`
+- [x] Implementar `BaseAgentHandler` ABC con métodos abstractos ✅
+- [x] Migrar lógica SDK a `SDKModeHandler` ✅
+- [x] Migrar lógica MCP proxy a `MCPProxyModeHandler` ✅
+- [x] Migrar lógica CLI a `CLIModeHandler` ✅
+- [x] Crear función factory `create_handler(mode, websocket, cwd)` ✅
+- [x] Refactorizar `agent_websocket` para usar handlers ✅
+- [x] Unificar código duplicado de approval en `approval.py` ✅
 
-### Estructura base esperada
+### Estructura implementada
 ```python
 # handlers/base.py
 class BaseAgentHandler(ABC):
-    def __init__(self, websocket: WebSocket, cwd: str):
-        self.websocket = websocket
-        self.cwd = cwd
+    def __init__(self, config: HandlerConfig, callbacks: HandlerCallbacks):
+        self.config = config
+        self.callbacks = callbacks
+        self.runner = None
+        self._running = False
 
     @abstractmethod
-    async def handle_run(self, message: dict) -> None: ...
+    async def handle_run(self, prompt: str, message: dict) -> asyncio.Task: ...
 
     @abstractmethod
     async def handle_cancel(self) -> None: ...
+
+    async def handle_tool_approval_response(...) -> bool: ...
+    async def cleanup(self) -> None: ...
 ```
 
 ---
@@ -255,7 +261,7 @@ interface BasePendingApproval {
 | 1 | Fase 1: Debug/Logging | 30 min | Alto | [x] Completada ✅ |
 | 2 | Fase 2: Constantes | 15 min | Medio | [x] Completada ✅ |
 | 3 | Fase 6: Limpieza | 15 min | Bajo | [x] Completada ✅ |
-| 4 | Fase 3: Handlers | 2 horas | Alto | [ ] Pendiente |
+| 4 | Fase 3: Handlers | 2 horas | Alto | [x] Completada ✅ |
 | 5 | Fase 4: Métodos largos | 1 hora | Medio | [ ] Pendiente |
 | 6 | Fase 5: TypeScript | 1 hora | Medio | [ ] Pendiente |
 
@@ -277,5 +283,6 @@ interface BasePendingApproval {
 |-------|------|---------|--------|
 | 2025-11-28 | Fase 1 | Debug/Logging cleanup - 60+ prints eliminados | 0ed2973 |
 | 2025-11-28 | Fase 2 | Constantes compartidas - constants.py creado, 4 archivos actualizados | ead73be |
-| 2025-11-28 | Fase 6 | Limpieza código muerto - LEGACY_SOCKET_PATH, _pending, difflib imports, substr | Pendiente |
+| 2025-11-28 | Fase 6 | Limpieza código muerto - LEGACY_SOCKET_PATH, _pending, difflib imports, substr | c00c2bd |
+| 2025-11-28 | Fase 3 | Handler extraction - 7 archivos creados, terminal.py reducido ~40% | a6ed3b6 |
 
