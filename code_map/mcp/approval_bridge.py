@@ -12,7 +12,6 @@ import asyncio
 import difflib
 import json
 import logging
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Optional, Awaitable
@@ -38,6 +37,7 @@ class ApprovalRequest:
     Contains all information needed for the frontend to display
     a meaningful approval dialog.
     """
+
     request_id: str
     tool_name: str
     tool_input: dict[str, Any]
@@ -99,14 +99,15 @@ class ApprovalBridge:
         self._futures: dict[str, asyncio.Future] = {}
 
         # Callback to notify frontend
-        self._notify_callback: Optional[Callable[[ApprovalRequest], Awaitable[None]]] = None
+        self._notify_callback: Optional[
+            Callable[[ApprovalRequest], Awaitable[None]]
+        ] = None
 
         # Lock for sequential processing
         self._lock = asyncio.Lock()
 
     def set_notify_callback(
-        self,
-        callback: Callable[[ApprovalRequest], Awaitable[None]]
+        self, callback: Callable[[ApprovalRequest], Awaitable[None]]
     ) -> None:
         """
         Set callback to notify frontend of new approval requests.
@@ -122,10 +123,7 @@ class ApprovalBridge:
     # -------------------------------------------------------------------------
 
     def _create_approval_request(
-        self,
-        tool_name: str,
-        tool_input: dict[str, Any],
-        context: str
+        self, tool_name: str, tool_input: dict[str, Any], context: str
     ) -> ApprovalRequest:
         """Create an ApprovalRequest with a unique ID."""
         return ApprovalRequest(
@@ -137,23 +135,13 @@ class ApprovalBridge:
 
     def _auto_approve_response(self, tool_input: dict[str, Any]) -> dict[str, Any]:
         """Create auto-approve response for safe tools."""
-        return {
-            "approved": True,
-            "message": "",
-            "updated_input": tool_input
-        }
+        return {"approved": True, "message": "", "updated_input": tool_input}
 
     def _denial_response(
-        self,
-        tool_input: dict[str, Any],
-        message: str
+        self, tool_input: dict[str, Any], message: str
     ) -> dict[str, Any]:
         """Create denial response."""
-        return {
-            "approved": False,
-            "message": message,
-            "updated_input": tool_input
-        }
+        return {"approved": False, "message": message, "updated_input": tool_input}
 
     # -------------------------------------------------------------------------
     # Response Handling
@@ -173,8 +161,7 @@ class ApprovalBridge:
             except Exception as e:
                 logger.error(f"Error in notify callback: {e}", exc_info=True)
                 return self._denial_response(
-                    request.tool_input,
-                    f"Failed to notify frontend: {e}"
+                    request.tool_input, f"Failed to notify frontend: {e}"
                 )
         else:
             logger.warning("No notify callback set, auto-approving")
@@ -184,13 +171,14 @@ class ApprovalBridge:
         logger.debug(f"Waiting for user response (timeout={self.timeout}s)")
         try:
             result = await asyncio.wait_for(future, timeout=self.timeout)
-            logger.debug(f"Got response for {request.request_id}: approved={result.get('approved')}")
+            logger.debug(
+                f"Got response for {request.request_id}: approved={result.get('approved')}"
+            )
             return result
         except asyncio.TimeoutError:
             logger.warning(f"Approval request {request.request_id} timed out")
             return self._denial_response(
-                request.tool_input,
-                "Approval timeout - no response from user"
+                request.tool_input, "Approval timeout - no response from user"
             )
 
     # -------------------------------------------------------------------------
@@ -198,10 +186,7 @@ class ApprovalBridge:
     # -------------------------------------------------------------------------
 
     async def request_approval(
-        self,
-        tool_name: str,
-        tool_input: dict[str, Any],
-        context: str = ""
+        self, tool_name: str, tool_input: dict[str, Any], context: str = ""
     ) -> dict[str, Any]:
         """
         Request approval from the user for a tool execution.
@@ -234,7 +219,9 @@ class ApprovalBridge:
             future = asyncio.get_event_loop().create_future()
             self._futures[request.request_id] = future
 
-            logger.debug(f"Created approval request {request.request_id} for {tool_name}")
+            logger.debug(
+                f"Created approval request {request.request_id} for {tool_name}"
+            )
 
             try:
                 return await self._notify_and_wait(request, future)
@@ -249,7 +236,7 @@ class ApprovalBridge:
         request_id: str,
         approved: bool,
         message: str = "",
-        updated_input: Optional[dict[str, Any]] = None
+        updated_input: Optional[dict[str, Any]] = None,
     ) -> bool:
         """
         Respond to a pending approval request.
@@ -275,11 +262,13 @@ class ApprovalBridge:
         # Use original input if no updated input provided
         original_input = request.tool_input if request else {}
 
-        future.set_result({
-            "approved": approved,
-            "message": message,
-            "updated_input": updated_input or original_input
-        })
+        future.set_result(
+            {
+                "approved": approved,
+                "message": message,
+                "updated_input": updated_input or original_input,
+            }
+        )
 
         logger.debug(f"Approval response for {request_id}: approved={approved}")
         return True
@@ -296,7 +285,6 @@ class ApprovalBridge:
         """Generate preview data based on tool type"""
 
         tool_name = request.tool_name
-        tool_input = request.tool_input
 
         if tool_name in FILE_TOOLS:
             await self._generate_file_preview(request)
@@ -330,9 +318,7 @@ class ApprovalBridge:
 
             # Generate diff
             request.diff_lines = self._generate_diff(
-                request.original_content or "",
-                new_content,
-                file_path
+                request.original_content or "", new_content, file_path
             )
 
             request.preview_data = {
@@ -364,21 +350,30 @@ class ApprovalBridge:
                         new_content = original.replace(old_string, new_string, 1)
 
                     request.new_content = new_content
-                    request.diff_lines = self._generate_diff(original, new_content, file_path)
+                    request.diff_lines = self._generate_diff(
+                        original, new_content, file_path
+                    )
 
                     occurrences = original.count(old_string)
                     request.preview_data = {
                         "file_path": file_path,
-                        "old_string_preview": old_string[:PREVIEW_CHAR_LIMIT] + ("..." if len(old_string) > PREVIEW_CHAR_LIMIT else ""),
-                        "new_string_preview": new_string[:PREVIEW_CHAR_LIMIT] + ("..." if len(new_string) > PREVIEW_CHAR_LIMIT else ""),
+                        "old_string_preview": old_string[:PREVIEW_CHAR_LIMIT]
+                        + ("..." if len(old_string) > PREVIEW_CHAR_LIMIT else ""),
+                        "new_string_preview": new_string[:PREVIEW_CHAR_LIMIT]
+                        + ("..." if len(new_string) > PREVIEW_CHAR_LIMIT else ""),
                         "replace_all": replace_all,
                         "occurrences": occurrences,
-                        "will_replace": occurrences if replace_all else min(1, occurrences),
+                        "will_replace": (
+                            occurrences if replace_all else min(1, occurrences)
+                        ),
                     }
                 except Exception as e:
                     request.preview_data = {"error": str(e), "file_path": file_path}
             else:
-                request.preview_data = {"error": f"File not found: {file_path}", "file_path": file_path}
+                request.preview_data = {
+                    "error": f"File not found: {file_path}",
+                    "file_path": file_path,
+                }
 
     def _generate_command_preview(self, request: ApprovalRequest) -> None:
         """Generate preview for command execution"""
@@ -397,7 +392,9 @@ class ApprovalBridge:
             "has_rm": "rm " in command or command.startswith("rm"),
             "has_pipe": "|" in command,
             "has_redirect": ">" in command,
-            "is_dangerous": any(x in command for x in ["sudo", "rm -rf", "dd ", "mkfs", "> /dev/"]),
+            "is_dangerous": any(
+                x in command for x in ["sudo", "rm -rf", "dd ", "mkfs", "> /dev/"]
+            ),
         }
 
     def _generate_generic_preview(self, request: ApprovalRequest) -> None:
@@ -413,13 +410,15 @@ class ApprovalBridge:
         original_lines = original.splitlines(keepends=True)
         modified_lines = modified.splitlines(keepends=True)
 
-        diff = list(difflib.unified_diff(
-            original_lines,
-            modified_lines,
-            fromfile=f"a/{file_path}",
-            tofile=f"b/{file_path}",
-            lineterm=""
-        ))
+        diff = list(
+            difflib.unified_diff(
+                original_lines,
+                modified_lines,
+                fromfile=f"a/{file_path}",
+                tofile=f"b/{file_path}",
+                lineterm="",
+            )
+        )
 
         return diff
 
@@ -430,7 +429,9 @@ class ApprovalBridge:
             return path
         return Path(self.cwd) / path
 
-    def _summarize_input(self, tool_input: dict[str, Any], max_length: int = SUMMARY_CHAR_LIMIT) -> str:
+    def _summarize_input(
+        self, tool_input: dict[str, Any], max_length: int = SUMMARY_CHAR_LIMIT
+    ) -> str:
         """Create summary of tool input"""
         try:
             json_str = json.dumps(tool_input, indent=2)

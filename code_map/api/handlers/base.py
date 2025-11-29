@@ -108,7 +108,7 @@ class BaseAgentHandler(ABC):
             True if response was processed, False otherwise
         """
         # Default implementation - can be overridden by subclasses
-        if self.runner and hasattr(self.runner, 'respond_to_tool_approval'):
+        if self.runner and hasattr(self.runner, "respond_to_tool_approval"):
             return self.runner.respond_to_tool_approval(request_id, approved, feedback)
         return False
 
@@ -121,7 +121,11 @@ class BaseAgentHandler(ABC):
             except asyncio.CancelledError:
                 pass
 
-        if self.runner and hasattr(self.runner, 'is_running') and self.runner.is_running:
+        if (
+            self.runner
+            and hasattr(self.runner, "is_running")
+            and self.runner.is_running
+        ):
             await self.handle_cancel()
 
         self._running = False

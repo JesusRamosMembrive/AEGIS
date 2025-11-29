@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from code_map.audit import create_run, close_run, list_events, get_run
+from code_map.audit import create_run, list_events
 from code_map.audit.hooks import (
     AuditContext,
     audit_tracked,
@@ -56,7 +56,7 @@ class TestAuditContext:
             event_type="test",
             phase="plan",
             actor="agent"
-        ) as ctx:
+        ):
             # Simulate some work
             time.sleep(0.1)
 
@@ -89,7 +89,7 @@ class TestAuditContext:
                 run_id=test_run.id,
                 title="Failing Operation",
                 event_type="test",
-            ) as ctx:
+            ):
                 raise ValueError("Test error")
 
         # Verify error event was created
@@ -109,7 +109,7 @@ class TestAuditContext:
             title="Operation with Detail",
             detail="Initial detail",
             event_type="test",
-        ) as ctx:
+        ):
             pass
 
         events = list_events(test_run.id, limit=10)
@@ -125,7 +125,7 @@ class TestAuditContext:
             title="Operation with Payload",
             event_type="test",
             payload=payload
-        ) as ctx:
+        ):
             pass
 
         events = list_events(test_run.id, limit=10)
@@ -289,7 +289,7 @@ class TestAuditRunCommand:
         # Generate large output (>2000 chars)
         large_text = "x" * 3000
 
-        result = audit_run_command(
+        audit_run_command(
             ["echo", large_text],
             run_id=test_run.id
         )

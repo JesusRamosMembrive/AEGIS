@@ -12,14 +12,12 @@ This module provides a PTY-based interface to Claude Code that:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
 from typing import Any, AsyncIterator, Callable, Optional
 
 import pexpect
@@ -31,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class RunnerState(Enum):
     """State of the PTY runner."""
+
     IDLE = "idle"
     INITIALIZING = "initializing"
     RUNNING = "running"
@@ -42,6 +41,7 @@ class RunnerState(Enum):
 @dataclass
 class PTYRunnerConfig:
     """Configuration for the PTY runner."""
+
     working_directory: str = "."
     timeout: float = 300.0  # 5 minutes default
     pty_dimensions: tuple[int, int] = (50, 140)  # rows, cols
@@ -85,7 +85,9 @@ class PTYClaudeRunner:
         """Set callback for event emissions."""
         self._on_event = callback
 
-    def set_permission_callback(self, callback: Callable[[dict[str, Any]], asyncio.Future]):
+    def set_permission_callback(
+        self, callback: Callable[[dict[str, Any]], asyncio.Future]
+    ):
         """Set callback for permission requests (should return Future with response)."""
         self._on_permission = callback
 
@@ -102,28 +104,34 @@ class PTYClaudeRunner:
             await self.stop_session()
 
         self._state = RunnerState.INITIALIZING
-        self._emit_event({
-            "type": "session_start",
-            "timestamp": datetime.now().isoformat(),
-            "working_directory": self.config.working_directory,
-        })
+        self._emit_event(
+            {
+                "type": "session_start",
+                "timestamp": datetime.now().isoformat(),
+                "working_directory": self.config.working_directory,
+            }
+        )
 
         try:
             # Build environment
             env = os.environ.copy()
             env["TERM"] = "xterm-256color"
 
-            logger.info(f"PTYRunner: Spawning claude binary: {self.config.claude_binary}")
+            logger.info(
+                f"PTYRunner: Spawning claude binary: {self.config.claude_binary}"
+            )
             # Spawn Claude in PTY
             self._process = pexpect.spawn(
                 self.config.claude_binary,
-                encoding='utf-8',
+                encoding="utf-8",
                 timeout=self.config.timeout,
                 dimensions=self.config.pty_dimensions,
                 cwd=self.config.working_directory,
                 env=env,
             )
-            logger.info(f"PTYRunner: Claude spawned, waiting {self.config.init_wait}s for initialization")
+            logger.info(
+                f"PTYRunner: Claude spawned, waiting {self.config.init_wait}s for initialization"
+            )
 
             # Wait for initialization
             await asyncio.sleep(self.config.init_wait)
@@ -141,27 +149,31 @@ class PTYClaudeRunner:
 
             self._state = RunnerState.RUNNING
             logger.info("PTYRunner: Session ready, returning True")
-            self._emit_event({
-                "type": "session_ready",
-                "timestamp": datetime.now().isoformat(),
-            })
+            self._emit_event(
+                {
+                    "type": "session_ready",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return True
 
         except Exception as e:
             logger.error(f"Failed to start session: {e}", exc_info=True)
             self._state = RunnerState.ERROR
-            self._emit_event({
-                "type": "error",
-                "timestamp": datetime.now().isoformat(),
-                "content": str(e),
-            })
+            self._emit_event(
+                {
+                    "type": "error",
+                    "timestamp": datetime.now().isoformat(),
+                    "content": str(e),
+                }
+            )
             return False
 
     async def stop_session(self):
         """Stop the current session."""
         if self._process is not None:
             try:
-                self._process.sendcontrol('c')
+                self._process.sendcontrol("c")
                 await asyncio.sleep(0.5)
                 self._process.close(force=True)
             except Exception as e:
@@ -174,10 +186,12 @@ class PTYClaudeRunner:
         self._state = RunnerState.IDLE
         self._pending_permission = None
 
-        self._emit_event({
-            "type": "session_end",
-            "timestamp": datetime.now().isoformat(),
-        })
+        self._emit_event(
+            {
+                "type": "session_end",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     async def send_prompt(self, prompt: str) -> AsyncIterator[dict[str, Any]]:
         """
@@ -196,19 +210,21 @@ class PTYClaudeRunner:
             raise RuntimeError("Waiting for permission response")
 
         self._state = RunnerState.RUNNING
-        self._emit_event({
-            "type": "prompt_sent",
-            "timestamp": datetime.now().isoformat(),
-            "data": {"prompt": prompt[:200]},  # Truncate for logging
-        })
+        self._emit_event(
+            {
+                "type": "prompt_sent",
+                "timestamp": datetime.now().isoformat(),
+                "data": {"prompt": prompt[:200]},  # Truncate for logging
+            }
+        )
 
         # Send prompt using ESC+Enter method (proven to work with Ink UI)
         # The ESC clears any pending state, Enter submits
         self._process.send(prompt)
         await asyncio.sleep(0.3)
-        self._process.send('\x1b')  # ESC
+        self._process.send("\x1b")  # ESC
         await asyncio.sleep(0.1)
-        self._process.send('\r')    # Enter to submit
+        self._process.send("\r")  # Enter to submit
 
         # Collect and yield output
         start_time = time.time()
@@ -218,7 +234,9 @@ class PTYClaudeRunner:
 
         while time.time() - start_time < self.config.timeout:
             try:
-                chunk = self._process.read_nonblocking(16384, timeout=self.config.read_interval)
+                chunk = self._process.read_nonblocking(
+                    16384, timeout=self.config.read_interval
+                )
                 if chunk:
                     idle_count = 0  # Reset idle counter
                     events = self._parse_output(chunk)
@@ -279,13 +297,13 @@ class PTYClaudeRunner:
         if approved:
             if always:
                 # Select "Always allow" option (typically 'a' or arrow down + enter)
-                self._process.send('a')
+                self._process.send("a")
             else:
                 # Select "Allow once" (typically 'y' or enter)
-                self._process.send('y')
+                self._process.send("y")
         else:
             # Deny (typically 'n' or escape)
-            self._process.send('n')
+            self._process.send("n")
 
         await asyncio.sleep(0.3)
         self._pending_permission = None

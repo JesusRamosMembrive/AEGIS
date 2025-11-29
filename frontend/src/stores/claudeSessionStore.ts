@@ -444,6 +444,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         const userMessage: ClaudeMessage = {
           id: generateMessageId(),
           type: "text",
+          role: "user",
           content: prompt,
           timestamp: new Date(),
         };
@@ -641,6 +642,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         const userMessage: ClaudeMessage = {
           id: generateMessageId(),
           type: "text",
+          role: "user",
           content: prompt,
           timestamp: new Date(),
         };
@@ -715,7 +717,8 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         const userMessage: ClaudeMessage = {
           id: generateMessageId(),
           type: "system",
-          content: "⚡ Executing plan with auto-approve mode...",
+          role: "assistant",
+          content: "Executing plan with auto-approve mode...",
           timestamp: new Date(),
         };
 
@@ -760,6 +763,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
             const message: ClaudeMessage = {
               id: generateMessageId(),
               type: "text",
+              role: "assistant",
               content: event.content,
               timestamp: new Date(),
               usage: event.usage,
@@ -787,6 +791,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
             const message: ClaudeMessage = {
               id: generateMessageId(),
               type: "tool_use",
+              role: "assistant",
               content: event.content,
               timestamp: new Date(),
               toolName: event.content.name,
@@ -818,6 +823,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
             const message: ClaudeMessage = {
               id: generateMessageId(),
               type: "tool_result",
+              role: "assistant",
               content: event.content.content,
               timestamp: new Date(),
               toolId,
@@ -880,6 +886,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
             const message: ClaudeMessage = {
               id: generateMessageId(),
               type: "error",
+              role: "assistant",
               content: errorContent,
               timestamp: new Date(),
               isError: true,
@@ -1027,6 +1034,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
               const message: ClaudeMessage = {
                 id: generateMessageId(),
                 type: "error",
+                role: "assistant",
                 content: event.result,
                 timestamp: new Date(),
                 isError: true,
@@ -1075,6 +1083,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
               const message: ClaudeMessage = {
                 id: generateMessageId(),
                 type: "text",
+                role: "assistant",
                 content: content,
                 timestamp: new Date(),
               };

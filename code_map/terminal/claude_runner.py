@@ -52,24 +52,41 @@ def find_claude_cli() -> str:
             return str(path)
 
     # Fallback - will likely fail but let it try
-    logger.warning("Claude CLI not found in common locations, using 'claude' (may fail)")
+    logger.warning(
+        "Claude CLI not found in common locations, using 'claude' (may fail)"
+    )
     return "claude"
 
 
 # Permission modes supported by Claude CLI
-PERMISSION_MODES = ("default", "acceptEdits", "bypassPermissions", "dontAsk", "plan", "toolApproval", "mcpApproval")
+PERMISSION_MODES = (
+    "default",
+    "acceptEdits",
+    "bypassPermissions",
+    "dontAsk",
+    "plan",
+    "toolApproval",
+    "mcpApproval",
+)
 
 
 @dataclass
 class ClaudeRunnerConfig:
     """Configuration for Claude Code runner"""
+
     cwd: str
     continue_session: bool = True
     verbose: bool = True
     timeout: Optional[float] = None  # None = no timeout
-    permission_mode: str = "default"  # default, acceptEdits, bypassPermissions, dontAsk, plan, toolApproval, mcpApproval
-    auto_approve_safe_tools: bool = False  # Only used with toolApproval/mcpApproval mode
-    mcp_socket_path: str = "/tmp/atlas_mcp_approval.sock"  # Socket for MCP approval communication
+    permission_mode: str = (
+        "default"  # default, acceptEdits, bypassPermissions, dontAsk, plan, toolApproval, mcpApproval
+    )
+    auto_approve_safe_tools: bool = (
+        False  # Only used with toolApproval/mcpApproval mode
+    )
+    mcp_socket_path: str = (
+        "/tmp/atlas_mcp_approval.sock"  # Socket for MCP approval communication
+    )
 
 
 class ClaudeAgentRunner:
@@ -100,6 +117,7 @@ class ClaudeAgentRunner:
         self._tool_approval_manager = None
         if config.permission_mode == "toolApproval":
             from .tool_approval import ToolApprovalManager
+
             self._tool_approval_manager = ToolApprovalManager(
                 cwd=config.cwd,
                 auto_approve_safe=config.auto_approve_safe_tools,
@@ -132,11 +150,14 @@ class ClaudeAgentRunner:
         print(f"DEBUG: run_prompt called with prompt: {prompt[:50]}...")
         claude_bin = find_claude_cli()
         cmd = [
-            claude_bin, "-p",
-            "--output-format", "stream-json",
-            "--input-format", "stream-json",
+            claude_bin,
+            "-p",
+            "--output-format",
+            "stream-json",
+            "--input-format",
+            "stream-json",
             "--include-partial-messages",
-            "--verbose"  # Required for stream-json
+            "--verbose",  # Required for stream-json
         ]
 
         if self.config.continue_session:
@@ -167,7 +188,9 @@ class ClaudeAgentRunner:
                 #
                 # For better UX, use mcpApproval mode which uses --permission-prompt-tool
                 cmd.extend(["--permission-mode", "plan"])
-                logger.info("Tool approval mode: using plan mode, will execute approved tools manually")
+                logger.info(
+                    "Tool approval mode: using plan mode, will execute approved tools manually"
+                )
             elif self.config.permission_mode == "mcpApproval":
                 # mcpApproval mode: DEPRECATED - --permission-prompt-tool does not exist in Claude Code
                 #
@@ -175,10 +198,17 @@ class ClaudeAgentRunner:
                 # Claude Code v2.0.55 does not have --permission-prompt-tool option.
                 #
                 # Falling back to plan mode with a warning
-                logger.warning("mcpApproval mode is not available - --permission-prompt-tool doesn't exist in Claude Code")
-                logger.warning("Falling back to plan mode. Claude will propose actions but not execute them.")
+                logger.warning(
+                    "mcpApproval mode is not available - --permission-prompt-tool doesn't exist in Claude Code"
+                )
+                logger.warning(
+                    "Falling back to plan mode. Claude will propose actions but not execute them."
+                )
                 cmd.extend(["--permission-mode", "plan"])
-            elif self.config.permission_mode != "default" and self.config.permission_mode in PERMISSION_MODES:
+            elif (
+                self.config.permission_mode != "default"
+                and self.config.permission_mode in PERMISSION_MODES
+            ):
                 cmd.extend(["--permission-mode", self.config.permission_mode])
             # For "default" mode, rely on .claude/settings.local.json rules
 
@@ -194,23 +224,25 @@ class ClaudeAgentRunner:
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=self.config.cwd
+                cwd=self.config.cwd,
             )
 
             logger.info(f"Claude Code process started: PID={self.process.pid}")
 
             # Send the initial prompt as JSON (stream-json input format)
             # Format: {"type":"user","message":{"role":"user","content":"..."},"session_id":"default","parent_tool_use_id":null}
-            initial_message = json.dumps({
-                "type": "user",
-                "message": {
-                    "role": "user",
-                    "content": prompt
-                },
-                "session_id": "default",
-                "parent_tool_use_id": None
-            }) + "\n"
-            self.process.stdin.write(initial_message.encode('utf-8'))
+            initial_message = (
+                json.dumps(
+                    {
+                        "type": "user",
+                        "message": {"role": "user", "content": prompt},
+                        "session_id": "default",
+                        "parent_tool_use_id": None,
+                    }
+                )
+                + "\n"
+            )
+            self.process.stdin.write(initial_message.encode("utf-8"))
             await self.process.stdin.drain()
             logger.info("Initial prompt sent to Claude")
 
@@ -225,52 +257,80 @@ class ClaudeAgentRunner:
 
                 while self.running and not self._cancelled:
                     try:
-                        logger.debug(f"[read_stdout] Waiting for line {line_count + 1}...")
+                        logger.debug(
+                            f"[read_stdout] Waiting for line {line_count + 1}..."
+                        )
                         line = await self.process.stdout.readline()
                         if not line:
-                            logger.info(f"[read_stdout] EOF reached after {line_count} lines")
-                            print(f"DEBUG: [read_stdout] EOF reached")
+                            logger.info(
+                                f"[read_stdout] EOF reached after {line_count} lines"
+                            )
+                            print("DEBUG: [read_stdout] EOF reached")
                             break
 
                         line_count += 1
-                        line_str = line.decode('utf-8').strip()
+                        line_str = line.decode("utf-8").strip()
                         if not line_str:
                             continue
 
-                        logger.debug(f"[read_stdout] Line {line_count}: {line_str[:100]}...")
+                        logger.debug(
+                            f"[read_stdout] Line {line_count}: {line_str[:100]}..."
+                        )
 
                         # Parse JSON
                         try:
                             event = json.loads(line_str)
 
                             # DEBUG: Log tool_use events in toolApproval mode
-                            if self._tool_approval_manager and self._is_tool_use_event(event):
+                            if self._tool_approval_manager and self._is_tool_use_event(
+                                event
+                            ):
                                 tool_info = self._extract_tool_use_from_event(event)
                                 if tool_info:
-                                    logger.info(f"[toolApproval] tool_use detected: {tool_info[0]} (id={tool_info[2]})")
+                                    logger.info(
+                                        f"[toolApproval] tool_use detected: {tool_info[0]} (id={tool_info[2]})"
+                                    )
 
                             # Check for permission request
                             if self._is_permission_request(event):
-                                logger.info(f"Permission request received: {event.get('type')}")
-                                await self._handle_permission_request(event, on_permission_request)
+                                logger.info(
+                                    f"Permission request received: {event.get('type')}"
+                                )
+                                await self._handle_permission_request(
+                                    event, on_permission_request
+                                )
                             # Check for tool_use in toolApproval mode
-                            elif self._is_tool_use_event(event) and self._tool_approval_manager and on_tool_approval_request:
-                                logger.info(f"[toolApproval] Intercepting tool_use for approval (line {line_count})")
+                            elif (
+                                self._is_tool_use_event(event)
+                                and self._tool_approval_manager
+                                and on_tool_approval_request
+                            ):
+                                logger.info(
+                                    f"[toolApproval] Intercepting tool_use for approval (line {line_count})"
+                                )
                                 # Spawn approval as separate task to not block the reader
                                 approval_task = asyncio.create_task(
-                                    self._handle_tool_approval(event, on_event, on_tool_approval_request)
+                                    self._handle_tool_approval(
+                                        event, on_event, on_tool_approval_request
+                                    )
                                 )
                                 self._pending_approval_tasks.append(approval_task)
-                                logger.info(f"[toolApproval] Spawned approval task for line {line_count}")
+                                logger.info(
+                                    f"[toolApproval] Spawned approval task for line {line_count}"
+                                )
                             else:
                                 # Call event callback
-                                print(f"DEBUG: Emitting event: {event.get('type')} subtype={event.get('subtype')}")
+                                print(
+                                    f"DEBUG: Emitting event: {event.get('type')} subtype={event.get('subtype')}"
+                                )
                                 result = on_event(event)
                                 if asyncio.iscoroutine(result):
                                     await result
 
                         except json.JSONDecodeError as e:
-                            logger.warning(f"Invalid JSON line: {line_str[:100]}... Error: {e}")
+                            logger.warning(
+                                f"Invalid JSON line: {line_str[:100]}... Error: {e}"
+                            )
                             # Still emit as raw text for debugging
                             if on_error:
                                 result = on_error(f"[PARSE ERROR] {line_str}")
@@ -284,7 +344,9 @@ class ClaudeAgentRunner:
                         logger.error(f"[read_stdout] Error reading stdout: {e}")
                         break
 
-                logger.info(f"[read_stdout] Reader loop exited after {line_count} lines")
+                logger.info(
+                    f"[read_stdout] Reader loop exited after {line_count} lines"
+                )
 
             # Read stderr for errors
             async def read_stderr():
@@ -297,7 +359,7 @@ class ClaudeAgentRunner:
                         if not line:
                             break
 
-                        line_str = line.decode('utf-8').strip()
+                        line_str = line.decode("utf-8").strip()
                         if line_str and on_error:
                             result = on_error(line_str)
                             if asyncio.iscoroutine(result):
@@ -319,40 +381,55 @@ class ClaudeAgentRunner:
             try:
                 if self.config.timeout:
                     await asyncio.wait_for(
-                        self.process.wait(),
-                        timeout=self.config.timeout
+                        self.process.wait(), timeout=self.config.timeout
                     )
                 else:
-                    print(f"DEBUG: [run_prompt] Waiting for process.wait()...")
+                    print("DEBUG: [run_prompt] Waiting for process.wait()...")
                     await self.process.wait()
-                    print(f"DEBUG: [run_prompt] process.wait() returned")
-                logger.info(f"[run_prompt] Process completed with returncode: {self.process.returncode}")
+                    print("DEBUG: [run_prompt] process.wait() returned")
+                logger.info(
+                    f"[run_prompt] Process completed with returncode: {self.process.returncode}"
+                )
             except asyncio.TimeoutError:
                 logger.warning("[run_prompt] Claude Code process timed out")
                 await self.cancel()
 
             # Wait for readers to finish
             logger.info("[run_prompt] Waiting for reader tasks to complete...")
-            print(f"DEBUG: [run_prompt] Waiting for reader tasks...")
-            results = await asyncio.gather(stdout_task, stderr_task, return_exceptions=True)
-            print(f"DEBUG: [run_prompt] Reader tasks completed")
-            logger.info(f"[run_prompt] Reader tasks completed: {[type(r).__name__ if isinstance(r, Exception) else 'OK' for r in results]}")
+            print("DEBUG: [run_prompt] Waiting for reader tasks...")
+            results = await asyncio.gather(
+                stdout_task, stderr_task, return_exceptions=True
+            )
+            print("DEBUG: [run_prompt] Reader tasks completed")
+            logger.info(
+                f"[run_prompt] Reader tasks completed: {[type(r).__name__ if isinstance(r, Exception) else 'OK' for r in results]}"
+            )
 
             # Wait for any pending approval tasks
             if self._pending_approval_tasks:
-                logger.info(f"[run_prompt] Waiting for {len(self._pending_approval_tasks)} pending approval tasks...")
-                print(f"DEBUG: [run_prompt] Waiting for {len(self._pending_approval_tasks)} approval tasks...")
-                approval_results = await asyncio.gather(*self._pending_approval_tasks, return_exceptions=True)
-                print(f"DEBUG: [run_prompt] Approval tasks completed")
-                logger.info(f"[run_prompt] Approval tasks completed: {[type(r).__name__ if isinstance(r, Exception) else 'OK' for r in approval_results]}")
+                logger.info(
+                    f"[run_prompt] Waiting for {len(self._pending_approval_tasks)} pending approval tasks..."
+                )
+                print(
+                    f"DEBUG: [run_prompt] Waiting for {len(self._pending_approval_tasks)} approval tasks..."
+                )
+                approval_results = await asyncio.gather(
+                    *self._pending_approval_tasks, return_exceptions=True
+                )
+                print("DEBUG: [run_prompt] Approval tasks completed")
+                logger.info(
+                    f"[run_prompt] Approval tasks completed: {[type(r).__name__ if isinstance(r, Exception) else 'OK' for r in approval_results]}"
+                )
                 self._pending_approval_tasks.clear()
 
             exit_code = self.process.returncode or 0
-            logger.info(f"[run_prompt] Claude Code process exited with code {exit_code}")
+            logger.info(
+                f"[run_prompt] Claude Code process exited with code {exit_code}"
+            )
 
             # Call done callback
             logger.info("[run_prompt] Calling on_done callback...")
-            print(f"DEBUG: [run_prompt] Calling on_done...")
+            print("DEBUG: [run_prompt] Calling on_done...")
             if on_done:
                 result = on_done()
                 if asyncio.iscoroutine(result):
@@ -452,7 +529,9 @@ class ClaudeAgentRunner:
         tool_info = self._extract_tool_use_from_event(event)
         if tool_info is None:
             # Couldn't extract tool info, forward as-is
-            logger.warning(f"[toolApproval] Could not extract tool info from event: {event}")
+            logger.warning(
+                f"[toolApproval] Could not extract tool info from event: {event}"
+            )
             result = on_event(event)
             if asyncio.iscoroutine(result):
                 await result
@@ -461,7 +540,9 @@ class ClaudeAgentRunner:
         tool_name, tool_input, tool_id = tool_info
 
         logger.info(f"[toolApproval] Intercepted {tool_name} (id={tool_id})")
-        logger.info(f"[toolApproval] Process running: {self.process is not None and self.running}")
+        logger.info(
+            f"[toolApproval] Process running: {self.process is not None and self.running}"
+        )
 
         # Forward the tool_use event to frontend (so they see what Claude wants to do)
         print(f"DEBUG: Forwarding tool_use event to frontend: {tool_name}")
@@ -472,37 +553,58 @@ class ClaudeAgentRunner:
         # Create approval request with preview/diff
         async def send_approval_request(request):
             """Callback to send approval request to frontend"""
-            print(f"DEBUG: [send_approval_request] Entered callback for {request.tool_name} (id={request.request_id})", flush=True)
-            logger.info(f"[toolApproval] Sending approval request to frontend: {request.request_id}")
+            print(
+                f"DEBUG: [send_approval_request] Entered callback for {request.tool_name} (id={request.request_id})",
+                flush=True,
+            )
+            logger.info(
+                f"[toolApproval] Sending approval request to frontend: {request.request_id}"
+            )
             try:
                 result = on_tool_approval_request(request)
-                print(f"DEBUG: [send_approval_request] Called on_tool_approval_request, result type: {type(result)}", flush=True)
+                print(
+                    f"DEBUG: [send_approval_request] Called on_tool_approval_request, result type: {type(result)}",
+                    flush=True,
+                )
                 if asyncio.iscoroutine(result):
-                    print(f"DEBUG: [send_approval_request] Awaiting coroutine...", flush=True)
+                    print(
+                        "DEBUG: [send_approval_request] Awaiting coroutine...",
+                        flush=True,
+                    )
                     await result
-                    print(f"DEBUG: [send_approval_request] Coroutine completed", flush=True)
-                print(f"DEBUG: [send_approval_request] Callback completed successfully for {request.tool_name}", flush=True)
+                    print(
+                        "DEBUG: [send_approval_request] Coroutine completed",
+                        flush=True,
+                    )
+                print(
+                    f"DEBUG: [send_approval_request] Callback completed successfully for {request.tool_name}",
+                    flush=True,
+                )
             except Exception as e:
                 print(f"DEBUG: [send_approval_request] EXCEPTION: {e}", flush=True)
                 logger.error(f"Error in send_approval_request: {e}", exc_info=True)
                 raise
 
         # Process through approval manager (this blocks waiting for user)
-        logger.info(f"[toolApproval] Waiting for user approval...")
+        logger.info("[toolApproval] Waiting for user approval...")
         approved, feedback = await self._tool_approval_manager.process_tool_use(
             tool_name=tool_name,
             tool_input=tool_input,
             tool_use_id=tool_id,
             on_approval_request=send_approval_request,
         )
-        logger.info(f"[toolApproval] User response: approved={approved}, feedback={feedback}")
+        logger.info(
+            f"[toolApproval] User response: approved={approved}, feedback={feedback}"
+        )
         print(f"DEBUG: User approval response: approved={approved}")
 
         if approved:
             # Execute the tool manually
             logger.info(f"[toolApproval] Tool {tool_name} approved, executing...")
             tool_result = await self._execute_tool(tool_name, tool_input)
-            logger.info(f"[toolApproval] Tool execution result: error={tool_result.get('is_error')}, content_len={len(str(tool_result.get('content', '')))}")
+            logger.info(
+                f"[toolApproval] Tool execution result: error={tool_result.get('is_error')}, content_len={len(str(tool_result.get('content', '')))}"
+            )
 
             # Send tool_result event to frontend
             # IMPORTANT: Mark as "local_execution" so frontend knows this was executed locally
@@ -521,22 +623,26 @@ class ClaudeAgentRunner:
             result = on_event(result_event)
             if asyncio.iscoroutine(result):
                 await result
-            print(f"DEBUG: Sent local tool result event to frontend")
+            print("DEBUG: Sent local tool result event to frontend")
 
             # In toolApproval mode, we executed the tool locally.
             # We should NOT send the result back to Claude because:
             # 1. Claude might be in "plan" mode and has already exited or doesn't expect results.
-            # 2. Even if running, sending a result for a tool use that Claude didn't strictly "ask" for 
+            # 2. Even if running, sending a result for a tool use that Claude didn't strictly "ask" for
             #    (in the way it expects during execution) can cause "unexpected tool_use_id" errors.
             #
             # Instead, we just mark the session as broken so the next prompt starts a fresh session.
-            logger.info(f"[toolApproval] Tool executed locally. NOT sending result to Claude to avoid API errors.")
+            logger.info(
+                "[toolApproval] Tool executed locally. NOT sending result to Claude to avoid API errors."
+            )
             self._session_broken = True
-            
+
             # If the process is still running (e.g. we're not in plan mode but intercepting),
             # we should probably kill it or at least not try to talk to it anymore.
             if self.process and self.process.returncode is None:
-                logger.info(f"[toolApproval] Process still running, terminating it to ensure clean state for next session.")
+                logger.info(
+                    "[toolApproval] Process still running, terminating it to ensure clean state for next session."
+                )
                 try:
                     self.process.terminate()
                 except Exception as e:
@@ -564,12 +670,14 @@ class ClaudeAgentRunner:
 
             # In toolApproval mode, we rejected the tool locally.
             # We should NOT send the rejection back to Claude for the same reasons as above.
-            logger.info(f"[toolApproval] Tool rejected locally. NOT sending rejection to Claude.")
+            logger.info(
+                "[toolApproval] Tool rejected locally. NOT sending rejection to Claude."
+            )
             self._session_broken = True
 
             # Terminate process if still running
             if self.process and self.process.returncode is None:
-                logger.info(f"[toolApproval] Process still running, terminating it.")
+                logger.info("[toolApproval] Process still running, terminating it.")
                 try:
                     self.process.terminate()
                 except Exception as e:
@@ -695,7 +803,7 @@ class ClaudeAgentRunner:
             lines = content.splitlines()
 
             # Apply offset and limit
-            selected_lines = lines[offset:offset + limit]
+            selected_lines = lines[offset : offset + limit]
 
             # Format with line numbers (like cat -n)
             result_lines = []
@@ -806,7 +914,10 @@ class ClaudeAgentRunner:
 
         try:
             import glob as glob_module
-            files = glob_module.glob(os.path.join(search_path, glob_pattern), recursive=True)
+
+            files = glob_module.glob(
+                os.path.join(search_path, glob_pattern), recursive=True
+            )
 
             matches = []
             for file_path in files[:100]:  # Limit files
@@ -816,7 +927,9 @@ class ClaudeAgentRunner:
                     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         for line_num, line in enumerate(f, 1):
                             if regex.search(line):
-                                matches.append(f"{file_path}:{line_num}:{line.rstrip()}")
+                                matches.append(
+                                    f"{file_path}:{line_num}:{line.rstrip()}"
+                                )
                                 if len(matches) >= 100:  # Limit matches
                                     break
                 except Exception:
@@ -844,7 +957,9 @@ class ClaudeAgentRunner:
     async def _send_tool_result_to_claude(self, tool_id: str, result: dict):
         """Send tool result back to Claude via stdin"""
         logger.info(f"[toolApproval] _send_tool_result_to_claude called for {tool_id}")
-        logger.info(f"[toolApproval] Process state: process={self.process is not None}, running={self.running}")
+        logger.info(
+            f"[toolApproval] Process state: process={self.process is not None}, running={self.running}"
+        )
 
         if self.process is None:
             logger.error("[toolApproval] Cannot send tool result: process is None")
@@ -855,24 +970,33 @@ class ClaudeAgentRunner:
             return
 
         if self.process.returncode is not None:
-            logger.error(f"[toolApproval] Cannot send tool result: process already exited with code {self.process.returncode}")
+            logger.error(
+                f"[toolApproval] Cannot send tool result: process already exited with code {self.process.returncode}"
+            )
             return
 
         # Format tool result message
-        message = json.dumps({
-            "type": "user",
-            "message": {
-                "role": "user",
-                "content": [{
-                    "type": "tool_result",
-                    "tool_use_id": tool_id,
-                    "content": result.get("content", ""),
-                    "is_error": result.get("is_error", False),
-                }]
-            },
-            "session_id": "default",
-            "parent_tool_use_id": tool_id,
-        }) + "\n"
+        message = (
+            json.dumps(
+                {
+                    "type": "user",
+                    "message": {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": tool_id,
+                                "content": result.get("content", ""),
+                                "is_error": result.get("is_error", False),
+                            }
+                        ],
+                    },
+                    "session_id": "default",
+                    "parent_tool_use_id": tool_id,
+                }
+            )
+            + "\n"
+        )
 
         logger.info(f"[toolApproval] Sending message to stdin: {message[:200]}...")
 
@@ -881,16 +1005,23 @@ class ClaudeAgentRunner:
             await self.process.stdin.drain()
             logger.info(f"[toolApproval] Tool result sent to Claude for {tool_id}")
         except Exception as e:
-            logger.error(f"[toolApproval] Error sending tool result: {e}", exc_info=True)
+            logger.error(
+                f"[toolApproval] Error sending tool result: {e}", exc_info=True
+            )
 
     async def _send_tool_rejection_to_claude(self, tool_id: str, reason: str):
         """Send tool rejection back to Claude"""
-        await self._send_tool_result_to_claude(tool_id, {
-            "content": f"[USER REJECTED] {reason}",
-            "is_error": True,
-        })
+        await self._send_tool_result_to_claude(
+            tool_id,
+            {
+                "content": f"[USER REJECTED] {reason}",
+                "is_error": True,
+            },
+        )
 
-    def respond_to_tool_approval(self, request_id: str, approved: bool, feedback: str | None = None) -> bool:
+    def respond_to_tool_approval(
+        self, request_id: str, approved: bool, feedback: str | None = None
+    ) -> bool:
         """
         Respond to a pending tool approval request.
 
@@ -906,7 +1037,9 @@ class ClaudeAgentRunner:
             logger.warning("No tool approval manager")
             return False
 
-        return self._tool_approval_manager.respond_to_approval(request_id, approved, feedback)
+        return self._tool_approval_manager.respond_to_approval(
+            request_id, approved, feedback
+        )
 
     def _is_permission_request(self, event: dict) -> bool:
         """
@@ -935,15 +1068,16 @@ class ClaudeAgentRunner:
         # Claude may ask "Allow?" or similar prompts
         if event_type == "system":
             message = str(event.get("message", ""))
-            if any(phrase in message.lower() for phrase in ["allow", "permit", "approve", "permission"]):
+            if any(
+                phrase in message.lower()
+                for phrase in ["allow", "permit", "approve", "permission"]
+            ):
                 return True
 
         return False
 
     async def _handle_permission_request(
-        self,
-        event: dict,
-        on_permission_request: Optional[Callable[[dict], Any]]
+        self, event: dict, on_permission_request: Optional[Callable[[dict], Any]]
     ):
         """Handle a permission request from Claude"""
         if on_permission_request is None:
@@ -962,8 +1096,7 @@ class ClaudeAgentRunner:
             await self._send_permission_response(result)
         elif isinstance(result, dict):
             await self._send_permission_response(
-                result.get("approved", False),
-                result.get("always", False)
+                result.get("approved", False), result.get("always", False)
             )
 
     async def _send_permission_response(self, approved: bool, always: bool = False):
@@ -975,14 +1108,16 @@ class ClaudeAgentRunner:
         response = {
             "type": "permission_response",
             "approved": approved,
-            "always": always
+            "always": always,
         }
 
         try:
             response_str = json.dumps(response) + "\n"
-            self.process.stdin.write(response_str.encode('utf-8'))
+            self.process.stdin.write(response_str.encode("utf-8"))
             await self.process.stdin.drain()
-            logger.info(f"Permission response sent: approved={approved}, always={always}")
+            logger.info(
+                f"Permission response sent: approved={approved}, always={always}"
+            )
         except Exception as e:
             logger.error(f"Error sending permission response: {e}")
 
@@ -993,18 +1128,20 @@ class ClaudeAgentRunner:
             return
 
         # Use same format as initial prompt (stream-json input format)
-        message = json.dumps({
-            "type": "user",
-            "message": {
-                "role": "user",
-                "content": content
-            },
-            "session_id": "default",
-            "parent_tool_use_id": None
-        }) + "\n"
+        message = (
+            json.dumps(
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": content},
+                    "session_id": "default",
+                    "parent_tool_use_id": None,
+                }
+            )
+            + "\n"
+        )
 
         try:
-            self.process.stdin.write(message.encode('utf-8'))
+            self.process.stdin.write(message.encode("utf-8"))
             await self.process.stdin.drain()
             logger.info("User input sent to Claude")
         except Exception as e:

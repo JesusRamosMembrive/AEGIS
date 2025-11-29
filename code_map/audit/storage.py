@@ -128,7 +128,9 @@ def _row_to_run(row: Mapping[str, Any]) -> AuditRun:
         status=row["status"],
         root_path=row["root_path"],
         created_at=_parse_timestamp(row["created_at"]) or datetime.now(timezone.utc),
-        closed_at=_parse_timestamp(row["closed_at"]) if "closed_at" in row.keys() else None,
+        closed_at=(
+            _parse_timestamp(row["closed_at"]) if "closed_at" in row.keys() else None
+        ),
         notes=row["notes"] if "notes" in row.keys() else None,
         event_count=int(row["event_count"]) if "event_count" in row.keys() else 0,
     )

@@ -399,7 +399,6 @@ def _select_stage_definition(
     for definition in STAGE_DEFINITIONS:
         thresholds = definition.thresholds
         score = 0
-        total_metrics = 4
 
         files_ok = thresholds.max_files is None or files <= thresholds.max_files
         loc_ok = thresholds.max_loc is None or loc < thresholds.max_loc

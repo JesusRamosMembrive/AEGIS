@@ -21,7 +21,7 @@ from pathlib import Path
 ATLAS_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(ATLAS_ROOT))
 
-from .claude.hooks.audit_bridge import (
+from .claude.hooks.audit_bridge import (  # noqa: E402
     start_audit_session,
     end_audit_session,
     log_phase_start,
@@ -32,7 +32,6 @@ from .claude.hooks.audit_bridge import (
     log_git_operation,
     log_error,
     audit_context,
-    get_current_run_id,
 )
 
 
@@ -57,7 +56,7 @@ def main():
     os.environ["ATLAS_AUDIT_RUN_ID"] = str(run_id)
 
     print(f"📋 Started audit session {run_id}")
-    print(f"🌐 View at: http://localhost:8010")
+    print("🌐 View at: http://localhost:8010")
 
     try:
         # ==============================================================
@@ -193,8 +192,8 @@ def main():
             summary="Workflow completed successfully: configured, implemented, and validated"
         )
 
-        print(f"✅ Workflow completed successfully!")
-        print(f"📊 View full audit trail at: http://localhost:8010")
+        print("✅ Workflow completed successfully!")
+        print("📊 View full audit trail at: http://localhost:8010")
 
     except Exception as e:
         # ==============================================================

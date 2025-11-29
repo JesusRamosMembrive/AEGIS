@@ -12,7 +12,6 @@ import asyncio
 import difflib
 import json
 import logging
-import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -24,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class ApprovalStatus(str, Enum):
     """Status of a tool approval request"""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -35,6 +35,7 @@ class ToolApprovalRequest:
     """
     Represents a pending tool approval request with preview data.
     """
+
     request_id: str
     tool_name: str
     tool_input: dict[str, Any]
@@ -101,7 +102,7 @@ class ToolApprovalManager:
         # Pending approvals
         self._pending: dict[str, ToolApprovalRequest] = {}
         self._approval_futures: dict[str, asyncio.Future] = {}
-        
+
         # Lock to ensure sequential processing of approval requests
         self._lock = asyncio.Lock()
 
@@ -146,28 +147,51 @@ class ToolApprovalManager:
 
             try:
                 # Send request to frontend
-                import sys
-                logger.info(f"Sending approval request for {tool_name} (id={request.request_id})")
-                print(f"DEBUG: [ToolApproval] Added pending request: {request.request_id} for tool {tool_name}", flush=True)
-                print(f"DEBUG: [ToolApproval] About to call on_approval_request callback...", flush=True)
+
+                logger.info(
+                    f"Sending approval request for {tool_name} (id={request.request_id})"
+                )
+                print(
+                    f"DEBUG: [ToolApproval] Added pending request: {request.request_id} for tool {tool_name}",
+                    flush=True,
+                )
+                print(
+                    "DEBUG: [ToolApproval] About to call on_approval_request callback...",
+                    flush=True,
+                )
                 try:
                     await on_approval_request(request)
-                    print(f"DEBUG: [ToolApproval] on_approval_request callback completed successfully", flush=True)
+                    print(
+                        "DEBUG: [ToolApproval] on_approval_request callback completed successfully",
+                        flush=True,
+                    )
                 except Exception as callback_error:
-                    print(f"DEBUG: [ToolApproval] on_approval_request callback FAILED: {callback_error}", flush=True)
-                    logger.error(f"Error in on_approval_request callback: {callback_error}", exc_info=True)
+                    print(
+                        f"DEBUG: [ToolApproval] on_approval_request callback FAILED: {callback_error}",
+                        flush=True,
+                    )
+                    logger.error(
+                        f"Error in on_approval_request callback: {callback_error}",
+                        exc_info=True,
+                    )
                     raise
 
                 # Wait for response with timeout
                 try:
-                    result = await asyncio.wait_for(future, timeout=self.approval_timeout)
+                    result = await asyncio.wait_for(
+                        future, timeout=self.approval_timeout
+                    )
                     approved = result.get("approved", False)
                     feedback = result.get("feedback")
 
-                    request.status = ApprovalStatus.APPROVED if approved else ApprovalStatus.REJECTED
+                    request.status = (
+                        ApprovalStatus.APPROVED if approved else ApprovalStatus.REJECTED
+                    )
                     request.user_feedback = feedback
 
-                    logger.info(f"Tool {tool_name} {'approved' if approved else 'rejected'}")
+                    logger.info(
+                        f"Tool {tool_name} {'approved' if approved else 'rejected'}"
+                    )
                     return (approved, feedback)
 
                 except asyncio.TimeoutError:
@@ -179,7 +203,9 @@ class ToolApprovalManager:
                 # Cleanup
                 self._pending.pop(request.request_id, None)
                 self._approval_futures.pop(request.request_id, None)
-                print(f"DEBUG: [ToolApproval] Removed pending request: {request.request_id}")
+                print(
+                    f"DEBUG: [ToolApproval] Removed pending request: {request.request_id}"
+                )
 
     def respond_to_approval(
         self,
@@ -201,13 +227,17 @@ class ToolApprovalManager:
         future = self._approval_futures.get(request_id)
         if future is None or future.done():
             logger.warning(f"No pending approval for request_id={request_id}")
-            print(f"DEBUG: [ToolApproval] Response failed. ID={request_id} not found in {list(self._approval_futures.keys())}")
+            print(
+                f"DEBUG: [ToolApproval] Response failed. ID={request_id} not found in {list(self._approval_futures.keys())}"
+            )
             return False
 
-        future.set_result({
-            "approved": approved,
-            "feedback": feedback,
-        })
+        future.set_result(
+            {
+                "approved": approved,
+                "feedback": feedback,
+            }
+        )
 
         logger.info(f"Approval response set: approved={approved}, feedback={feedback}")
         return True
@@ -272,7 +302,11 @@ class ToolApprovalManager:
             request.preview_data = {
                 "file_path": file_path,
                 "is_new_file": not full_path.exists(),
-                "original_lines": len(request.original_content.splitlines()) if request.original_content else 0,
+                "original_lines": (
+                    len(request.original_content.splitlines())
+                    if request.original_content
+                    else 0
+                ),
                 "new_lines": len(new_content.splitlines()),
             }
 
@@ -296,7 +330,9 @@ class ToolApprovalManager:
                     if replace_all:
                         new_content = original_content.replace(old_string, new_string)
                     else:
-                        new_content = original_content.replace(old_string, new_string, 1)
+                        new_content = original_content.replace(
+                            old_string, new_string, 1
+                        )
 
                     request.new_content = new_content
 
@@ -312,11 +348,15 @@ class ToolApprovalManager:
 
                     request.preview_data = {
                         "file_path": file_path,
-                        "old_string_preview": old_string[:200] + ("..." if len(old_string) > 200 else ""),
-                        "new_string_preview": new_string[:200] + ("..." if len(new_string) > 200 else ""),
+                        "old_string_preview": old_string[:200]
+                        + ("..." if len(old_string) > 200 else ""),
+                        "new_string_preview": new_string[:200]
+                        + ("..." if len(new_string) > 200 else ""),
                         "replace_all": replace_all,
                         "occurrences": occurrences,
-                        "will_replace": occurrences if replace_all else min(1, occurrences),
+                        "will_replace": (
+                            occurrences if replace_all else min(1, occurrences)
+                        ),
                     }
 
                 except Exception as e:
@@ -355,15 +395,19 @@ class ToolApprovalManager:
                         all_diff_lines.extend(diff)
                         all_diff_lines.append("")  # Separator
 
-                        request.preview_data["edits"].append({
-                            "file_path": file_path,
-                            "diff": diff,
-                        })
+                        request.preview_data["edits"].append(
+                            {
+                                "file_path": file_path,
+                                "diff": diff,
+                            }
+                        )
                     except Exception as e:
-                        request.preview_data["edits"].append({
-                            "file_path": file_path,
-                            "error": str(e),
-                        })
+                        request.preview_data["edits"].append(
+                            {
+                                "file_path": file_path,
+                                "error": str(e),
+                            }
+                        )
 
             request.diff_lines = all_diff_lines
 
@@ -407,13 +451,15 @@ class ToolApprovalManager:
         original_lines = original.splitlines(keepends=True)
         modified_lines = modified.splitlines(keepends=True)
 
-        diff = list(difflib.unified_diff(
-            original_lines,
-            modified_lines,
-            fromfile=f"a/{file_path}",
-            tofile=f"b/{file_path}",
-            lineterm="",
-        ))
+        diff = list(
+            difflib.unified_diff(
+                original_lines,
+                modified_lines,
+                fromfile=f"a/{file_path}",
+                tofile=f"b/{file_path}",
+                lineterm="",
+            )
+        )
 
         return diff
 
@@ -424,7 +470,9 @@ class ToolApprovalManager:
             return path
         return Path(self.cwd) / path
 
-    def _summarize_input(self, tool_input: dict[str, Any], max_length: int = 200) -> str:
+    def _summarize_input(
+        self, tool_input: dict[str, Any], max_length: int = 200
+    ) -> str:
         """Create a summary of tool input for display"""
         try:
             json_str = json.dumps(tool_input, indent=2)

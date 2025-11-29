@@ -6,8 +6,7 @@ sin requerir API key real (usa mocks).
 """
 
 import pytest
-from unittest.mock import AsyncMock, Mock, patch
-from datetime import datetime
+from unittest.mock import patch
 
 from code_map.agent import AgentController, AgentTask, AgentStatus
 

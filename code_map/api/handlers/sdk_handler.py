@@ -80,7 +80,7 @@ class SDKModeHandler(BaseAgentHandler):
         """Cancel SDK runner."""
         if self._sdk_runner:
             # SDK runner may not have cancel method
-            if hasattr(self._sdk_runner, 'cancel'):
+            if hasattr(self._sdk_runner, "cancel"):
                 await self._sdk_runner.cancel()
             self._running = False
             logger.info("SDK mode cancelled")
@@ -92,7 +92,9 @@ class SDKModeHandler(BaseAgentHandler):
         feedback: str = "",
     ) -> bool:
         """Handle tool approval response for SDK mode."""
-        if self._sdk_runner and hasattr(self._sdk_runner, 'respond_to_tool_approval'):
-            return self._sdk_runner.respond_to_tool_approval(request_id, approved, feedback)
+        if self._sdk_runner and hasattr(self._sdk_runner, "respond_to_tool_approval"):
+            return self._sdk_runner.respond_to_tool_approval(
+                request_id, approved, feedback
+            )
         logger.warning("SDK runner not available for approval response")
         return False

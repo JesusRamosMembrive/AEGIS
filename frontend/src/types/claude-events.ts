@@ -350,6 +350,7 @@ export interface ClaudeUsage {
 export interface ClaudeMessage {
   id: string;
   type: "text" | "tool_use" | "tool_result" | "error" | "system";
+  role: "user" | "assistant";
   content: string | Record<string, unknown>;
   timestamp: Date;
   toolName?: string;

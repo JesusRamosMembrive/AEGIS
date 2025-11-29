@@ -117,8 +117,7 @@ class ToolProxyServer:
             # Wait for response
             try:
                 response_line = await asyncio.wait_for(
-                    reader.readline(),
-                    timeout=self.timeout
+                    reader.readline(), timeout=self.timeout
                 )
                 response = json.loads(response_line.decode())
 
@@ -158,11 +157,21 @@ class ToolProxyServer:
             preview_lines.append(f"... ({len(lines) - PREVIEW_LINE_LIMIT} more lines)")
 
         if path.exists():
-            return f"OVERWRITE {file_path}\n\n" + "\n".join(f"+ {line}" for line in preview_lines)
+            return f"OVERWRITE {file_path}\n\n" + "\n".join(
+                f"+ {line}" for line in preview_lines
+            )
         else:
-            return f"CREATE {file_path}\n\n" + "\n".join(f"+ {line}" for line in preview_lines)
+            return f"CREATE {file_path}\n\n" + "\n".join(
+                f"+ {line}" for line in preview_lines
+            )
 
-    def _generate_edit_preview(self, file_path: str, old_string: str, new_string: str, replace_all: bool = False) -> str:
+    def _generate_edit_preview(
+        self,
+        file_path: str,
+        old_string: str,
+        new_string: str,
+        replace_all: bool = False,
+    ) -> str:
         """Generate diff preview for Edit operation"""
         path = Path(file_path)
         if not path.is_absolute():
@@ -242,7 +251,7 @@ class ToolProxyServer:
         file_path: str,
         old_string: str,
         new_string: str,
-        replace_all: bool = False
+        replace_all: bool = False,
     ) -> str:
         """
         Edit a file by replacing text (requires approval).
@@ -256,7 +265,9 @@ class ToolProxyServer:
         Returns:
             Success message or error description
         """
-        preview = self._generate_edit_preview(file_path, old_string, new_string, replace_all)
+        preview = self._generate_edit_preview(
+            file_path, old_string, new_string, replace_all
+        )
 
         if preview.startswith("ERROR:"):
             return preview
@@ -298,10 +309,7 @@ class ToolProxyServer:
             return f"[ERROR] Failed to edit file: {e}"
 
     async def atlas_bash(
-        self,
-        command: str,
-        timeout: int = COMMAND_TIMEOUT_MS,
-        description: str = ""
+        self, command: str, timeout: int = COMMAND_TIMEOUT_MS, description: str = ""
     ) -> str:
         """
         Execute a bash command (requires approval).
@@ -344,8 +352,7 @@ class ToolProxyServer:
 
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    proc.communicate(),
-                    timeout=timeout_sec
+                    proc.communicate(), timeout=timeout_sec
                 )
             except asyncio.TimeoutError:
                 proc.kill()
@@ -402,10 +409,7 @@ def create_mcp_server():
 
     @mcp.tool()
     async def atlas_edit(
-        file_path: str,
-        old_string: str,
-        new_string: str,
-        replace_all: bool = False
+        file_path: str, old_string: str, new_string: str, replace_all: bool = False
     ) -> str:
         """
         Edit a file by replacing text. Performs exact string replacement.
@@ -422,9 +426,7 @@ def create_mcp_server():
 
     @mcp.tool()
     async def atlas_bash(
-        command: str,
-        timeout: int = 120000,
-        description: str = ""
+        command: str, timeout: int = 120000, description: str = ""
     ) -> str:
         """
         Execute a bash command in the current working directory.
@@ -461,7 +463,7 @@ def create_mcp_server():
             content = path.read_text(encoding="utf-8")
             lines = content.splitlines()
 
-            selected = lines[offset:offset + limit]
+            selected = lines[offset : offset + limit]
 
             result = []
             for i, line in enumerate(selected, start=offset + 1):
@@ -485,25 +487,18 @@ def main():
     parser.add_argument(
         "--socket",
         default=DEFAULT_SOCKET_PATH,
-        help="Unix socket path for approval requests"
+        help="Unix socket path for approval requests",
     )
     parser.add_argument(
-        "--cwd",
-        default="",
-        help="Working directory for file operations"
+        "--cwd", default="", help="Working directory for file operations"
     )
     parser.add_argument(
         "--transport",
         choices=["stdio", "sse"],
         default="stdio",
-        help="MCP transport type"
+        help="MCP transport type",
     )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8012,
-        help="Port for SSE transport"
-    )
+    parser.add_argument("--port", type=int, default=8012, help="Port for SSE transport")
 
     args = parser.parse_args()
 
@@ -515,7 +510,7 @@ def main():
     # Create and run server
     mcp = create_mcp_server()
 
-    print(f"Starting ATLAS MCP Tool Proxy Server", file=sys.stderr)
+    print("Starting ATLAS MCP Tool Proxy Server", file=sys.stderr)
     print(f"  Socket: {args.socket}", file=sys.stderr)
     print(f"  CWD: {args.cwd or os.getcwd()}", file=sys.stderr)
     print(f"  Transport: {args.transport}", file=sys.stderr)

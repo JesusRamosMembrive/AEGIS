@@ -8,9 +8,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from contextlib import suppress
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Mapping
 
@@ -18,7 +17,6 @@ from .cache import SnapshotStore
 from .index import SymbolIndex
 from .scanner import ProjectScanner
 from .scheduler import ChangeScheduler
-from .watcher import WatcherService
 from .settings import AppSettings, save_settings, ENV_DISABLE_LINTERS, ENV_CACHE_DIR
 from .linters import (
     LinterRunOptions,
@@ -28,7 +26,6 @@ from .linters import (
 from .stage_toolkit import stage_status as compute_stage_status
 from .state_reporter import StateReporter
 from .insights import VALID_INSIGHTS_FOCUS
-from .integrations import OllamaChatError
 from .services.linters_service import LintersService, LintersConfig
 from .services.insights_service import InsightsService, InsightsConfig
 from .services.watcher_manager import WatcherManager, WatcherConfig
@@ -286,8 +283,12 @@ class AppState:
             pending_events=self.event_queue.qsize(),
             insights_last_run=self.insights.last_run,
             insights_next_run=self._compute_insights_next_run(),
-            insights_last_model=self.insights.last_result.model if self.insights.last_result else None,
-            insights_last_message=self.insights.last_result.message if self.insights.last_result else None,
+            insights_last_model=(
+                self.insights.last_result.model if self.insights.last_result else None
+            ),
+            insights_last_message=(
+                self.insights.last_result.message if self.insights.last_result else None
+            ),
             insights_last_error=self.insights.last_error,
         )
 
@@ -506,9 +507,7 @@ class AppState:
         timeout: Optional[float] = None,
     ):
         """Genera insights inmediatamente usando la configuración actual."""
-        return await self.insights.run_now(
-            model=model, focus=focus, timeout=timeout
-        )
+        return await self.insights.run_now(model=model, focus=focus, timeout=timeout)
 
     async def build_insights_context(self) -> str:
         """Expone el contexto usado por el generador de insights."""

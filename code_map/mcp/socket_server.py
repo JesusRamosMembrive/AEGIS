@@ -14,7 +14,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Optional, Callable, Awaitable, Any
 
@@ -47,9 +46,7 @@ class MCPSocketServer:
 
         # Create approval bridge
         self.bridge = ApprovalBridge(
-            cwd=cwd,
-            timeout=timeout,
-            auto_approve_safe=auto_approve_safe
+            cwd=cwd, timeout=timeout, auto_approve_safe=auto_approve_safe
         )
 
         # Server state
@@ -57,8 +54,7 @@ class MCPSocketServer:
         self._running = False
 
     def set_frontend_callback(
-        self,
-        callback: Callable[[ApprovalRequest], Awaitable[None]]
+        self, callback: Callable[[ApprovalRequest], Awaitable[None]]
     ) -> None:
         """
         Set callback to notify frontend of approval requests.
@@ -80,8 +76,7 @@ class MCPSocketServer:
 
         # Start server
         self._server = await asyncio.start_unix_server(
-            self._handle_client,
-            path=self.socket_path
+            self._handle_client, path=self.socket_path
         )
 
         self._running = True
@@ -103,12 +98,10 @@ class MCPSocketServer:
         logger.info("MCP Socket Server stopped")
 
     async def _handle_client(
-        self,
-        reader: asyncio.StreamReader,
-        writer: asyncio.StreamWriter
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
         """Handle a client connection from MCP server"""
-        peer = writer.get_extra_info('peername')
+        peer = writer.get_extra_info("peername")
         logger.debug(f"MCP client connected: {peer}")
 
         try:
@@ -134,10 +127,15 @@ class MCPSocketServer:
 
                 except json.JSONDecodeError as e:
                     logger.error(f"Invalid JSON from MCP client: {e}")
-                    error_response = json.dumps({
-                        "approved": False,
-                        "message": f"Invalid request format: {e}"
-                    }) + "\n"
+                    error_response = (
+                        json.dumps(
+                            {
+                                "approved": False,
+                                "message": f"Invalid request format: {e}",
+                            }
+                        )
+                        + "\n"
+                    )
                     writer.write(error_response.encode())
                     await writer.drain()
 
@@ -164,9 +162,7 @@ class MCPSocketServer:
 
             # Use bridge to get approval
             result = await self.bridge.request_approval(
-                tool_name=tool_name,
-                tool_input=tool_input,
-                context=context
+                tool_name=tool_name, tool_input=tool_input, context=context
             )
 
             return result
@@ -177,7 +173,6 @@ class MCPSocketServer:
             tool = request.get("tool", "unknown")
             params = request.get("params", {})
             preview = request.get("preview", "")
-            cwd = request.get("cwd", self.cwd)
 
             # Map tool proxy names to standard names
             tool_name_map = {
@@ -187,13 +182,15 @@ class MCPSocketServer:
             }
             tool_name = tool_name_map.get(tool, tool.title())
 
-            logger.debug(f"Received tool_approval_request for {tool_name}, request_id={request_id}")
+            logger.debug(
+                f"Received tool_approval_request for {tool_name}, request_id={request_id}"
+            )
 
             # Use bridge to get approval
             result = await self.bridge.request_approval(
                 tool_name=tool_name,
                 tool_input=params,
-                context=f"Preview:\n{preview}" if preview else ""
+                context=f"Preview:\n{preview}" if preview else "",
             )
 
             # Return in format expected by tool proxy
@@ -207,7 +204,7 @@ class MCPSocketServer:
             logger.warning(f"Unknown request type: {request_type}")
             return {
                 "approved": False,
-                "message": f"Unknown request type: {request_type}"
+                "message": f"Unknown request type: {request_type}",
             }
 
     def respond_to_approval(
@@ -215,7 +212,7 @@ class MCPSocketServer:
         request_id: str,
         approved: bool,
         message: str = "",
-        updated_input: Optional[dict[str, Any]] = None
+        updated_input: Optional[dict[str, Any]] = None,
     ) -> bool:
         """
         Respond to a pending approval request.
@@ -250,6 +247,6 @@ def create_socket_server(
         socket_path=socket_path,
         cwd=cwd,
         timeout=timeout,
-        auto_approve_safe=auto_approve_safe
+        auto_approve_safe=auto_approve_safe,
     )
     return _socket_server

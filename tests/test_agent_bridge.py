@@ -12,14 +12,14 @@ import pytest
 claude_hooks = Path(__file__).parent.parent / ".claude" / "hooks"
 sys.path.insert(0, str(claude_hooks))
 
-from code_map.audit import create_run, list_events, get_run
+from code_map.audit import list_events, get_run  # noqa: E402
 
 if TYPE_CHECKING:
-    from code_map.audit import AuditRun
+    pass
 
 
 # Import audit_bridge after path setup
-import audit_bridge
+import audit_bridge  # noqa: E402
 
 
 @pytest.fixture

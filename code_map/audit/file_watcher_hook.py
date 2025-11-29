@@ -24,7 +24,6 @@ from __future__ import annotations
 import difflib
 import logging
 import os
-import subprocess
 from pathlib import Path
 from typing import Dict, Optional, Set
 
@@ -34,18 +33,42 @@ logger = logging.getLogger(__name__)
 
 # File extensions to track
 TRACKED_EXTENSIONS = {
-    ".py", ".js", ".jsx", ".ts", ".tsx",
-    ".html", ".css", ".scss", ".json",
-    ".md", ".yaml", ".yml", ".toml",
-    ".sh", ".bash", ".sql"
+    ".py",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".html",
+    ".css",
+    ".scss",
+    ".json",
+    ".md",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".sh",
+    ".bash",
+    ".sql",
 }
 
 # Directories to exclude
 EXCLUDED_DIRS = {
-    "__pycache__", ".git", ".hg", ".mypy_cache",
-    ".pytest_cache", ".ruff_cache", ".svn", ".tox",
-    ".venv", "env", "node_modules", "venv",
-    "dist", "build", ".next", ".nuxt"
+    "__pycache__",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "env",
+    "node_modules",
+    "venv",
+    "dist",
+    "build",
+    ".next",
+    ".nuxt",
 }
 
 
@@ -137,7 +160,9 @@ class AuditFileWatcher:
         self._observer.start()
         self._running = True
 
-        logger.info(f"AuditFileWatcher started for run {self.run_id} at {self.root_path}")
+        logger.info(
+            f"AuditFileWatcher started for run {self.run_id} at {self.root_path}"
+        )
 
     def stop(self) -> None:
         """Stop watching for file changes."""
@@ -202,7 +227,7 @@ class AuditFileWatcher:
                     "change_type": "create",
                     "file_path": str(rel_path),
                     "lines_added": len(content.splitlines()),
-                }
+                },
             )
 
             logger.debug(f"Audit event created for new file: {rel_path}")
@@ -260,7 +285,7 @@ class AuditFileWatcher:
                     "file_path": str(rel_path),
                     "lines_added": max(0, lines_added),
                     "lines_removed": max(0, -lines_added),
-                }
+                },
             )
 
             logger.debug(f"Audit event created for modified file: {rel_path}")
@@ -297,8 +322,10 @@ class AuditFileWatcher:
                 payload={
                     "change_type": "delete",
                     "file_path": str(rel_path),
-                    "lines_removed": len(old_content.splitlines()) if old_content else 0,
-                }
+                    "lines_removed": (
+                        len(old_content.splitlines()) if old_content else 0
+                    ),
+                },
             )
 
             logger.debug(f"Audit event created for deleted file: {rel_path}")
@@ -316,7 +343,7 @@ class AuditFileWatcher:
             new_lines,
             fromfile=f"a/{file_path}",
             tofile=f"b/{file_path}",
-            lineterm=""
+            lineterm="",
         )
 
         diff = "".join(diff_lines)

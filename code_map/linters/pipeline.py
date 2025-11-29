@@ -39,12 +39,14 @@ ElementTree = cast(Any, _ElementTree)
 # CONSTANTS - Linter Pipeline Configuration
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class LinterConfig:
     """
     Centralized configuration for linter pipeline.
     All magic numbers and thresholds in one place for easy tuning.
     """
+
     # Output truncation limits
     max_output_chars: int = 2000  # Maximum characters before truncating tool output
     max_issues_sample: int = 25  # Maximum issues to include in report samples
@@ -56,7 +58,9 @@ class LinterConfig:
 
     # File length thresholds
     max_file_length_warn: int = 500  # Recommended maximum lines per file before warning
-    max_file_length_critical: int = 1000  # Critical threshold where files are severely oversized
+    max_file_length_critical: int = (
+        1000  # Critical threshold where files are severely oversized
+    )
 
     # Default timeout fallback
     default_timeout: int = 300  # Used when no specific timeout is defined
@@ -377,6 +381,7 @@ def _execute_tool(
     if audit_run_id is not None:
         try:
             from ..audit.hooks import audit_run_command
+
             completed = audit_run_command(
                 effective_command,
                 run_id=audit_run_id,
@@ -596,7 +601,9 @@ def _aggregate_summary(
 
 
 def run_linters_pipeline(
-    root: Path, options: Optional[LinterRunOptions] = None, audit_run_id: Optional[int] = None
+    root: Path,
+    options: Optional[LinterRunOptions] = None,
+    audit_run_id: Optional[int] = None,
 ) -> LintersReport:
     """Ejecuta las herramientas estándar y devuelve un reporte completo."""
     resolved_root = Path(root).expanduser().resolve()
@@ -652,7 +659,9 @@ def run_linters_pipeline(
     tool_results: List[ToolRunResult] = []
     coverage_snapshot: Optional[CoverageSnapshot] = None
     for spec in selected_specs:
-        tool_result, coverage = _execute_tool(resolved_root, spec, audit_run_id=audit_run_id)
+        tool_result, coverage = _execute_tool(
+            resolved_root, spec, audit_run_id=audit_run_id
+        )
         tool_results.append(tool_result)
         if coverage:
             coverage_snapshot = coverage

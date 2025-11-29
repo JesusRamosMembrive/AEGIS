@@ -1,7 +1,6 @@
 
 import unittest
 from code_map.terminal.pty_shell import PTYShell
-from code_map.terminal.agent_parser import AgentOutputParser, AgentEventType
 
 class TestStructuredOutput(unittest.TestCase):
     def setUp(self):

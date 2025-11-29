@@ -29,7 +29,7 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from code_map.audit import storage
 
 # Type variable for decorator
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class AuditContext:
@@ -81,14 +81,16 @@ class AuditContext:
             phase=self.phase,
             status="running",
             ref=self.ref,
-            payload=payload
+            payload=payload,
         )
         self.start_event_id = event.id
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """End tracking - emit 'ok' or 'error' status event"""
-        duration_ms = int((time.time() - self.start_time) * 1000) if self.start_time else 0
+        duration_ms = (
+            int((time.time() - self.start_time) * 1000) if self.start_time else 0
+        )
 
         if exc_type is None:
             # Success case
@@ -101,11 +103,18 @@ class AuditContext:
                 phase=self.phase,
                 status="ok",
                 ref=self.ref,
-                payload={"duration_ms": duration_ms, "start_event_id": self.start_event_id}
+                payload={
+                    "duration_ms": duration_ms,
+                    "start_event_id": self.start_event_id,
+                },
             )
         else:
             # Error case
-            error_detail = f"{self.detail}\n\nError: {exc_type.__name__}: {exc_val}" if self.detail else f"Error: {exc_type.__name__}: {exc_val}"
+            error_detail = (
+                f"{self.detail}\n\nError: {exc_type.__name__}: {exc_val}"
+                if self.detail
+                else f"Error: {exc_type.__name__}: {exc_val}"
+            )
             storage.append_event(
                 run_id=self.run_id,
                 type=self.event_type,
@@ -119,8 +128,8 @@ class AuditContext:
                     "duration_ms": duration_ms,
                     "start_event_id": self.start_event_id,
                     "error_type": exc_type.__name__,
-                    "error_message": str(exc_val)
-                }
+                    "error_message": str(exc_val),
+                },
             )
 
         # Don't suppress exceptions
@@ -154,11 +163,12 @@ def audit_tracked(
 
     Note: Requires `run_id` to be passed as kwarg or set in environment.
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Try to get run_id from kwargs or environment
-            run_id = kwargs.pop('audit_run_id', None)
+            run_id = kwargs.pop("audit_run_id", None)
             if run_id is None:
                 # No run_id, skip audit tracking
                 return func(*args, **kwargs)
@@ -174,7 +184,7 @@ def audit_tracked(
                 actor=actor,
                 phase=phase,
                 status="running",
-                payload={"args": str(args)[:200], "started_at": start_time}
+                payload={"args": str(args)[:200], "started_at": start_time},
             )
 
             try:
@@ -193,7 +203,7 @@ def audit_tracked(
                     actor=actor,
                     phase=phase,
                     status="ok",
-                    payload=payload
+                    payload=payload,
                 )
 
                 return result
@@ -214,12 +224,13 @@ def audit_tracked(
                         "duration_ms": duration_ms,
                         "start_event_id": start_event.id,
                         "error_type": type(e).__name__,
-                        "error_message": str(e)
-                    }
+                        "error_message": str(e),
+                    },
                 )
                 raise
 
         return wrapper  # type: ignore
+
     return decorator
 
 
@@ -230,7 +241,7 @@ def audit_run_command(
     actor: str = "agent",
     capture_output: bool = True,
     timeout: Optional[int] = None,
-    **subprocess_kwargs
+    **subprocess_kwargs,
 ) -> subprocess.CompletedProcess:
     """
     Wrapper around subprocess.run() that automatically logs command
@@ -268,7 +279,7 @@ def audit_run_command(
         actor=actor,
         phase=phase,
         status="running",
-        payload={"command": cmd_str, "started_at": start_time}
+        payload={"command": cmd_str, "started_at": start_time},
     )
 
     try:
@@ -278,7 +289,7 @@ def audit_run_command(
             capture_output=capture_output,
             text=True,
             timeout=timeout,
-            **subprocess_kwargs
+            **subprocess_kwargs,
         )
 
         duration_ms = int((time.time() - start_time) * 1000)
@@ -286,10 +297,14 @@ def audit_run_command(
         # Format output for detail field (truncate if too long)
         output_parts = []
         if result.stdout:
-            stdout_excerpt = result.stdout[:2000] + ("..." if len(result.stdout) > 2000 else "")
+            stdout_excerpt = result.stdout[:2000] + (
+                "..." if len(result.stdout) > 2000 else ""
+            )
             output_parts.append(f"STDOUT:\n{stdout_excerpt}")
         if result.stderr:
-            stderr_excerpt = result.stderr[:2000] + ("..." if len(result.stderr) > 2000 else "")
+            stderr_excerpt = result.stderr[:2000] + (
+                "..." if len(result.stderr) > 2000 else ""
+            )
             output_parts.append(f"STDERR:\n{stderr_excerpt}")
         detail = "\n\n".join(output_parts) if output_parts else None
 
@@ -310,12 +325,12 @@ def audit_run_command(
                 "start_event_id": start_event.id,
                 "stdout_lines": len(result.stdout.splitlines()) if result.stdout else 0,
                 "stderr_lines": len(result.stderr.splitlines()) if result.stderr else 0,
-            }
+            },
         )
 
         return result
 
-    except subprocess.TimeoutExpired as e:
+    except subprocess.TimeoutExpired:
         duration_ms = int((time.time() - start_time) * 1000)
 
         storage.append_event(
@@ -332,7 +347,7 @@ def audit_run_command(
                 "timeout_seconds": timeout,
                 "duration_ms": duration_ms,
                 "start_event_id": start_event.id,
-            }
+            },
         )
         raise
 
@@ -353,7 +368,7 @@ def audit_run_command(
                 "error_message": str(e),
                 "duration_ms": duration_ms,
                 "start_event_id": start_event.id,
-            }
+            },
         )
         raise
 
@@ -384,7 +399,7 @@ def audit_phase(run_id: int, phase_name: str, actor: str = "agent"):
         actor=actor,
         phase=phase_name,
         status="running",
-        payload={"phase_name": phase_name, "started_at": start_time}
+        payload={"phase_name": phase_name, "started_at": start_time},
     )
 
     try:
@@ -403,8 +418,8 @@ def audit_phase(run_id: int, phase_name: str, actor: str = "agent"):
             payload={
                 "phase_name": phase_name,
                 "duration_ms": duration_ms,
-                "start_event_id": start_event.id
-            }
+                "start_event_id": start_event.id,
+            },
         )
 
     except Exception as e:
@@ -424,7 +439,7 @@ def audit_phase(run_id: int, phase_name: str, actor: str = "agent"):
                 "duration_ms": duration_ms,
                 "start_event_id": start_event.id,
                 "error_type": type(e).__name__,
-                "error_message": str(e)
-            }
+                "error_message": str(e),
+            },
         )
         raise

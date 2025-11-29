@@ -167,7 +167,9 @@ async def analyze_file(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except (ValueError, OSError, PermissionError) as exc:
         # Known errors: invalid file, access denied, etc.
-        raise HTTPException(status_code=400, detail=f"Error al analizar archivo: {exc}") from exc
+        raise HTTPException(
+            status_code=400, detail=f"Error al analizar archivo: {exc}"
+        ) from exc
     except Exception as exc:
         # Unexpected errors: log with traceback for debugging
         logger.exception("Unexpected error in analyze_file endpoint")
@@ -258,7 +260,9 @@ async def trace_chain(
     except HTTPException:
         raise
     except (ValueError, KeyError) as exc:
-        raise HTTPException(status_code=400, detail=f"Error al trazar cadena: {exc}") from exc
+        raise HTTPException(
+            status_code=400, detail=f"Error al trazar cadena: {exc}"
+        ) from exc
     except Exception as exc:
         logger.exception("Unexpected error in trace_chain endpoint")
         raise HTTPException(
@@ -346,7 +350,9 @@ async def get_all_chains(
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except (ValueError, OSError, PermissionError) as exc:
-        raise HTTPException(status_code=400, detail=f"Error al extraer cadenas: {exc}") from exc
+        raise HTTPException(
+            status_code=400, detail=f"Error al extraer cadenas: {exc}"
+        ) from exc
     except Exception as exc:
         logger.exception("Unexpected error in get_all_chains endpoint")
         raise HTTPException(
@@ -521,7 +527,9 @@ async def analyze_cross_file(
         )
 
     except (ValueError, OSError, PermissionError) as exc:
-        raise HTTPException(status_code=400, detail=f"Error en análisis cross-file: {exc}") from exc
+        raise HTTPException(
+            status_code=400, detail=f"Error en análisis cross-file: {exc}"
+        ) from exc
     except Exception as exc:
         logger.exception("Unexpected error in analyze_cross_file endpoint")
         raise HTTPException(
@@ -626,7 +634,9 @@ async def trace_cross_file(
     except HTTPException:
         raise
     except (ValueError, KeyError) as exc:
-        raise HTTPException(status_code=400, detail=f"Error al trazar cross-file: {exc}") from exc
+        raise HTTPException(
+            status_code=400, detail=f"Error al trazar cross-file: {exc}"
+        ) from exc
     except Exception as exc:
         logger.exception("Unexpected error in trace_cross_file endpoint")
         raise HTTPException(

@@ -218,14 +218,14 @@ async def stream_audit_events(
                 # Send new events
                 for event in events:
                     event_data = _serialize_event(event).model_dump(mode="json")
-                    yield f"event: audit_event\n"
+                    yield "event: audit_event\n"
                     yield f"data: {json.dumps(event_data)}\n\n"
                     last_event_id = event.id
 
                 # Send heartbeat every 10 seconds (10 iterations of 1s sleep)
                 heartbeat_counter += 1
                 if heartbeat_counter >= 10:
-                    yield f": heartbeat\n\n"
+                    yield ": heartbeat\n\n"
                     heartbeat_counter = 0
 
                 # Wait before next poll
@@ -233,7 +233,7 @@ async def stream_audit_events(
 
         except asyncio.CancelledError:
             # Client disconnected
-            yield f": connection closed\n\n"
+            yield ": connection closed\n\n"
 
     return StreamingResponse(
         event_generator(),

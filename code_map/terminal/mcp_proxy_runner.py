@@ -45,7 +45,6 @@ import logging
 import os
 import tempfile
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Callable, Optional
 
 from .claude_runner import find_claude_cli
@@ -57,6 +56,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MCPProxyRunnerConfig:
     """Configuration for MCP Proxy Runner"""
+
     cwd: str
     continue_session: bool = True
     verbose: bool = True
@@ -94,9 +94,12 @@ class MCPProxyRunner:
         """Build the Claude CLI command with all necessary flags."""
         claude_bin = find_claude_cli()
         cmd = [
-            claude_bin, "-p",
-            "--output-format", "stream-json",
-            "--input-format", "stream-json",
+            claude_bin,
+            "-p",
+            "--output-format",
+            "stream-json",
+            "--input-format",
+            "stream-json",
             "--verbose",
         ]
 
@@ -129,7 +132,7 @@ class MCPProxyRunner:
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            cwd=self.config.cwd
+            cwd=self.config.cwd,
         )
         logger.info(f"Claude process started: PID={process.pid}")
         return process
@@ -139,23 +142,27 @@ class MCPProxyRunner:
         if self.process is None or self.process.stdin is None:
             raise RuntimeError("Process not started")
 
-        message = json.dumps({
-            "type": "user",
-            "message": {"role": "user", "content": prompt},
-            "session_id": "default",
-            "parent_tool_use_id": None
-        }) + "\n"
+        message = (
+            json.dumps(
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": prompt},
+                    "session_id": "default",
+                    "parent_tool_use_id": None,
+                }
+            )
+            + "\n"
+        )
 
-        self.process.stdin.write(message.encode('utf-8'))
+        self.process.stdin.write(message.encode("utf-8"))
         await self.process.stdin.drain()
         logger.info("Initial prompt sent")
 
     def _create_stdout_reader(
-        self,
-        on_event: Callable[[dict], Any],
-        on_error: Optional[Callable[[str], Any]]
+        self, on_event: Callable[[dict], Any], on_error: Optional[Callable[[str], Any]]
     ) -> Callable[[], Any]:
         """Create coroutine for reading stdout."""
+
         async def read_stdout():
             if self.process is None or self.process.stdout is None:
                 return
@@ -166,7 +173,7 @@ class MCPProxyRunner:
                     if not line:
                         break
 
-                    line_str = line.decode('utf-8').strip()
+                    line_str = line.decode("utf-8").strip()
                     if not line_str:
                         continue
 
@@ -191,10 +198,10 @@ class MCPProxyRunner:
         return read_stdout
 
     def _create_stderr_reader(
-        self,
-        on_error: Optional[Callable[[str], Any]]
+        self, on_error: Optional[Callable[[str], Any]]
     ) -> Callable[[], Any]:
         """Create coroutine for reading stderr."""
+
         async def read_stderr():
             if self.process is None or self.process.stderr is None:
                 return
@@ -205,7 +212,7 @@ class MCPProxyRunner:
                     if not line:
                         break
 
-                    line_str = line.decode('utf-8').strip()
+                    line_str = line.decode("utf-8").strip()
                     if line_str and on_error:
                         result = on_error(line_str)
                         if asyncio.iscoroutine(result):
@@ -239,21 +246,24 @@ class MCPProxyRunner:
                 "atlas-tools": {
                     "command": python_path,
                     "args": [
-                        "-m", proxy_module,
-                        "--socket", self.config.socket_path,
-                        "--cwd", self.config.cwd,
+                        "-m",
+                        proxy_module,
+                        "--socket",
+                        self.config.socket_path,
+                        "--cwd",
+                        self.config.cwd,
                     ],
                     "env": {
                         "ATLAS_TOOL_SOCKET": self.config.socket_path,
                         "ATLAS_CWD": self.config.cwd,
-                    }
+                    },
                 }
             }
         }
 
         # Create temp file
         fd, path = tempfile.mkstemp(suffix=".json", prefix="atlas_mcp_")
-        with os.fdopen(fd, 'w') as f:
+        with os.fdopen(fd, "w") as f:
             json.dump(config, f)
 
         self._mcp_config_file = path
@@ -347,10 +357,7 @@ class MCPProxyRunner:
 
         try:
             if self.config.timeout:
-                await asyncio.wait_for(
-                    self.process.wait(),
-                    timeout=self.config.timeout
-                )
+                await asyncio.wait_for(self.process.wait(), timeout=self.config.timeout)
             else:
                 await self.process.wait()
         except asyncio.TimeoutError:
@@ -363,18 +370,20 @@ class MCPProxyRunner:
             logger.error("Cannot send input: no process")
             return
 
-        message = json.dumps({
-            "type": "user",
-            "message": {
-                "role": "user",
-                "content": content
-            },
-            "session_id": "default",
-            "parent_tool_use_id": None
-        }) + "\n"
+        message = (
+            json.dumps(
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": content},
+                    "session_id": "default",
+                    "parent_tool_use_id": None,
+                }
+            )
+            + "\n"
+        )
 
         try:
-            self.process.stdin.write(message.encode('utf-8'))
+            self.process.stdin.write(message.encode("utf-8"))
             await self.process.stdin.drain()
             logger.info("User input sent")
         except Exception as e:

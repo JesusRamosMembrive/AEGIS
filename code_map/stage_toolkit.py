@@ -261,7 +261,9 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
     component_counts: Dict[str, int] = {}
     error_message: Optional[str] = None
 
-    async def run_command(command: Sequence[str], *, cwd: Optional[Path] = None) -> Dict[str, object]:
+    async def run_command(
+        command: Sequence[str], *, cwd: Optional[Path] = None
+    ) -> Dict[str, object]:
         process = await asyncio.create_subprocess_exec(
             *command,
             stdout=PIPE,
@@ -382,7 +384,9 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
         for relative_src, relative_dest in SUPERCLAUDE_DOC_EXPORTS:
             await copy_file(relative_src, relative_dest)
 
-        plugin_commands_dir = workspace / ".claude" / "plugins" / "superclaude" / "commands"
+        plugin_commands_dir = (
+            workspace / ".claude" / "plugins" / "superclaude" / "commands"
+        )
         plugin_command_count = (
             len(list(plugin_commands_dir.glob("*.md")))
             if plugin_commands_dir.exists()
@@ -396,11 +400,7 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
         error_message = str(exc)
 
     success = error_message is None
-    timestamp = (
-        datetime.now(timezone.utc).isoformat()
-        if success
-        else None
-    )
+    timestamp = datetime.now(timezone.utc).isoformat() if success else None
 
     if not component_counts:
         component_counts = dict(SUPERCLAUDE_REFERENCE_COUNTS)

@@ -11,9 +11,9 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from .deps import get_app_state
@@ -29,6 +29,7 @@ router = APIRouter(prefix="/claude-permissions", tags=["claude-permissions"])
 
 class ClaudePermissions(BaseModel):
     """Claude Code permissions structure"""
+
     allow: List[str] = []
     deny: List[str] = []
     ask: List[str] = []
@@ -36,11 +37,13 @@ class ClaudePermissions(BaseModel):
 
 class ClaudeSettings(BaseModel):
     """Claude Code settings.local.json structure"""
+
     permissions: ClaudePermissions = ClaudePermissions()
 
 
 class PermissionsResponse(BaseModel):
     """Response for permissions endpoint"""
+
     settings_path: str
     exists: bool
     permissions: ClaudePermissions
@@ -49,11 +52,13 @@ class PermissionsResponse(BaseModel):
 
 class AddPermissionsRequest(BaseModel):
     """Request to add permissions"""
+
     permissions: List[str]
 
 
 class AddPermissionsResponse(BaseModel):
     """Response after adding permissions"""
+
     success: bool
     added: List[str]
     already_present: List[str]
@@ -132,10 +137,7 @@ async def get_permissions() -> PermissionsResponse:
 
     # Calculate which recommended permissions are missing
     current_allow = set(settings.permissions.allow)
-    missing_recommended = [
-        p for p in RECOMMENDED_PERMISSIONS
-        if p not in current_allow
-    ]
+    missing_recommended = [p for p in RECOMMENDED_PERMISSIONS if p not in current_allow]
 
     return PermissionsResponse(
         settings_path=str(settings_path),
@@ -194,7 +196,9 @@ async def add_recommended_permissions() -> AddPermissionsResponse:
     Convenience endpoint that adds all permissions needed for
     the Claude Agent UI to work properly.
     """
-    return await add_permissions(AddPermissionsRequest(permissions=RECOMMENDED_PERMISSIONS))
+    return await add_permissions(
+        AddPermissionsRequest(permissions=RECOMMENDED_PERMISSIONS)
+    )
 
 
 @router.delete("/{permission}")
