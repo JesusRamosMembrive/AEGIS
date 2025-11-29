@@ -668,14 +668,24 @@ function MessageItem({ message }: MessageItemProps) {
   switch (message.type) {
     case "text":
       const textContent = message.content != null ? String(message.content) : "";
+      const isShortText = textContent.length < 100 && !textContent.includes('\n');
       return (
         <div className="message-row assistant" role="listitem" aria-label="Claude response">
-          <div className="assistant-message">
-            <MarkdownRenderer content={textContent} />
-            <div className="message-meta">
-              {message.timestamp.toLocaleTimeString()}
+          {isShortText ? (
+            <div className="assistant-message assistant-text-inline">
+              <span className="text-icon" aria-hidden="true">
+                <MessageCircleIcon size={14} />
+              </span>
+              <span className="text-content">{textContent}</span>
             </div>
-          </div>
+          ) : (
+            <div className="assistant-message">
+              <MarkdownRenderer content={textContent} />
+              <div className="message-meta">
+                {message.timestamp.toLocaleTimeString()}
+              </div>
+            </div>
+          )}
         </div>
       );
 
@@ -1336,14 +1346,37 @@ const styles = `
 .assistant-message {
   max-width: 90%;
   padding: 4px 0;
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.45;
+}
+
+.assistant-message.assistant-text-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.assistant-text-inline .text-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--agent-text-muted);
+  margin-top: 1px;
+}
+
+.assistant-text-inline .text-content {
+  font-size: 11px;
+  color: var(--agent-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .assistant-message .message-meta {
   color: var(--agent-text-disabled);
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 9px;
 }
 
 /* Legacy message class for compatibility */
