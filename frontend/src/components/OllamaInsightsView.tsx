@@ -154,7 +154,7 @@ function OllamaStatusCard({
               return (
                 <li key={model.name}>
                   <span>{model.name}</span>
-                  {details ? <span> · {details}</span> : null}
+                  {details ? <span> - {details}</span> : null}
                 </li>
               );
             })}
@@ -309,7 +309,12 @@ export function OllamaInsightsView(): JSX.Element {
     !ollamaStatusQuery.isLoading && isOllamaDetected && !isOllamaRunning;
 
   const insightsHistory = insightsQuery.data ?? [];
-  const insightsHistoryError = insightsQuery.error;
+  const insightsHistoryError =
+    insightsQuery.error && insightsQuery.error instanceof Error
+      ? insightsQuery.error.message
+      : statusQuery.data?.ollama_insights_last_error ?? null;
+
+  const showInsightsErrorBanner = Boolean(statusQuery.data?.ollama_insights_last_error);
 
   const insightsLastRunRaw = statusQuery.data?.ollama_insights_last_run ?? null;
   const insightsNextRunRaw = statusQuery.data?.ollama_insights_next_run ?? null;
@@ -500,7 +505,7 @@ export function OllamaInsightsView(): JSX.Element {
         </header>
 
         {ollamaStatusQuery.isLoading ? (
-          <p className="stage-info">Checking Ollama status…</p>
+          <p className="stage-info">Checking Ollama status...</p>
         ) : ollamaStatusQuery.isError ? (
           <p className="stage-error">
             Could not query the Ollama status. {String(ollamaStatusQuery.error)}
@@ -540,7 +545,7 @@ export function OllamaInsightsView(): JSX.Element {
 
         <article className="stage-card">
           {settingsLoading ? (
-            <p className="stage-info">Loading preferences…</p>
+        <p className="stage-info">Loading preferences...</p>
           ) : (
             <>
               <div className="stage-form-field stage-toggle-field">
@@ -662,16 +667,38 @@ export function OllamaInsightsView(): JSX.Element {
               <div className="stage-form-field">
                 <span>Recent history</span>
                 {insightsQuery.isLoading ? (
-                  <p className="stage-info">Retrieving generated insights…</p>
-                ) : insightsQuery.isError ? (
-                  <p className="stage-error">
-                    Error loading history: {String(insightsHistoryError)}
-                  </p>
-                ) : insightsHistory.length === 0 ? (
+                  <p className="stage-info">Retrieving generated insights...</p>
+              ) : insightsQuery.isError ? (
+                <p className="stage-error">
+                  Error loading history: {String(insightsHistoryError)}
+                </p>
+              ) : showInsightsErrorBanner ? (
+                <div className="stage-alert stage-alert--warn">
+                  <strong>Automatic insights failed</strong>
+                  <p>{statusQuery.data?.ollama_insights_last_error}</p>
                   <p className="stage-hint">
-                    No insights recorded yet. Generate one manually or wait for the next automatic run.
+                    Ensure Ollama is running and the configured model exists, then retry.
                   </p>
-                ) : (
+                  <button
+                    className="secondary-btn"
+                    type="button"
+                    onClick={() =>
+                      manualInsightsMutation.mutate({
+                        model:
+                          statusQuery.data?.ollama_insights_last_model || insightsModel || "",
+                        focus: insightsFocus,
+                      })
+                    }
+                    disabled={manualInsightsMutation.isPending}
+                  >
+                      {manualInsightsMutation.isPending ? "Retrying..." : "Retry now"}
+                  </button>
+                </div>
+              ) : insightsHistory.length === 0 ? (
+                <p className="stage-hint">
+                  No insights recorded yet. Generate one manually or wait for the next automatic run.
+                  </p>
+              ) : (
                   <ul className="stage-list stage-insights-list">
                     {insightsHistory.map((entry) => (
                       <li key={entry.id}>

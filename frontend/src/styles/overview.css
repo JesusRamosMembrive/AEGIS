@@ -299,6 +299,7 @@
   align-items: center;
   gap: 16px;
   color: #e2e8f0;
+  box-shadow: 0 12px 36px rgba(8, 15, 30, 0.3);
 }
 
 .overview-alert--info {
@@ -307,8 +308,8 @@
 }
 
 .overview-alert--warn {
-  background: rgba(248, 113, 113, 0.12);
-  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(248, 180, 28, 0.14);
+  border-color: rgba(248, 180, 28, 0.28);
 }
 
 .overview-alert--danger {
@@ -321,6 +322,9 @@
   font-weight: 600;
   white-space: nowrap;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .overview-timeline {
