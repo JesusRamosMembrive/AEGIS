@@ -242,6 +242,8 @@ class ClaudeAgentRunner:
                 )
                 + "\n"
             )
+            if self.process.stdin is None:
+                raise RuntimeError("Process stdin is None")
             self.process.stdin.write(initial_message.encode("utf-8"))
             await self.process.stdin.drain()
             logger.info("Initial prompt sent to Claude")

@@ -167,7 +167,7 @@ class PTYParser:
 
     def _parse_line(self, line: str) -> list[ParsedEvent]:
         """Parse a single line of output."""
-        events = []
+        events: list[ParsedEvent] = []
         clean = line.strip()
 
         if not clean or self.is_noise(line):

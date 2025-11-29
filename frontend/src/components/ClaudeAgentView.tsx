@@ -928,8 +928,8 @@ const styles = `
 .claude-agent-view {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 40px); /* Account for parent layout elements */
-  max-height: calc(85vh - 40px);
+  height: calc(80vh - 55px); /* Account for parent layout elements */
+  max-height: calc(100vh - 90px);
   background: var(--agent-bg-primary);
   color: var(--agent-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

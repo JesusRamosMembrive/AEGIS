@@ -7,7 +7,7 @@ including commands, file operations, test results, and agent reasoning blocks.
 
 import re
 import json
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from enum import Enum
@@ -326,7 +326,7 @@ class AgentOutputParser:
         event_type: AgentEventType,
         line: str,
         clean_line: str,
-        extractor: Optional[callable] = None,
+        extractor: Optional[Callable[[str], Optional[Dict[str, Any]]]] = None,
     ) -> AgentEvent:
         """Create an event from parsed data"""
 

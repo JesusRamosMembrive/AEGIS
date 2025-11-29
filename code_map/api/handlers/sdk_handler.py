@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from .base import BaseAgentHandler, HandlerConfig, HandlerCallbacks
 
@@ -27,7 +27,7 @@ class SDKModeHandler(BaseAgentHandler):
 
     def __init__(self, config: HandlerConfig, callbacks: HandlerCallbacks):
         super().__init__(config, callbacks)
-        self._sdk_runner = None
+        self._sdk_runner: Optional[Any] = None
 
     async def handle_run(self, prompt: str, message: dict) -> asyncio.Task:
         """

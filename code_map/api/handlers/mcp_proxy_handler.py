@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from .base import BaseAgentHandler, HandlerConfig, HandlerCallbacks
 
@@ -34,7 +34,7 @@ class MCPProxyModeHandler(BaseAgentHandler):
         socket_server: Any,
     ):
         super().__init__(config, callbacks)
-        self._mcp_proxy_runner = None
+        self._mcp_proxy_runner: Optional[Any] = None
         self._socket_server = socket_server
 
     async def handle_run(self, prompt: str, message: dict) -> asyncio.Task:

@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, AsyncIterator, Callable, Optional
+from typing import Any, AsyncIterator, Awaitable, Callable, Optional, Union
 
 import pexpect
 
@@ -68,8 +68,15 @@ class PTYClaudeRunner:
         self._pending_permission: Optional[ParsedEvent] = None
 
         # Callbacks for events
-        self._on_event: Optional[Callable[[dict[str, Any]], None]] = None
-        self._on_permission: Optional[Callable[[dict[str, Any]], asyncio.Future]] = None
+        self._on_event: Optional[
+            Callable[[dict[str, Any]], Union[None, asyncio.Task[Any]]]
+        ] = None
+        self._on_permission: Optional[
+            Callable[
+                [dict[str, Any]],
+                Union[asyncio.Future[Any], Awaitable[asyncio.Future[Any]]],
+            ]
+        ] = None
 
     @property
     def state(self) -> RunnerState:
@@ -81,12 +88,17 @@ class PTYClaudeRunner:
         """Check if a session is active."""
         return self._state in (RunnerState.RUNNING, RunnerState.WAITING_PERMISSION)
 
-    def set_event_callback(self, callback: Callable[[dict[str, Any]], None]):
+    def set_event_callback(
+        self, callback: Callable[[dict[str, Any]], Union[None, asyncio.Task[Any]]]
+    ):
         """Set callback for event emissions."""
         self._on_event = callback
 
     def set_permission_callback(
-        self, callback: Callable[[dict[str, Any]], asyncio.Future]
+        self,
+        callback: Callable[
+            [dict[str, Any]], Union[asyncio.Future[Any], Awaitable[asyncio.Future[Any]]]
+        ],
     ):
         """Set callback for permission requests (should return Future with response)."""
         self._on_permission = callback

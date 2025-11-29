@@ -398,7 +398,7 @@ class GeminiAgentRunner:
         Respond to a pending tool approval request.
         """
         if self._tool_approval_manager:
-            return self._tool_approval_manager.resolve_request(
+            return self._tool_approval_manager.respond_to_approval(
                 request_id, approved, feedback
             )
         return False

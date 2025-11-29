@@ -131,6 +131,8 @@ class PermissionServer:
     ) -> dict[str, Any]:
         """Request approval via embedded ApprovalBridge"""
         print("DEBUG: [PermissionServer] Using embedded bridge", flush=True)
+        if self._bridge is None:
+            raise RuntimeError("Bridge not set - call set_bridge() first")
         return await self._bridge.request_approval(tool_name, tool_input, context)
 
     async def _request_via_socket(

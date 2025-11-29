@@ -408,8 +408,8 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
                 model=self.config.model,
                 max_tokens=self.config.max_tokens,
                 system=self._system_prompt,
-                tools=CLAUDE_TOOLS,
-                messages=self.conversation,
+                tools=CLAUDE_TOOLS,  # type: ignore[arg-type]
+                messages=self.conversation,  # type: ignore[arg-type]
             ),
         )
 

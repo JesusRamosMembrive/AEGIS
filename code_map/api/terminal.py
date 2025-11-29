@@ -230,9 +230,10 @@ async def terminal_websocket(websocket: WebSocket):
                                             """Send agent event to WebSocket"""
                                             try:
                                                 # Process event in manager
-                                                await agent_event_manager.process_event(
-                                                    event
-                                                )
+                                                if agent_event_manager is not None:
+                                                    await agent_event_manager.process_event(
+                                                        event
+                                                    )
 
                                                 # Send event to client
                                                 event_msg = (

@@ -25,7 +25,7 @@ import difflib
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Optional, Set
+from typing import Any, Dict, Optional, Set
 
 from code_map.audit import append_event
 
@@ -118,8 +118,8 @@ class AuditFileWatcher:
         self._file_snapshots: Dict[str, str] = {}
 
         # Watchdog observer (lazy loaded)
-        self._observer = None
-        self._handler = None
+        self._observer: Optional[Any] = None
+        self._handler: Optional[Any] = None
 
         # Flag to track if watcher is running
         self._running = False

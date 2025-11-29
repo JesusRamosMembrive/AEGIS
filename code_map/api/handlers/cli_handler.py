@@ -41,7 +41,7 @@ class CLIModeHandler(BaseAgentHandler):
         on_permission_request: Optional[Callable[[dict], Awaitable[dict]]] = None,
     ):
         super().__init__(config, callbacks)
-        self._cli_runner = None
+        self._cli_runner: Optional[Any] = None
         self._permission_mode = permission_mode
         self._socket_server = socket_server
         self._parser = parser

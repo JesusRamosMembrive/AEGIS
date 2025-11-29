@@ -271,7 +271,7 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
             cwd=str(cwd) if cwd else None,
         )
         stdout_bytes, stderr_bytes = await process.communicate()
-        entry = {
+        entry: Dict[str, object] = {
             "command": list(command),
             "stdout": stdout_bytes.decode("utf-8", errors="replace"),
             "stderr": stderr_bytes.decode("utf-8", errors="replace"),
@@ -376,7 +376,8 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
         rev_entry = await run_command(
             ["git", "-C", str(clone_dir), "rev-parse", "HEAD"]
         )
-        source_commit = rev_entry["stdout"].strip() or None
+        stdout = rev_entry["stdout"]
+        source_commit = str(stdout).strip() if stdout else None
 
         await copy_tree("plugins/superclaude", ".claude/plugins/superclaude")
         await copy_tree(".claude/skills", ".claude/skills/superclaude")

@@ -448,7 +448,7 @@
   {
     "path": "code_map/api/claude_permissions.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:25.993274+00:00",
+    "modified_at": "2025-11-29T09:31:41.657055+00:00",
     "symbols": [
       {
         "name": "ClaudePermissions",
@@ -523,14 +523,14 @@
       {
         "name": "add_recommended_permissions",
         "kind": "function",
-        "lineno": 192,
+        "lineno": 194,
         "parent": null,
         "docstring": "Add all recommended permissions for Agent UI.\n\nConvenience endpoint that adds all permissions needed for\nthe Claude Agent UI to work properly."
       },
       {
         "name": "remove_permission",
         "kind": "function",
-        "lineno": 205,
+        "lineno": 207,
         "parent": null,
         "docstring": "Remove a specific permission."
       }
@@ -698,7 +698,7 @@
   {
     "path": "code_map/api/handlers/cli_handler.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:01:48.644500+00:00",
+    "modified_at": "2025-11-29T09:25:28.986198+00:00",
     "symbols": [
       {
         "name": "CLIModeHandler",
@@ -805,7 +805,7 @@
   {
     "path": "code_map/api/handlers/mcp_proxy_handler.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:26.007275+00:00",
+    "modified_at": "2025-11-29T09:25:16.063272+00:00",
     "symbols": [
       {
         "name": "MCPProxyModeHandler",
@@ -855,7 +855,7 @@
   {
     "path": "code_map/api/handlers/sdk_handler.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:01:48.635502+00:00",
+    "modified_at": "2025-11-29T09:25:47.843021+00:00",
     "symbols": [
       {
         "name": "SDKModeHandler",
@@ -1702,7 +1702,7 @@
   {
     "path": "code_map/api/terminal.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:09:13.656789+00:00",
+    "modified_at": "2025-11-29T09:26:58.301678+00:00",
     "symbols": [
       {
         "name": "get_or_create_mcp_socket_server",
@@ -1728,21 +1728,21 @@
       {
         "name": "agent_websocket",
         "kind": "function",
-        "lineno": 357,
+        "lineno": 358,
         "parent": null,
         "docstring": "WebSocket endpoint for Claude Code JSON streaming mode\n\nUses `claude -p --output-format stream-json --verbose` to get structured\noutput instead of TUI rendering. Supports bidirectional communication for\ninteractive permission handling.\n\nClient sends JSON commands:\n- {\"command\": \"run\", \"prompt\": \"...\", \"continue\": true}\n- {\"command\": \"cancel\"}\n- {\"command\": \"new_session\"}\n- {\"command\": \"permission_response\", \"approved\": true, \"always\": false}\n\nServer sends JSON events:\n- {\"type\": \"system\", \"subtype\": \"init\", ...}\n- {\"type\": \"assistant\", \"subtype\": \"text\", \"content\": \"...\"}\n- {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n- {\"type\": \"user\", \"subtype\": \"tool_result\", \"content\": {...}}\n- {\"type\": \"permission_request\", \"tool\": \"...\", \"input\": {...}, \"request_id\": \"...\"}\n- {\"type\": \"done\"}\n- {\"type\": \"error\", \"content\": \"...\"}"
       },
       {
         "name": "agent_pty_websocket",
         "kind": "function",
-        "lineno": 713,
+        "lineno": 714,
         "parent": null,
         "docstring": "WebSocket endpoint for Claude Code PTY mode with real terminal interaction.\n\nThis mode spawns Claude in a pseudo-terminal (PTY) for proper Ink UI support,\nparses the terminal output into structured events, and enables real tool approval\nby detecting permission prompts in the output.\n\nClient sends JSON commands:\n- {\"command\": \"start\"} - Start a new PTY session\n- {\"command\": \"run\", \"prompt\": \"...\"} - Send a prompt to Claude\n- {\"command\": \"approve\"} - Approve a pending permission (send 'y')\n- {\"command\": \"deny\"} - Deny a pending permission (send 'n')\n- {\"command\": \"always_allow\"} - Always allow this permission (send 'a')\n- {\"command\": \"cancel\"} - Cancel current operation (send Ctrl+C)\n- {\"command\": \"stop\"} - Stop the PTY session\n\nServer sends JSON events:\n- {\"type\": \"session_started\"}\n- {\"type\": \"thinking\", \"data\": {...}}\n- {\"type\": \"completion\", \"data\": {...}}\n- {\"type\": \"permission_request\", \"data\": {...}}\n- {\"type\": \"message\", \"data\": {...}}\n- {\"type\": \"error\", \"data\": {...}}\n- {\"type\": \"session_ended\"}"
       },
       {
         "name": "gemini_agent_websocket",
         "kind": "function",
-        "lineno": 964,
+        "lineno": 965,
         "parent": null,
         "docstring": "WebSocket endpoint for Gemini Code JSON streaming mode"
       }
@@ -1993,7 +1993,7 @@
   {
     "path": "code_map/audit/file_watcher_hook.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:25.998275+00:00",
+    "modified_at": "2025-11-29T09:24:45.259014+00:00",
     "symbols": [
       {
         "name": "AuditFileWatcher",
@@ -4284,7 +4284,7 @@
   {
     "path": "code_map/mcp/permission_server.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:25.994275+00:00",
+    "modified_at": "2025-11-29T09:29:36.309717+00:00",
     "symbols": [
       {
         "name": "PermissionServer",
@@ -4324,35 +4324,35 @@
       {
         "name": "_request_via_socket",
         "kind": "method",
-        "lineno": 136,
+        "lineno": 138,
         "parent": "PermissionServer",
         "docstring": "Request approval via Unix socket to ATLAS backend"
       },
       {
         "name": "get_server",
         "kind": "function",
-        "lineno": 201,
+        "lineno": 203,
         "parent": null,
         "docstring": "Get or create the global PermissionServer instance"
       },
       {
         "name": "set_server",
         "kind": "function",
-        "lineno": 213,
+        "lineno": 215,
         "parent": null,
         "docstring": "Set the global PermissionServer instance"
       },
       {
         "name": "create_mcp_server",
         "kind": "function",
-        "lineno": 224,
+        "lineno": 226,
         "parent": null,
         "docstring": "Create FastMCP server with the check_permission tool.\n\nThis is used when running as a standalone MCP server."
       },
       {
         "name": "main",
         "kind": "function",
-        "lineno": 268,
+        "lineno": 270,
         "parent": null,
         "docstring": "Run the MCP server in standalone mode"
       }
@@ -5128,7 +5128,7 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:01:50.053929+00:00",
+    "modified_at": "2025-11-29T09:22:34.429980+00:00",
     "symbols": [
       {
         "name": "FileStatus",
@@ -5601,7 +5601,7 @@
   {
     "path": "code_map/terminal/agent_parser.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:26.009275+00:00",
+    "modified_at": "2025-11-29T09:21:57.183260+00:00",
     "symbols": [
       {
         "name": "AgentEventType",
@@ -5791,7 +5791,7 @@
   {
     "path": "code_map/terminal/claude_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:25.993274+00:00",
+    "modified_at": "2025-11-29T09:23:55.307011+00:00",
     "symbols": [
       {
         "name": "find_claude_cli",
@@ -5831,140 +5831,140 @@
       {
         "name": "_is_tool_use_event",
         "kind": "method",
-        "lineno": 452,
+        "lineno": 454,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if event is a tool_use event.\n\nClaude CLI emits tool_use in two formats:\n1. Simplified: {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n2. Full message: {\"type\": \"assistant\", \"message\": {\"content\": [{\"type\": \"tool_use\", ...}]}}"
       },
       {
         "name": "_extract_tool_use_from_event",
         "kind": "method",
-        "lineno": 478,
+        "lineno": 480,
         "parent": "ClaudeAgentRunner",
         "docstring": "Extract tool_use info from event.\n\nReturns (tool_name, tool_input, tool_id) or None if not found."
       },
       {
         "name": "_handle_tool_approval",
         "kind": "method",
-        "lineno": 509,
+        "lineno": 511,
         "parent": "ClaudeAgentRunner",
         "docstring": "Handle tool approval flow for toolApproval mode.\n\nIn plan mode, Claude proposes tool_use but doesn't execute.\nWe intercept, show preview to user, and execute manually if approved."
       },
       {
         "name": "_execute_tool",
         "kind": "method",
-        "lineno": 686,
+        "lineno": 688,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute a tool manually.\n\nReturns dict with \"content\" and \"is_error\" keys."
       },
       {
         "name": "_execute_write",
         "kind": "method",
-        "lineno": 718,
+        "lineno": 720,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Write tool"
       },
       {
         "name": "_execute_edit",
         "kind": "method",
-        "lineno": 741,
+        "lineno": 743,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Edit tool"
       },
       {
         "name": "_execute_read",
         "kind": "method",
-        "lineno": 785,
+        "lineno": 787,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Read tool"
       },
       {
         "name": "_execute_bash",
         "kind": "method",
-        "lineno": 826,
+        "lineno": 828,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Bash tool"
       },
       {
         "name": "_execute_glob",
         "kind": "method",
-        "lineno": 871,
+        "lineno": 873,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Glob tool"
       },
       {
         "name": "_execute_grep",
         "kind": "method",
-        "lineno": 899,
+        "lineno": 901,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Grep tool"
       },
       {
         "name": "_send_tool_result_to_claude",
         "kind": "method",
-        "lineno": 957,
+        "lineno": 959,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send tool result back to Claude via stdin"
       },
       {
         "name": "_send_tool_rejection_to_claude",
         "kind": "method",
-        "lineno": 1012,
+        "lineno": 1014,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send tool rejection back to Claude"
       },
       {
         "name": "respond_to_tool_approval",
         "kind": "method",
-        "lineno": 1022,
+        "lineno": 1024,
         "parent": "ClaudeAgentRunner",
         "docstring": "Respond to a pending tool approval request.\n\nArgs:\n    request_id: ID of the approval request\n    approved: Whether to approve the tool use\n    feedback: Optional feedback (for rejection)\n\nReturns:\n    True if response was processed, False if request not found"
       },
       {
         "name": "_is_permission_request",
         "kind": "method",
-        "lineno": 1044,
+        "lineno": 1046,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if an event is a permission request.\n\nClaude sends permission requests in stream-json mode in these ways:\n1. Explicit \"permission_request\" type event\n2. Tool use events may have \"requires_permission\" flag\n3. Events may contain permission prompts in the message"
       },
       {
         "name": "_handle_permission_request",
         "kind": "method",
-        "lineno": 1079,
+        "lineno": 1081,
         "parent": "ClaudeAgentRunner",
         "docstring": "Handle a permission request from Claude"
       },
       {
         "name": "_send_permission_response",
         "kind": "method",
-        "lineno": 1102,
+        "lineno": 1104,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send a permission response to Claude"
       },
       {
         "name": "send_user_input",
         "kind": "method",
-        "lineno": 1124,
+        "lineno": 1126,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send additional user input to the running process"
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 1150,
+        "lineno": 1152,
         "parent": "ClaudeAgentRunner",
         "docstring": "Cancel the running process"
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 1190,
+        "lineno": 1192,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if process is currently running"
       },
       {
         "name": "session_broken",
         "kind": "method",
-        "lineno": 1195,
+        "lineno": 1197,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if the Claude session is broken and cannot be continued.\n\nThis happens when we execute tools locally (in toolApproval mode with plan)\nafter Claude has already exited. Claude doesn't know about our local execution,\nso continuing the session would cause API errors."
       }
@@ -5974,7 +5974,7 @@
   {
     "path": "code_map/terminal/gemini_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:26.007275+00:00",
+    "modified_at": "2025-11-29T09:23:07.888549+00:00",
     "symbols": [
       {
         "name": "find_gemini_cli",
@@ -6299,7 +6299,7 @@
   {
     "path": "code_map/terminal/pty_parser.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:01:50.618865+00:00",
+    "modified_at": "2025-11-29T09:21:22.455187+00:00",
     "symbols": [
       {
         "name": "EventType",
@@ -6426,7 +6426,7 @@
   {
     "path": "code_map/terminal/pty_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:25.995275+00:00",
+    "modified_at": "2025-11-29T09:30:52.654047+00:00",
     "symbols": [
       {
         "name": "RunnerState",
@@ -6459,84 +6459,84 @@
       {
         "name": "state",
         "kind": "method",
-        "lineno": 75,
+        "lineno": 82,
         "parent": "PTYClaudeRunner",
         "docstring": "Get current runner state."
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 80,
+        "lineno": 87,
         "parent": "PTYClaudeRunner",
         "docstring": "Check if a session is active."
       },
       {
         "name": "set_event_callback",
         "kind": "method",
-        "lineno": 84,
+        "lineno": 91,
         "parent": "PTYClaudeRunner",
         "docstring": "Set callback for event emissions."
       },
       {
         "name": "set_permission_callback",
         "kind": "method",
-        "lineno": 88,
+        "lineno": 97,
         "parent": "PTYClaudeRunner",
         "docstring": "Set callback for permission requests (should return Future with response)."
       },
       {
         "name": "start_session",
         "kind": "method",
-        "lineno": 94,
+        "lineno": 106,
         "parent": "PTYClaudeRunner",
         "docstring": "Start a new Claude Code session.\n\nReturns:\n    True if session started successfully"
       },
       {
         "name": "stop_session",
         "kind": "method",
-        "lineno": 172,
+        "lineno": 184,
         "parent": "PTYClaudeRunner",
         "docstring": "Stop the current session."
       },
       {
         "name": "send_prompt",
         "kind": "method",
-        "lineno": 196,
+        "lineno": 208,
         "parent": "PTYClaudeRunner",
         "docstring": "Send a prompt to Claude and yield events as they occur.\n\nArgs:\n    prompt: The prompt to send\n\nYields:\n    Event dictionaries as they are parsed from output"
       },
       {
         "name": "respond_permission",
         "kind": "method",
-        "lineno": 285,
+        "lineno": 297,
         "parent": "PTYClaudeRunner",
         "docstring": "Respond to a pending permission request.\n\nArgs:\n    approved: Whether to allow the operation\n    always: If True and approved, select \"always allow\""
       },
       {
         "name": "_parse_output",
         "kind": "method",
-        "lineno": 312,
+        "lineno": 324,
         "parent": "PTYClaudeRunner",
         "docstring": "Parse raw output through parser and aggregator."
       },
       {
         "name": "_emit_event",
         "kind": "method",
-        "lineno": 317,
+        "lineno": 329,
         "parent": "PTYClaudeRunner",
         "docstring": "Emit an event through the callback."
       },
       {
         "name": "_handle_permission",
         "kind": "method",
-        "lineno": 325,
+        "lineno": 337,
         "parent": "PTYClaudeRunner",
         "docstring": "Handle a permission request."
       },
       {
         "name": "create_pty_runner",
         "kind": "function",
-        "lineno": 368,
+        "lineno": 380,
         "parent": null,
         "docstring": "Create a configured PTY runner.\n\nArgs:\n    working_directory: Directory to run Claude in\n    timeout: Timeout for operations\n\nReturns:\n    Configured PTYClaudeRunner instance"
       }
@@ -6638,7 +6638,7 @@
   {
     "path": "code_map/terminal/sdk_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T09:07:26.004275+00:00",
+    "modified_at": "2025-11-29T09:26:22.838983+00:00",
     "symbols": [
       {
         "name": "SDKRunnerConfig",
@@ -8208,7 +8208,7 @@
   {
     "path": "frontend/src/components/ClaudeAgentView.tsx",
     "relative": true,
-    "modified_at": "2025-11-29T09:18:35.933862+00:00",
+    "modified_at": "2025-11-29T09:28:05.778446+00:00",
     "symbols": [
       {
         "name": "extractResultContent",
