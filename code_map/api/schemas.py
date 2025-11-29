@@ -202,6 +202,9 @@ class StatusResponse(BaseModel):
     ollama_insights_enabled: bool
     ollama_insights_model: Optional[str]
     ollama_insights_frequency_minutes: Optional[int]
+    ollama_insights_last_model: Optional[str] = None
+    ollama_insights_last_message: Optional[str] = None
+    ollama_insights_last_error: Optional[str] = None
     ollama_insights_last_run: Optional[datetime]
     ollama_insights_next_run: Optional[datetime]
     ollama_insights_focus: Optional[str]
@@ -210,6 +213,8 @@ class StatusResponse(BaseModel):
     files_indexed: int
     symbols_indexed: int
     pending_events: int
+    analyzers_degraded: bool = False
+    degraded_capabilities: List[str] = Field(default_factory=list)
     capabilities: List[AnalyzerCapabilitySchema] = Field(default_factory=list)
 
 

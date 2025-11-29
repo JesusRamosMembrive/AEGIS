@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import AsyncIterator, Dict, Iterable, List, Optional
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
@@ -35,6 +36,7 @@ from .schemas import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 KEEPALIVE_SECONDS = 10
 
@@ -42,7 +44,8 @@ KEEPALIVE_SECONDS = 10
 def _get_git_history(state: AppState) -> Optional[GitHistory]:
     try:
         return GitHistory(state.settings.root_path)
-    except GitHistoryError:
+    except GitHistoryError as exc:
+        logger.warning("Git history no disponible: %s", exc)
         return None
 
 
@@ -59,7 +62,8 @@ def _build_change_map(
             relative_path = state.to_relative(absolute_path)
             mapping[relative_path] = change.payload()
         return mapping
-    except GitHistoryError:
+    except GitHistoryError as exc:
+        logger.warning("Error obteniendo cambios del working tree: %s", exc)
         return {}
 
 

@@ -12,7 +12,6 @@ import { AppLayout } from "./components/AppLayout";
 import { OllamaInsightsView } from "./components/OllamaInsightsView";
 import { RemoteTerminalView } from "./components/RemoteTerminalView";
 import { ClaudeAgentView } from "./components/ClaudeAgentView";
-import { GeminiAgentView } from "./components/GeminiAgentView";
 import CodeTimelineView from "./components/CodeTimelineView";
 import { DocsLibraryView } from "./components/DocsLibraryView";
 import { useEventStream } from "./hooks/useEventStream";
@@ -99,10 +98,6 @@ export function App(): JSX.Element {
           <Route
             path="/agent"
             element={withLayout("Claude Agent", <ClaudeAgentView />)}
-          />
-          <Route
-            path="/gemini-agent"
-            element={withLayout("Gemini Agent", <GeminiAgentView />)}
           />
           <Route
             path="/settings"

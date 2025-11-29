@@ -116,6 +116,9 @@ export interface StatusPayload {
   ollama_insights_model: string | null;
   ollama_insights_frequency_minutes: number | null;
   ollama_insights_focus: string | null;
+  ollama_insights_last_model: string | null;
+  ollama_insights_last_message: string | null;
+  ollama_insights_last_error: string | null;
   ollama_insights_last_run: string | null;
   ollama_insights_next_run: string | null;
   last_full_scan: string | null;
@@ -123,6 +126,8 @@ export interface StatusPayload {
   files_indexed: number;
   symbols_indexed: number;
   pending_events: number;
+  analyzers_degraded: boolean;
+  degraded_capabilities: string[];
   capabilities: AnalyzerCapability[];
 }
 
