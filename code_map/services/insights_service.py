@@ -82,9 +82,7 @@ class InsightsService:
                     except RuntimeError:
                         self._pending = True
                         return
-                    self._timer = loop.create_task(
-                        self._schedule_later(remaining)
-                    )
+                    self._timer = loop.create_task(self._schedule_later(remaining))
                 return
 
         self._pending = False
@@ -96,7 +94,11 @@ class InsightsService:
         self._task = loop.create_task(self._run())
 
     async def run_now(
-        self, *, model: Optional[str] = None, focus: Optional[str] = None, timeout: Optional[float] = None
+        self,
+        *,
+        model: Optional[str] = None,
+        focus: Optional[str] = None,
+        timeout: Optional[float] = None,
     ):
         """Ejecuta insights inmediatamente y devuelve el resultado."""
         await self._cancel_timer()
@@ -201,7 +203,9 @@ class InsightsService:
                 )
             raise
         except Exception:  # pragma: no cover
-            logger.exception("Error inesperado al generar insights automáticos con Ollama")
+            logger.exception(
+                "Error inesperado al generar insights automáticos con Ollama"
+            )
             self.last_error = "Error inesperado al generar insights; revisar logs."
             if self.config.notify:
                 record_notification(

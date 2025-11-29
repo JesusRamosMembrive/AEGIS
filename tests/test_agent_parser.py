@@ -5,8 +5,7 @@ Verifies pattern detection and event extraction from terminal output.
 """
 
 import pytest
-from datetime import datetime
-from code_map.terminal.agent_parser import AgentOutputParser, AgentEvent, AgentEventType
+from code_map.terminal.agent_parser import AgentOutputParser, AgentEventType
 
 
 class TestAgentOutputParser:

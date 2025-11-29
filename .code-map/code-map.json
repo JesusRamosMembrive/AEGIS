@@ -250,7 +250,7 @@
   {
     "path": "code_map/api/analysis.py",
     "relative": true,
-    "modified_at": "2025-11-29T05:05:32.385685+00:00",
+    "modified_at": "2025-11-29T09:01:48.981503+00:00",
     "symbols": [
       {
         "name": "_get_git_history",
@@ -283,84 +283,84 @@
       {
         "name": "_change_payload_for_path",
         "kind": "function",
-        "lineno": 118,
+        "lineno": 119,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_create_generic_summary_for_file",
         "kind": "function",
-        "lineno": 133,
+        "lineno": 134,
         "parent": null,
         "docstring": "Construye un FileSummary sin s\u00edmbolos para archivos no indexados."
       },
       {
         "name": "health",
         "kind": "function",
-        "lineno": 146,
+        "lineno": 147,
         "parent": null,
         "docstring": "Comprueba el estado de la API."
       },
       {
         "name": "get_tree",
         "kind": "function",
-        "lineno": 152,
+        "lineno": 153,
         "parent": null,
         "docstring": "Obtiene el \u00e1rbol de archivos del proyecto."
       },
       {
         "name": "get_file",
         "kind": "function",
-        "lineno": 170,
+        "lineno": 171,
         "parent": null,
         "docstring": "Obtiene el resumen de un archivo espec\u00edfico."
       },
       {
         "name": "get_working_tree_diff",
         "kind": "function",
-        "lineno": 195,
+        "lineno": 196,
         "parent": null,
         "docstring": "Devuelve el diff del working tree frente al \u00faltimo commit para un archivo."
       },
       {
         "name": "list_working_tree_changes",
         "kind": "function",
-        "lineno": 231,
+        "lineno": 232,
         "parent": null,
         "docstring": "Lista todos los archivos con cambios detectados desde el \u00faltimo commit."
       },
       {
         "name": "list_docs_directory",
         "kind": "function",
-        "lineno": 246,
+        "lineno": 247,
         "parent": null,
         "docstring": "Lista los archivos markdown en docs/."
       },
       {
         "name": "search",
         "kind": "function",
-        "lineno": 289,
+        "lineno": 290,
         "parent": null,
         "docstring": "Busca s\u00edmbolos en el proyecto."
       },
       {
         "name": "_event_stream",
         "kind": "function",
-        "lineno": 300,
+        "lineno": 301,
         "parent": null,
         "docstring": "Genera un flujo de eventos de cambio."
       },
       {
         "name": "events",
         "kind": "function",
-        "lineno": 314,
+        "lineno": 315,
         "parent": null,
         "docstring": "Suscribe al flujo de eventos de cambio."
       },
       {
         "name": "rescan",
         "kind": "function",
-        "lineno": 320,
+        "lineno": 321,
         "parent": null,
         "docstring": "Dispara un escaneo completo del proyecto."
       }
@@ -370,7 +370,7 @@
   {
     "path": "code_map/api/audit.py",
     "relative": true,
-    "modified_at": "2025-11-23T19:29:44.876460+00:00",
+    "modified_at": "2025-11-29T09:07:25.992275+00:00",
     "symbols": [
       {
         "name": "_serialize_run",
@@ -448,7 +448,7 @@
   {
     "path": "code_map/api/claude_permissions.py",
     "relative": true,
-    "modified_at": "2025-11-26T18:15:03.029594+00:00",
+    "modified_at": "2025-11-29T09:31:41.657055+00:00",
     "symbols": [
       {
         "name": "ClaudePermissions",
@@ -460,77 +460,77 @@
       {
         "name": "ClaudeSettings",
         "kind": "class",
-        "lineno": 37,
+        "lineno": 38,
         "parent": null,
         "docstring": "Claude Code settings.local.json structure"
       },
       {
         "name": "PermissionsResponse",
         "kind": "class",
-        "lineno": 42,
+        "lineno": 44,
         "parent": null,
         "docstring": "Response for permissions endpoint"
       },
       {
         "name": "AddPermissionsRequest",
         "kind": "class",
-        "lineno": 50,
+        "lineno": 53,
         "parent": null,
         "docstring": "Request to add permissions"
       },
       {
         "name": "AddPermissionsResponse",
         "kind": "class",
-        "lineno": 55,
+        "lineno": 59,
         "parent": null,
         "docstring": "Response after adding permissions"
       },
       {
         "name": "get_settings_path",
         "kind": "function",
-        "lineno": 86,
+        "lineno": 91,
         "parent": null,
         "docstring": "Get path to .claude/settings.local.json"
       },
       {
         "name": "read_settings",
         "kind": "function",
-        "lineno": 91,
+        "lineno": 96,
         "parent": null,
         "docstring": "Read Claude settings from file"
       },
       {
         "name": "write_settings",
         "kind": "function",
-        "lineno": 105,
+        "lineno": 110,
         "parent": null,
         "docstring": "Write Claude settings to file"
       },
       {
         "name": "get_permissions",
         "kind": "function",
-        "lineno": 120,
+        "lineno": 125,
         "parent": null,
         "docstring": "Get current Claude Code permissions for the project.\n\nReturns the current permissions from .claude/settings.local.json\nalong with recommended permissions for the Agent UI."
       },
       {
         "name": "add_permissions",
         "kind": "function",
-        "lineno": 149,
+        "lineno": 151,
         "parent": null,
         "docstring": "Add permissions to Claude Code settings.\n\nAdds the specified permissions to the allow list in\n.claude/settings.local.json. Creates the file if it doesn't exist."
       },
       {
         "name": "add_recommended_permissions",
         "kind": "function",
-        "lineno": 190,
+        "lineno": 194,
         "parent": null,
         "docstring": "Add all recommended permissions for Agent UI.\n\nConvenience endpoint that adds all permissions needed for\nthe Claude Agent UI to work properly."
       },
       {
         "name": "remove_permission",
         "kind": "function",
-        "lineno": 201,
+        "lineno": 207,
         "parent": null,
         "docstring": "Remove a specific permission."
       }
@@ -598,7 +598,7 @@
   {
     "path": "code_map/api/handlers/approval.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:33:02.231816+00:00",
+    "modified_at": "2025-11-29T09:01:48.583674+00:00",
     "symbols": [
       {
         "name": "ApprovalRequestProtocol",
@@ -627,7 +627,7 @@
   {
     "path": "code_map/api/handlers/base.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:31:24.136070+00:00",
+    "modified_at": "2025-11-29T09:01:48.628860+00:00",
     "symbols": [
       {
         "name": "HandlerCallbacks",
@@ -698,7 +698,7 @@
   {
     "path": "code_map/api/handlers/cli_handler.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:32:41.226657+00:00",
+    "modified_at": "2025-11-29T09:25:28.986198+00:00",
     "symbols": [
       {
         "name": "CLIModeHandler",
@@ -731,35 +731,35 @@
       {
         "name": "_handle_tool_approval_request",
         "kind": "method",
-        "lineno": 135,
+        "lineno": 148,
         "parent": "CLIModeHandler",
         "docstring": "Forward tool approval request to frontend via callback."
       },
       {
         "name": "_send_mcp_approval_request",
         "kind": "method",
-        "lineno": 142,
+        "lineno": 155,
         "parent": "CLIModeHandler",
         "docstring": "Forward MCP approval request to frontend via WebSocket (mcpApproval mode).\n\nThis is used when permission_mode is 'mcpApproval' with the CLI runner."
       },
       {
         "name": "handle_cancel",
         "kind": "method",
-        "lineno": 170,
+        "lineno": 183,
         "parent": "CLIModeHandler",
         "docstring": "Cancel CLI runner."
       },
       {
         "name": "handle_tool_approval_response",
         "kind": "method",
-        "lineno": 177,
+        "lineno": 190,
         "parent": "CLIModeHandler",
         "docstring": "Handle tool approval response for CLI mode.\n\nRoutes to either MCP socket server (mcpApproval) or runner (toolApproval)."
       },
       {
         "name": "handle_mcp_approval_response",
         "kind": "method",
-        "lineno": 206,
+        "lineno": 221,
         "parent": "CLIModeHandler",
         "docstring": "Handle MCP approval response (mcpApproval mode only).\n\nThis is a separate method for the specific mcp_approval_response command."
       }
@@ -805,7 +805,7 @@
   {
     "path": "code_map/api/handlers/mcp_proxy_handler.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:32:05.525385+00:00",
+    "modified_at": "2025-11-29T09:25:16.063272+00:00",
     "symbols": [
       {
         "name": "MCPProxyModeHandler",
@@ -831,21 +831,21 @@
       {
         "name": "_send_approval_request",
         "kind": "method",
-        "lineno": 85,
+        "lineno": 88,
         "parent": "MCPProxyModeHandler",
         "docstring": "Forward MCP proxy approval request to frontend via WebSocket.\n\nArgs:\n    request: ApprovalRequest from the MCP socket server"
       },
       {
         "name": "handle_cancel",
         "kind": "method",
-        "lineno": 97,
+        "lineno": 102,
         "parent": "MCPProxyModeHandler",
         "docstring": "Cancel MCP proxy runner."
       },
       {
         "name": "handle_tool_approval_response",
         "kind": "method",
-        "lineno": 104,
+        "lineno": 109,
         "parent": "MCPProxyModeHandler",
         "docstring": "Handle tool approval response for MCP proxy mode.\n\nRoutes response through the socket server to the waiting MCP proxy."
       }
@@ -855,7 +855,7 @@
   {
     "path": "code_map/api/handlers/sdk_handler.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:31:43.711219+00:00",
+    "modified_at": "2025-11-29T09:25:47.843021+00:00",
     "symbols": [
       {
         "name": "SDKModeHandler",
@@ -905,7 +905,7 @@
   {
     "path": "code_map/api/integrations.py",
     "relative": true,
-    "modified_at": "2025-11-29T04:48:22.923245+00:00",
+    "modified_at": "2025-11-29T06:40:37.062237+00:00",
     "symbols": [
       {
         "name": "get_ollama_status",
@@ -955,7 +955,7 @@
   {
     "path": "code_map/api/linters.py",
     "relative": true,
-    "modified_at": "2025-11-29T04:47:57.704253+00:00",
+    "modified_at": "2025-11-29T06:40:37.062541+00:00",
     "symbols": [
       {
         "name": "get_linters_discovery",
@@ -1076,7 +1076,7 @@
   {
     "path": "code_map/api/schemas.py",
     "relative": true,
-    "modified_at": "2025-11-29T05:30:14.178762+00:00",
+    "modified_at": "2025-11-29T06:40:37.063098+00:00",
     "symbols": [
       {
         "name": "HealthResponse",
@@ -1702,47 +1702,47 @@
   {
     "path": "code_map/api/terminal.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:35:35.485499+00:00",
+    "modified_at": "2025-11-29T09:26:58.301678+00:00",
     "symbols": [
       {
         "name": "get_or_create_mcp_socket_server",
         "kind": "function",
-        "lineno": 45,
+        "lineno": 44,
         "parent": null,
         "docstring": "Get or create the global MCP socket server instance.\n\nThe socket server is shared across all WebSocket connections because\nthe MCP Permission Server subprocess needs a single point of communication."
       },
       {
         "name": "stop_mcp_socket_server",
         "kind": "function",
-        "lineno": 69,
+        "lineno": 68,
         "parent": null,
         "docstring": "Stop the global MCP socket server if running."
       },
       {
         "name": "terminal_websocket",
         "kind": "function",
-        "lineno": 84,
+        "lineno": 83,
         "parent": null,
         "docstring": "WebSocket endpoint for remote terminal access\n\nSpawns a shell process and provides bidirectional communication using text protocol.\n\nClient can send:\n- Raw text for shell input\n- \"__RESIZE__:cols:rows\" for terminal resize\n- \"__AGENT__:enable\" to enable agent parsing\n- \"__AGENT__:disable\" to disable agent parsing\n\nServer sends:\n- Raw text from shell output\n- \"__AGENT__:event:{json}\" for agent events (when enabled)"
       },
       {
         "name": "agent_websocket",
         "kind": "function",
-        "lineno": 322,
+        "lineno": 358,
         "parent": null,
         "docstring": "WebSocket endpoint for Claude Code JSON streaming mode\n\nUses `claude -p --output-format stream-json --verbose` to get structured\noutput instead of TUI rendering. Supports bidirectional communication for\ninteractive permission handling.\n\nClient sends JSON commands:\n- {\"command\": \"run\", \"prompt\": \"...\", \"continue\": true}\n- {\"command\": \"cancel\"}\n- {\"command\": \"new_session\"}\n- {\"command\": \"permission_response\", \"approved\": true, \"always\": false}\n\nServer sends JSON events:\n- {\"type\": \"system\", \"subtype\": \"init\", ...}\n- {\"type\": \"assistant\", \"subtype\": \"text\", \"content\": \"...\"}\n- {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n- {\"type\": \"user\", \"subtype\": \"tool_result\", \"content\": {...}}\n- {\"type\": \"permission_request\", \"tool\": \"...\", \"input\": {...}, \"request_id\": \"...\"}\n- {\"type\": \"done\"}\n- {\"type\": \"error\", \"content\": \"...\"}"
       },
       {
         "name": "agent_pty_websocket",
         "kind": "function",
-        "lineno": 644,
+        "lineno": 714,
         "parent": null,
         "docstring": "WebSocket endpoint for Claude Code PTY mode with real terminal interaction.\n\nThis mode spawns Claude in a pseudo-terminal (PTY) for proper Ink UI support,\nparses the terminal output into structured events, and enables real tool approval\nby detecting permission prompts in the output.\n\nClient sends JSON commands:\n- {\"command\": \"start\"} - Start a new PTY session\n- {\"command\": \"run\", \"prompt\": \"...\"} - Send a prompt to Claude\n- {\"command\": \"approve\"} - Approve a pending permission (send 'y')\n- {\"command\": \"deny\"} - Deny a pending permission (send 'n')\n- {\"command\": \"always_allow\"} - Always allow this permission (send 'a')\n- {\"command\": \"cancel\"} - Cancel current operation (send Ctrl+C)\n- {\"command\": \"stop\"} - Stop the PTY session\n\nServer sends JSON events:\n- {\"type\": \"session_started\"}\n- {\"type\": \"thinking\", \"data\": {...}}\n- {\"type\": \"completion\", \"data\": {...}}\n- {\"type\": \"permission_request\", \"data\": {...}}\n- {\"type\": \"message\", \"data\": {...}}\n- {\"type\": \"error\", \"data\": {...}}\n- {\"type\": \"session_ended\"}"
       },
       {
         "name": "gemini_agent_websocket",
         "kind": "function",
-        "lineno": 895,
+        "lineno": 965,
         "parent": null,
         "docstring": "WebSocket endpoint for Gemini Code JSON streaming mode"
       }
@@ -1837,7 +1837,7 @@
   {
     "path": "code_map/api/tracer.py",
     "relative": true,
-    "modified_at": "2025-11-29T05:05:19.556624+00:00",
+    "modified_at": "2025-11-29T09:01:49.005940+00:00",
     "symbols": [
       {
         "name": "_require_tree_sitter",
@@ -1898,63 +1898,63 @@
       {
         "name": "trace_chain",
         "kind": "function",
-        "lineno": 186,
+        "lineno": 188,
         "parent": null,
         "docstring": "Traza la cadena completa de llamadas desde una funci\u00f3n espec\u00edfica.\n\nSigue todas las llamadas recursivamente desde la funci\u00f3n de inicio\nhasta la profundidad m\u00e1xima especificada.\n\n**Ejemplo:**\nSi tienes `api_move_motors() -> internal_move() -> kinesis_move()`,\nel trace desde `api_move_motors` retornar\u00e1 toda la cadena."
       },
       {
         "name": "get_all_chains",
         "kind": "function",
-        "lineno": 276,
+        "lineno": 280,
         "parent": null,
         "docstring": "Obtiene todas las cadenas de llamadas posibles en un archivo.\n\nDetecta autom\u00e1ticamente funciones ra\u00edz (no llamadas por otras)\ny genera todas las cadenas desde esas ra\u00edces.\n\n**\u00datil para:**\n- Visualizar flujo completo de un m\u00f3dulo\n- Detectar endpoints y sus cadenas de ejecuci\u00f3n\n- Identificar c\u00f3digo no utilizado"
       },
       {
         "name": "AnalyzeCrossFileRequest",
         "kind": "class",
-        "lineno": 366,
+        "lineno": 372,
         "parent": null,
         "docstring": "Request para an\u00e1lisis cross-file (Stage 2)."
       },
       {
         "name": "CrossFileCallGraphResponse",
         "kind": "class",
-        "lineno": 386,
+        "lineno": 392,
         "parent": null,
         "docstring": "Response con call graph cross-file."
       },
       {
         "name": "TraceCrossFileRequest",
         "kind": "class",
-        "lineno": 416,
+        "lineno": 422,
         "parent": null,
         "docstring": "Request para trace cross-file."
       },
       {
         "name": "CrossFileCallChain",
         "kind": "class",
-        "lineno": 432,
+        "lineno": 438,
         "parent": null,
         "docstring": "Cadena de llamadas cross-file."
       },
       {
         "name": "TraceCrossFileResponse",
         "kind": "class",
-        "lineno": 444,
+        "lineno": 450,
         "parent": null,
         "docstring": "Response con trace cross-file."
       },
       {
         "name": "analyze_cross_file",
         "kind": "function",
-        "lineno": 454,
+        "lineno": 460,
         "parent": null,
         "docstring": "Analiza call graph con resoluci\u00f3n de imports (Stage 2).\n\n**Caracter\u00edsticas Stage 2:**\n- Sigue imports entre archivos\n- Resuelve llamadas a funciones importadas\n- Detecta entry points del proyecto\n- Cachea resultados por archivo\n\n**Formato de nombres:**\n- Nombres cualificados: `path/to/file.py::function_name`\n- M\u00e9todos de clase: `path/to/file.py::ClassName.method_name`\n\n**Ejemplo:**\n```\n{\n  \"call_graph\": {\n    \"server.py::create_app\": [\n      \"settings.py::load_settings\",\n      \"state.py::AppState\"\n    ]\n  }\n}\n```"
       },
       {
         "name": "trace_cross_file",
         "kind": "function",
-        "lineno": 533,
+        "lineno": 541,
         "parent": null,
         "docstring": "Traza cadena de llamadas cross-file (Stage 2).\n\n**Caracter\u00edsticas:**\n- Sigue llamadas entre archivos diferentes\n- Muestra path completo de ejecuci\u00f3n\n- Detecta ciclos\n\n**Input:**\n- `start_function`: Nombre cualificado `\"path/file.py::function\"`\n- `max_depth`: Profundidad m\u00e1xima a trazar\n\n**Ejemplo:**\n```\nPOST /tracer/trace-cross-file\n{\n  \"start_function\": \"code_map/server.py::create_app\",\n  \"max_depth\": 10\n}\n```"
       }
@@ -1993,89 +1993,89 @@
   {
     "path": "code_map/audit/file_watcher_hook.py",
     "relative": true,
-    "modified_at": "2025-11-23T21:19:57.150771+00:00",
+    "modified_at": "2025-11-29T09:24:45.259014+00:00",
     "symbols": [
       {
         "name": "AuditFileWatcher",
         "kind": "class",
-        "lineno": 52,
+        "lineno": 75,
         "parent": null,
         "docstring": "File watcher that automatically generates audit events for file changes.\n\nMonitors a directory tree and creates diff events whenever files are\ncreated, modified, or deleted.\n\nFeatures:\n- Automatic diff generation using git\n- Filtering by file extension\n- Exclusion of build/cache directories\n- Debouncing to avoid duplicate events\n- Integration with audit trail system"
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 67,
+        "lineno": 90,
         "parent": "AuditFileWatcher",
         "docstring": "Initialize the audit file watcher.\n\nArgs:\n    run_id: Audit run ID to attach events to\n    root_path: Root directory to watch\n    actor: Actor performing the changes (agent, human)\n    phase: Current workflow phase (plan, apply, validate)\n    extensions: File extensions to track (default: TRACKED_EXTENSIONS)\n    exclude_dirs: Directories to exclude (default: EXCLUDED_DIRS)"
       },
       {
         "name": "start",
         "kind": "method",
-        "lineno": 104,
+        "lineno": 127,
         "parent": "AuditFileWatcher",
         "docstring": "Start watching for file changes."
       },
       {
         "name": "stop",
         "kind": "method",
-        "lineno": 142,
+        "lineno": 167,
         "parent": "AuditFileWatcher",
         "docstring": "Stop watching for file changes."
       },
       {
         "name": "_should_track",
         "kind": "method",
-        "lineno": 154,
+        "lineno": 179,
         "parent": "AuditFileWatcher",
         "docstring": "Check if file should be tracked based on extension and exclusions."
       },
       {
         "name": "_handle_file_created",
         "kind": "method",
-        "lineno": 171,
+        "lineno": 196,
         "parent": "AuditFileWatcher",
         "docstring": "Handle file creation event."
       },
       {
         "name": "_handle_file_modified",
         "kind": "method",
-        "lineno": 213,
+        "lineno": 238,
         "parent": "AuditFileWatcher",
         "docstring": "Handle file modification event."
       },
       {
         "name": "_handle_file_deleted",
         "kind": "method",
-        "lineno": 271,
+        "lineno": 296,
         "parent": "AuditFileWatcher",
         "docstring": "Handle file deletion event."
       },
       {
         "name": "_generate_diff",
         "kind": "method",
-        "lineno": 309,
+        "lineno": 336,
         "parent": "AuditFileWatcher",
         "docstring": "Generate unified diff between old and new content."
       },
       {
         "name": "_generate_creation_diff",
         "kind": "method",
-        "lineno": 330,
+        "lineno": 357,
         "parent": "AuditFileWatcher",
         "docstring": "Generate diff for file creation."
       },
       {
         "name": "_generate_deletion_diff",
         "kind": "method",
-        "lineno": 334,
+        "lineno": 361,
         "parent": "AuditFileWatcher",
         "docstring": "Generate diff for file deletion."
       },
       {
         "name": "snapshot_current_state",
         "kind": "method",
-        "lineno": 338,
+        "lineno": 365,
         "parent": "AuditFileWatcher",
         "docstring": "Snapshot current state of all tracked files.\n\nCall this before starting to watch to establish a baseline."
       }
@@ -2085,7 +2085,7 @@
   {
     "path": "code_map/audit/hooks.py",
     "relative": true,
-    "modified_at": "2025-11-23T19:46:52.134694+00:00",
+    "modified_at": "2025-11-29T09:07:26.003275+00:00",
     "symbols": [
       {
         "name": "AuditContext",
@@ -2118,21 +2118,21 @@
       {
         "name": "audit_tracked",
         "kind": "function",
-        "lineno": 130,
+        "lineno": 139,
         "parent": null,
         "docstring": "Decorator to automatically track function execution as audit events.\n\nArgs:\n    event_type: Type of event (command, analysis, etc.)\n    phase: Workflow phase (plan, apply, validate, explore)\n    actor: Who is performing the action (agent, human)\n    title_from_func: Use function name as event title\n    capture_return: Include return value in payload\n\nExample:\n    @audit_tracked(type=\"command\", phase=\"validate\")\n    def run_tests():\n        return subprocess.run([\"pytest\", \"tests/\"])\n\n    # When called, automatically creates audit events\n    run_tests()  # -> emits \"run_tests (started)\" and \"run_tests (completed)\"\n\nNote: Requires `run_id` to be passed as kwarg or set in environment."
       },
       {
         "name": "audit_run_command",
         "kind": "function",
-        "lineno": 226,
+        "lineno": 237,
         "parent": null,
         "docstring": "Wrapper around subprocess.run() that automatically logs command\nexecution as audit events.\n\nArgs:\n    cmd: Command to execute (string or list)\n    run_id: Audit run ID to attach events to\n    phase: Workflow phase (validate, apply, etc.)\n    actor: Who is running the command\n    capture_output: Capture stdout/stderr for audit log\n    timeout: Command timeout in seconds\n    **subprocess_kwargs: Additional args passed to subprocess.run()\n\nReturns:\n    CompletedProcess with returncode, stdout, stderr\n\nExample:\n    result = audit_run_command(\n        [\"pytest\", \"tests/\"],\n        run_id=123,\n        phase=\"validate\"\n    )\n    # Creates events: \"$ pytest tests/\" (running) -> (ok/error)"
       },
       {
         "name": "audit_phase",
         "kind": "function",
-        "lineno": 362,
+        "lineno": 377,
         "parent": null,
         "docstring": "Context manager for tracking workflow phases (plan, apply, validate).\n\nEmits phase_start and phase_end events with duration tracking.\n\nExample:\n    with audit_phase(run_id=123, phase_name=\"plan\"):\n        # Planning work here\n        architect_design()\n\n    with audit_phase(run_id=123, phase_name=\"apply\"):\n        # Implementation work here\n        implementer_code()"
       }
@@ -2142,7 +2142,7 @@
   {
     "path": "code_map/audit/storage.py",
     "relative": true,
-    "modified_at": "2025-11-23T19:41:27.175207+00:00",
+    "modified_at": "2025-11-29T09:01:49.012361+00:00",
     "symbols": [
       {
         "name": "AuditRun",
@@ -2196,56 +2196,56 @@
       {
         "name": "_row_to_event",
         "kind": "function",
-        "lineno": 137,
+        "lineno": 139,
         "parent": null,
         "docstring": null
       },
       {
         "name": "create_run",
         "kind": "function",
-        "lineno": 153,
+        "lineno": 155,
         "parent": null,
         "docstring": "Creates a new audit run entry."
       },
       {
         "name": "close_run",
         "kind": "function",
-        "lineno": 181,
+        "lineno": 183,
         "parent": null,
         "docstring": "Marks a run as finished."
       },
       {
         "name": "get_run",
         "kind": "function",
-        "lineno": 203,
+        "lineno": 205,
         "parent": null,
         "docstring": "Fetches a single run including event count."
       },
       {
         "name": "list_runs",
         "kind": "function",
-        "lineno": 231,
+        "lineno": 233,
         "parent": null,
         "docstring": "Lists recent runs, optionally filtered by root."
       },
       {
         "name": "append_event",
         "kind": "function",
-        "lineno": 276,
+        "lineno": 278,
         "parent": null,
         "docstring": "Adds a new event to a run."
       },
       {
         "name": "get_event",
         "kind": "function",
-        "lineno": 330,
+        "lineno": 332,
         "parent": null,
         "docstring": "Fetches a single event by id."
       },
       {
         "name": "list_events",
         "kind": "function",
-        "lineno": 349,
+        "lineno": 351,
         "parent": null,
         "docstring": "Lists events for a run, ordered chronologically."
       }
@@ -2333,7 +2333,7 @@
   {
     "path": "code_map/call_tracer_v2.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.327922+00:00",
+    "modified_at": "2025-11-29T09:01:49.981040+00:00",
     "symbols": [
       {
         "name": "CrossFileCallGraphExtractor",
@@ -2380,63 +2380,63 @@
       {
         "name": "_handle_class_definition",
         "kind": "method",
-        "lineno": 262,
+        "lineno": 266,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Detecta y registra definici\u00f3n de clase."
       },
       {
         "name": "_handle_function_definition",
         "kind": "method",
-        "lineno": 280,
+        "lineno": 284,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Detecta y registra definici\u00f3n de funci\u00f3n."
       },
       {
         "name": "_handle_assignment",
         "kind": "method",
-        "lineno": 306,
+        "lineno": 310,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Detecta asignaci\u00f3n de atributo de instancia en __init__.\nEjemplo: self.middleware = middlewareAPI()"
       },
       {
         "name": "_handle_call",
         "kind": "method",
-        "lineno": 345,
+        "lineno": 351,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Detecta y registra llamadas a funciones."
       },
       {
         "name": "_extract_callee_name",
         "kind": "method",
-        "lineno": 378,
+        "lineno": 384,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Extrae nombre de funci\u00f3n llamada.\n\nManeja:\n- foo() \u2192 (\"foo\", False, None)\n- obj.method() \u2192 (\"method\", False, None)\n- self.helper() \u2192 (\"helper\", False, None)\n- module.func() \u2192 (\"module\", False, None) para imports\n- self.middleware.apiMethod() \u2192 (\"apiMethod\", True, \"middleware\")\n\nReturns:\n    Tuple of (callee_name, is_instance_method, instance_attr_name)"
       },
       {
         "name": "_get_node_text",
         "kind": "method",
-        "lineno": 440,
+        "lineno": 446,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Extrae texto de un nodo."
       },
       {
         "name": "trace_chain_cross_file",
         "kind": "method",
-        "lineno": 444,
+        "lineno": 450,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Traza cadena de llamadas cross-file.\n\nArgs:\n    start_function: Nombre cualificado (\"file.py::function\")\n    max_depth: Profundidad m\u00e1xima\n\nReturns:\n    Lista de (depth, qualified_name, callees)"
       },
       {
         "name": "find_entry_points",
         "kind": "method",
-        "lineno": 474,
+        "lineno": 480,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Encuentra funciones que no son llamadas por nadie (entry points).\n\nReturns:\n    Lista de nombres cualificados de entry points"
       },
       {
         "name": "export_to_dict",
         "kind": "method",
-        "lineno": 488,
+        "lineno": 494,
         "parent": "CrossFileCallGraphExtractor",
         "docstring": "Exporta el call graph a un diccionario serializable.\n\nReturns:\n    Dict con estructura del call graph"
       }
@@ -2735,7 +2735,7 @@
   {
     "path": "code_map/constants.py",
     "relative": true,
-    "modified_at": "2025-11-29T04:55:57.595503+00:00",
+    "modified_at": "2025-11-29T06:40:37.063541+00:00",
     "symbols": [],
     "errors": []
   },
@@ -2863,7 +2863,7 @@
   {
     "path": "code_map/git_history.py",
     "relative": true,
-    "modified_at": "2025-11-23T19:28:30.282186+00:00",
+    "modified_at": "2025-11-29T09:01:49.568507+00:00",
     "symbols": [
       {
         "name": "GitHistoryError",
@@ -2959,70 +2959,70 @@
       {
         "name": "get_commits",
         "kind": "method",
-        "lineno": 206,
+        "lineno": 207,
         "parent": "GitHistory",
         "docstring": "Get commit history with optional filters.\n\nArgs:\n    since: Only commits after this date\n    until: Only commits before this date\n    author: Filter by author name/email\n    file_path: Only commits that modified this file\n    limit: Maximum number of commits to return\n\nReturns:\n    List of CommitInfo objects"
       },
       {
         "name": "_parse_commit_log",
         "kind": "method",
-        "lineno": 251,
+        "lineno": 252,
         "parent": "GitHistory",
         "docstring": "Parse git log output into CommitInfo objects.\n\nFormat:\nhash|author|date|message\nfile1.py\nfile2.py\n\nhash2|author2|date2|message2\nfile3.py"
       },
       {
         "name": "get_file_history",
         "kind": "method",
-        "lineno": 311,
+        "lineno": 312,
         "parent": "GitHistory",
         "docstring": "Get commit history for a specific file.\n\nArgs:\n    file_path: Path to file (relative to repo root)\n    limit: Maximum number of commits\n\nReturns:\n    Dictionary with file_path, commits, and total_changes"
       },
       {
         "name": "get_commit_details",
         "kind": "method",
-        "lineno": 330,
+        "lineno": 331,
         "parent": "GitHistory",
         "docstring": "Get detailed information about a specific commit.\n\nArgs:\n    commit_hash: Git commit hash (full or short)\n\nReturns:\n    CommitInfo object or None if commit not found"
       },
       {
         "name": "get_all_files",
         "kind": "method",
-        "lineno": 350,
+        "lineno": 351,
         "parent": "GitHistory",
         "docstring": "Get list of all files currently tracked by git.\n\nReturns:\n    List of file paths (relative to repo root)"
       },
       {
         "name": "get_timeline_matrix",
         "kind": "method",
-        "lineno": 363,
+        "lineno": 364,
         "parent": "GitHistory",
         "docstring": "Get timeline data structured for DAW-style visualization.\n\nReturns a matrix where:\n- Rows: Files\n- Columns: Commits (chronological)\n- Cells: True if file changed in that commit\n\nArgs:\n    limit: Maximum number of commits\n    file_pattern: Optional regex pattern to filter files\n\nReturns:\n    Dictionary with:\n    - commits: List of commit metadata\n    - files: List of file paths\n    - matrix: 2D array of booleans (file_index, commit_index)"
       },
       {
         "name": "get_working_tree_changes",
         "kind": "method",
-        "lineno": 414,
+        "lineno": 415,
         "parent": "GitHistory",
         "docstring": "Return a list of files changed since the last commit (HEAD)."
       },
       {
         "name": "get_working_tree_change_map",
         "kind": "method",
-        "lineno": 471,
+        "lineno": 470,
         "parent": "GitHistory",
         "docstring": "Return working tree changes keyed by relative path."
       },
       {
         "name": "get_working_tree_change_for_path",
         "kind": "method",
-        "lineno": 476,
+        "lineno": 475,
         "parent": "GitHistory",
         "docstring": "Fetch working tree change info for a specific file."
       },
       {
         "name": "get_working_tree_diff",
         "kind": "method",
-        "lineno": 484,
+        "lineno": 483,
         "parent": "GitHistory",
         "docstring": "Return diff between working tree and HEAD for the given file."
       },
@@ -3324,7 +3324,7 @@
   {
     "path": "code_map/integrations/ollama_service.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-11-29T09:01:49.489851+00:00",
     "symbols": [
       {
         "name": "_normalize_endpoint",
@@ -3497,14 +3497,14 @@
       {
         "name": "_extract_version",
         "kind": "function",
-        "lineno": 500,
+        "lineno": 504,
         "parent": null,
         "docstring": "Extrae un token de versi\u00f3n de una salida CLI."
       },
       {
         "name": "start_ollama_server",
         "kind": "function",
-        "lineno": 513,
+        "lineno": 517,
         "parent": null,
         "docstring": "Intenta iniciar el servidor Ollama (`ollama serve`) y confirma que est\u00e1 operativo."
       }
@@ -3514,7 +3514,7 @@
   {
     "path": "code_map/js_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-29T04:58:03.353358+00:00",
+    "modified_at": "2025-11-29T06:40:37.063541+00:00",
     "symbols": [
       {
         "name": "_node_get",
@@ -3692,145 +3692,145 @@
   {
     "path": "code_map/linters/pipeline.py",
     "relative": true,
-    "modified_at": "2025-11-29T04:56:13.318634+00:00",
+    "modified_at": "2025-11-29T09:01:50.617961+00:00",
     "symbols": [
       {
         "name": "LinterConfig",
         "kind": "class",
-        "lineno": 43,
+        "lineno": 44,
         "parent": null,
         "docstring": "Centralized configuration for linter pipeline.\nAll magic numbers and thresholds in one place for easy tuning."
       },
       {
         "name": "_safe_severity",
         "kind": "function",
-        "lineno": 83,
+        "lineno": 87,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ToolSpec",
         "kind": "class",
-        "lineno": 95,
+        "lineno": 99,
         "parent": null,
         "docstring": "Metadatos para ejecutar una herramienta est\u00e1ndar del pipeline."
       },
       {
         "name": "LinterRunOptions",
         "kind": "class",
-        "lineno": 107,
+        "lineno": 111,
         "parent": null,
         "docstring": "Configuraci\u00f3n opcional para ajustar la ejecuci\u00f3n del pipeline."
       },
       {
         "name": "from_names",
         "kind": "method",
-        "lineno": 115,
+        "lineno": 119,
         "parent": "LinterRunOptions",
         "docstring": null
       },
       {
         "name": "_which",
         "kind": "function",
-        "lineno": 122,
+        "lineno": 126,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_truncate_output",
         "kind": "function",
-        "lineno": 127,
+        "lineno": 131,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_ensure_text",
         "kind": "function",
-        "lineno": 133,
+        "lineno": 137,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_ruff",
         "kind": "function",
-        "lineno": 141,
+        "lineno": 145,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_bandit",
         "kind": "function",
-        "lineno": 168,
+        "lineno": 172,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_default_parser",
         "kind": "function",
-        "lineno": 189,
+        "lineno": 193,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_should_skip",
         "kind": "function",
-        "lineno": 274,
+        "lineno": 278,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_check_max_file_length",
         "kind": "function",
-        "lineno": 279,
+        "lineno": 283,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_execute_tool",
         "kind": "function",
-        "lineno": 350,
+        "lineno": 354,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_extract_coverage",
         "kind": "function",
-        "lineno": 488,
+        "lineno": 493,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_aggregate_summary",
         "kind": "function",
-        "lineno": 512,
+        "lineno": 517,
         "parent": null,
         "docstring": null
       },
       {
         "name": "run_linters_pipeline",
         "kind": "function",
-        "lineno": 598,
+        "lineno": 603,
         "parent": null,
         "docstring": "Ejecuta las herramientas est\u00e1ndar y devuelve un reporte completo."
       },
       {
         "name": "_select_tool_specs",
         "kind": "function",
-        "lineno": 711,
+        "lineno": 720,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_collect_project_stats",
         "kind": "function",
-        "lineno": 720,
+        "lineno": 729,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_build_skipped_report",
         "kind": "function",
-        "lineno": 740,
+        "lineno": 749,
         "parent": null,
         "docstring": null
       }
@@ -4129,12 +4129,12 @@
   {
     "path": "code_map/mcp/approval_bridge.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:46:17.677943+00:00",
+    "modified_at": "2025-11-29T09:09:14.421317+00:00",
     "symbols": [
       {
         "name": "ApprovalRequest",
         "kind": "class",
-        "lineno": 34,
+        "lineno": 33,
         "parent": null,
         "docstring": "Represents a pending tool approval request.\n\nContains all information needed for the frontend to display\na meaningful approval dialog."
       },
@@ -4162,112 +4162,112 @@
       {
         "name": "set_notify_callback",
         "kind": "method",
-        "lineno": 107,
+        "lineno": 109,
         "parent": "ApprovalBridge",
         "docstring": "Set callback to notify frontend of new approval requests.\n\nThe callback receives an ApprovalRequest and should send it\nto the frontend via WebSocket."
       },
       {
         "name": "_create_approval_request",
         "kind": "method",
-        "lineno": 124,
+        "lineno": 125,
         "parent": "ApprovalBridge",
         "docstring": "Create an ApprovalRequest with a unique ID."
       },
       {
         "name": "_auto_approve_response",
         "kind": "method",
-        "lineno": 138,
+        "lineno": 136,
         "parent": "ApprovalBridge",
         "docstring": "Create auto-approve response for safe tools."
       },
       {
         "name": "_denial_response",
         "kind": "method",
-        "lineno": 146,
+        "lineno": 140,
         "parent": "ApprovalBridge",
         "docstring": "Create denial response."
       },
       {
         "name": "_notify_and_wait",
         "kind": "method",
-        "lineno": 162,
+        "lineno": 150,
         "parent": "ApprovalBridge",
         "docstring": "Notify frontend and wait for response."
       },
       {
         "name": "request_approval",
         "kind": "method",
-        "lineno": 200,
+        "lineno": 188,
         "parent": "ApprovalBridge",
         "docstring": "Request approval from the user for a tool execution.\n\nThis method blocks until the user responds or timeout occurs.\n\nArgs:\n    tool_name: Name of the tool (e.g., \"Edit\", \"Bash\")\n    tool_input: Input parameters for the tool\n    context: Additional context about the operation\n\nReturns:\n    dict with keys:\n        - approved: bool\n        - message: str (reason if denied)\n        - updated_input: dict (possibly modified input)"
       },
       {
         "name": "respond",
         "kind": "method",
-        "lineno": 247,
+        "lineno": 234,
         "parent": "ApprovalBridge",
         "docstring": "Respond to a pending approval request.\n\nCalled by the backend when the user responds via frontend.\n\nArgs:\n    request_id: ID of the approval request\n    approved: Whether to approve the tool execution\n    message: Optional message (reason for denial)\n    updated_input: Optional modified input parameters\n\nReturns:\n    True if response was processed, False if request not found"
       },
       {
         "name": "get_pending_requests",
         "kind": "method",
-        "lineno": 287,
+        "lineno": 276,
         "parent": "ApprovalBridge",
         "docstring": "Get all pending approval requests"
       },
       {
         "name": "has_pending",
         "kind": "method",
-        "lineno": 291,
+        "lineno": 280,
         "parent": "ApprovalBridge",
         "docstring": "Check if there are pending approval requests"
       },
       {
         "name": "_generate_preview",
         "kind": "method",
-        "lineno": 295,
+        "lineno": 284,
         "parent": "ApprovalBridge",
         "docstring": "Generate preview data based on tool type"
       },
       {
         "name": "_generate_file_preview",
         "kind": "method",
-        "lineno": 308,
+        "lineno": 296,
         "parent": "ApprovalBridge",
         "docstring": "Generate diff preview for file modification tools"
       },
       {
         "name": "_generate_command_preview",
         "kind": "method",
-        "lineno": 383,
+        "lineno": 378,
         "parent": "ApprovalBridge",
         "docstring": "Generate preview for command execution"
       },
       {
         "name": "_generate_generic_preview",
         "kind": "method",
-        "lineno": 403,
+        "lineno": 400,
         "parent": "ApprovalBridge",
         "docstring": "Generate generic preview for other tools"
       },
       {
         "name": "_generate_diff",
         "kind": "method",
-        "lineno": 411,
+        "lineno": 408,
         "parent": "ApprovalBridge",
         "docstring": "Generate unified diff"
       },
       {
         "name": "_resolve_path",
         "kind": "method",
-        "lineno": 426,
+        "lineno": 425,
         "parent": "ApprovalBridge",
         "docstring": "Resolve file path relative to cwd"
       },
       {
         "name": "_summarize_input",
         "kind": "method",
-        "lineno": 433,
+        "lineno": 432,
         "parent": "ApprovalBridge",
         "docstring": "Create summary of tool input"
       }
@@ -4277,82 +4277,82 @@
   {
     "path": "code_map/mcp/constants.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:25:36.524430+00:00",
+    "modified_at": "2025-11-29T09:31:12.951783+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/mcp/permission_server.py",
     "relative": true,
-    "modified_at": "2025-11-27T21:48:38.570449+00:00",
+    "modified_at": "2025-11-29T09:29:36.309717+00:00",
     "symbols": [
       {
         "name": "PermissionServer",
         "kind": "class",
-        "lineno": 40,
+        "lineno": 38,
         "parent": null,
         "docstring": "MCP Permission Server that handles tool approval requests.\n\nThis can run in two modes:\n1. Standalone: Communicates with ATLAS backend via Unix socket\n2. Embedded: Uses ApprovalBridge directly (for testing)"
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 49,
+        "lineno": 47,
         "parent": "PermissionServer",
         "docstring": null
       },
       {
         "name": "set_bridge",
         "kind": "method",
-        "lineno": 65,
+        "lineno": 71,
         "parent": "PermissionServer",
         "docstring": "Set ApprovalBridge for embedded mode"
       },
       {
         "name": "check_permission",
         "kind": "method",
-        "lineno": 70,
+        "lineno": 76,
         "parent": "PermissionServer",
         "docstring": "Check if a tool execution should be allowed.\n\nThis is the main entry point called by Claude Code via MCP.\n\nArgs:\n    tool_name: Name of the tool (e.g., \"Edit\", \"Bash\")\n    tool_input: Input parameters for the tool\n    context: Additional context\n\nReturns:\n    {\"behavior\": \"allow\", \"updatedInput\": {...}} or\n    {\"behavior\": \"deny\", \"message\": \"...\"}"
       },
       {
         "name": "_request_via_bridge",
         "kind": "method",
-        "lineno": 126,
+        "lineno": 129,
         "parent": "PermissionServer",
         "docstring": "Request approval via embedded ApprovalBridge"
       },
       {
         "name": "_request_via_socket",
         "kind": "method",
-        "lineno": 136,
+        "lineno": 138,
         "parent": "PermissionServer",
         "docstring": "Request approval via Unix socket to ATLAS backend"
       },
       {
         "name": "get_server",
         "kind": "function",
-        "lineno": 196,
+        "lineno": 203,
         "parent": null,
         "docstring": "Get or create the global PermissionServer instance"
       },
       {
         "name": "set_server",
         "kind": "function",
-        "lineno": 209,
+        "lineno": 215,
         "parent": null,
         "docstring": "Set the global PermissionServer instance"
       },
       {
         "name": "create_mcp_server",
         "kind": "function",
-        "lineno": 219,
+        "lineno": 226,
         "parent": null,
         "docstring": "Create FastMCP server with the check_permission tool.\n\nThis is used when running as a standalone MCP server."
       },
       {
         "name": "main",
         "kind": "function",
-        "lineno": 264,
+        "lineno": 270,
         "parent": null,
         "docstring": "Run the MCP server in standalone mode"
       }
@@ -4362,82 +4362,82 @@
   {
     "path": "code_map/mcp/socket_server.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:20:28.073092+00:00",
+    "modified_at": "2025-11-29T09:09:15.102952+00:00",
     "symbols": [
       {
         "name": "MCPSocketServer",
         "kind": "class",
-        "lineno": 27,
+        "lineno": 26,
         "parent": null,
         "docstring": "Unix Socket server that receives permission requests from MCP server.\n\nThis runs in the main ATLAS backend process and:\n1. Listens on a Unix socket for requests from MCP Permission Server\n2. Forwards requests to the ApprovalBridge\n3. The bridge notifies the frontend and waits for user response\n4. Returns the response to the MCP server via socket"
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 38,
+        "lineno": 37,
         "parent": "MCPSocketServer",
         "docstring": null
       },
       {
         "name": "set_frontend_callback",
         "kind": "method",
-        "lineno": 59,
+        "lineno": 56,
         "parent": "MCPSocketServer",
         "docstring": "Set callback to notify frontend of approval requests.\n\nThe callback should send the ApprovalRequest to the frontend\nvia WebSocket."
       },
       {
         "name": "start",
         "kind": "method",
-        "lineno": 71,
+        "lineno": 67,
         "parent": "MCPSocketServer",
         "docstring": "Start the socket server"
       },
       {
         "name": "stop",
         "kind": "method",
-        "lineno": 90,
+        "lineno": 85,
         "parent": "MCPSocketServer",
         "docstring": "Stop the socket server"
       },
       {
         "name": "_handle_client",
         "kind": "method",
-        "lineno": 105,
+        "lineno": 100,
         "parent": "MCPSocketServer",
         "docstring": "Handle a client connection from MCP server"
       },
       {
         "name": "_process_request",
         "kind": "method",
-        "lineno": 153,
+        "lineno": 151,
         "parent": "MCPSocketServer",
         "docstring": "Process a request from MCP server"
       },
       {
         "name": "respond_to_approval",
         "kind": "method",
-        "lineno": 213,
+        "lineno": 210,
         "parent": "MCPSocketServer",
         "docstring": "Respond to a pending approval request.\n\nCalled by the WebSocket handler when user responds via frontend."
       },
       {
         "name": "get_pending_requests",
         "kind": "method",
-        "lineno": 227,
+        "lineno": 224,
         "parent": "MCPSocketServer",
         "docstring": "Get all pending approval requests"
       },
       {
         "name": "get_socket_server",
         "kind": "function",
-        "lineno": 236,
+        "lineno": 233,
         "parent": null,
         "docstring": "Get the global socket server instance"
       },
       {
         "name": "create_socket_server",
         "kind": "function",
-        "lineno": 241,
+        "lineno": 238,
         "parent": null,
         "docstring": "Create and set the global socket server instance"
       }
@@ -4447,7 +4447,7 @@
   {
     "path": "code_map/mcp/tool_proxy_server.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:25:56.742583+00:00",
+    "modified_at": "2025-11-29T09:07:26.006275+00:00",
     "symbols": [
       {
         "name": "ToolProxyServer",
@@ -4473,63 +4473,63 @@
       {
         "name": "_generate_write_preview",
         "kind": "method",
-        "lineno": 149,
+        "lineno": 148,
         "parent": "ToolProxyServer",
         "docstring": "Generate preview for Write operation"
       },
       {
         "name": "_generate_edit_preview",
         "kind": "method",
-        "lineno": 165,
+        "lineno": 168,
         "parent": "ToolProxyServer",
         "docstring": "Generate diff preview for Edit operation"
       },
       {
         "name": "_generate_bash_preview",
         "kind": "method",
-        "lineno": 200,
+        "lineno": 209,
         "parent": "ToolProxyServer",
         "docstring": "Generate preview for Bash command"
       },
       {
         "name": "atlas_write",
         "kind": "method",
-        "lineno": 204,
+        "lineno": 213,
         "parent": "ToolProxyServer",
         "docstring": "Write content to a file (requires approval).\n\nArgs:\n    file_path: Absolute or relative path to the file\n    content: Content to write to the file\n\nReturns:\n    Success message or error description"
       },
       {
         "name": "atlas_edit",
         "kind": "method",
-        "lineno": 240,
+        "lineno": 249,
         "parent": "ToolProxyServer",
         "docstring": "Edit a file by replacing text (requires approval).\n\nArgs:\n    file_path: Path to the file to edit\n    old_string: Text to find and replace\n    new_string: Replacement text\n    replace_all: If True, replace all occurrences\n\nReturns:\n    Success message or error description"
       },
       {
         "name": "atlas_bash",
         "kind": "method",
-        "lineno": 300,
+        "lineno": 311,
         "parent": "ToolProxyServer",
         "docstring": "Execute a bash command (requires approval).\n\nArgs:\n    command: The bash command to execute\n    timeout: Timeout in milliseconds (default 2 minutes)\n    description: Optional description of what the command does\n\nReturns:\n    Command output or error description"
       },
       {
         "name": "get_server",
         "kind": "function",
-        "lineno": 370,
+        "lineno": 377,
         "parent": null,
         "docstring": "Get or create the global ToolProxyServer instance"
       },
       {
         "name": "create_mcp_server",
         "kind": "function",
-        "lineno": 380,
+        "lineno": 387,
         "parent": null,
         "docstring": "Create FastMCP server with proxy tools"
       },
       {
         "name": "main",
         "kind": "function",
-        "lineno": 480,
+        "lineno": 482,
         "parent": null,
         "docstring": "Run the MCP Tool Proxy Server"
       }
@@ -4603,7 +4603,7 @@
   {
     "path": "code_map/scanner.py",
     "relative": true,
-    "modified_at": "2025-11-29T04:56:03.727555+00:00",
+    "modified_at": "2025-11-29T06:40:37.064541+00:00",
     "symbols": [
       {
         "name": "ProjectScanner",
@@ -4781,7 +4781,7 @@
   {
     "path": "code_map/services/insights_service.py",
     "relative": true,
-    "modified_at": "2025-11-29T05:29:55.389687+00:00",
+    "modified_at": "2025-11-29T09:01:49.726130+00:00",
     "symbols": [
       {
         "name": "InsightsConfig",
@@ -4821,63 +4821,63 @@
       {
         "name": "run_now",
         "kind": "method",
-        "lineno": 98,
+        "lineno": 96,
         "parent": "InsightsService",
         "docstring": "Ejecuta insights inmediatamente y devuelve el resultado."
       },
       {
         "name": "_schedule_later",
         "kind": "method",
-        "lineno": 113,
+        "lineno": 115,
         "parent": "InsightsService",
         "docstring": null
       },
       {
         "name": "_settings_valid",
         "kind": "method",
-        "lineno": 124,
+        "lineno": 126,
         "parent": "InsightsService",
         "docstring": null
       },
       {
         "name": "_interval_seconds",
         "kind": "method",
-        "lineno": 127,
+        "lineno": 129,
         "parent": "InsightsService",
         "docstring": null
       },
       {
         "name": "_run",
         "kind": "method",
-        "lineno": 131,
+        "lineno": 133,
         "parent": "InsightsService",
         "docstring": null
       },
       {
         "name": "_run_once",
         "kind": "method",
-        "lineno": 146,
+        "lineno": 148,
         "parent": "InsightsService",
         "docstring": null
       },
       {
         "name": "_cancel_timer",
         "kind": "method",
-        "lineno": 217,
+        "lineno": 221,
         "parent": "InsightsService",
         "docstring": null
       },
       {
         "name": "_cancel_task",
         "kind": "method",
-        "lineno": 224,
+        "lineno": 228,
         "parent": "InsightsService",
         "docstring": null
       },
       {
         "name": "_clear_timer",
         "kind": "method",
-        "lineno": 231,
+        "lineno": 235,
         "parent": "InsightsService",
         "docstring": null
       }
@@ -4887,75 +4887,75 @@
   {
     "path": "code_map/services/linters_service.py",
     "relative": true,
-    "modified_at": "2025-11-29T05:09:21.503708+00:00",
+    "modified_at": "2025-11-29T09:07:25.998275+00:00",
     "symbols": [
       {
         "name": "LintersConfig",
         "kind": "class",
-        "lineno": 30,
+        "lineno": 29,
         "parent": null,
         "docstring": "Configuraci\u00f3n necesaria para ejecutar linters."
       },
       {
         "name": "LintersService",
         "kind": "class",
-        "lineno": 39,
+        "lineno": 38,
         "parent": null,
         "docstring": "Gestiona ejecuci\u00f3n y scheduling del pipeline de linters."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 42,
+        "lineno": 41,
         "parent": "LintersService",
         "docstring": null
       },
       {
         "name": "shutdown",
         "kind": "method",
-        "lineno": 52,
+        "lineno": 51,
         "parent": "LintersService",
         "docstring": "Cancela timers y tareas en curso."
       },
       {
         "name": "schedule",
         "kind": "method",
-        "lineno": 59,
+        "lineno": 58,
         "parent": "LintersService",
         "docstring": "Programa ejecuci\u00f3n respetando intervalos y cambios pendientes."
       },
       {
         "name": "run_now",
         "kind": "method",
-        "lineno": 87,
+        "lineno": 86,
         "parent": "LintersService",
         "docstring": "Ejecuta inmediatamente el pipeline y devuelve el ID del reporte."
       },
       {
         "name": "_schedule_later",
         "kind": "method",
-        "lineno": 98,
+        "lineno": 97,
         "parent": "LintersService",
         "docstring": null
       },
       {
         "name": "_run",
         "kind": "method",
-        "lineno": 109,
+        "lineno": 108,
         "parent": "LintersService",
         "docstring": "Ejecuta el pipeline y registra resultados/notificaciones."
       },
       {
         "name": "_cancel_timer",
         "kind": "method",
-        "lineno": 170,
+        "lineno": 169,
         "parent": "LintersService",
         "docstring": null
       },
       {
         "name": "_cancel_task",
         "kind": "method",
-        "lineno": 177,
+        "lineno": 176,
         "parent": "LintersService",
         "docstring": null
       }
@@ -4965,7 +4965,7 @@
   {
     "path": "code_map/services/watcher_manager.py",
     "relative": true,
-    "modified_at": "2025-11-29T05:33:48.155612+00:00",
+    "modified_at": "2025-11-29T09:07:25.999274+00:00",
     "symbols": [
       {
         "name": "WatcherConfig",
@@ -5128,7 +5128,7 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-11-12T09:07:37.912406+00:00",
+    "modified_at": "2025-11-29T09:22:34.429980+00:00",
     "symbols": [
       {
         "name": "FileStatus",
@@ -5199,201 +5199,201 @@
   {
     "path": "code_map/state.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:17:57.332139+00:00",
+    "modified_at": "2025-11-29T09:07:25.995275+00:00",
     "symbols": [
       {
         "name": "_parse_enabled_tools_env",
         "kind": "function",
-        "lineno": 48,
+        "lineno": 45,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_parse_int_env",
         "kind": "function",
-        "lineno": 55,
+        "lineno": 52,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_linters_disabled_from_env",
         "kind": "function",
-        "lineno": 65,
+        "lineno": 62,
         "parent": null,
         "docstring": null
       },
       {
         "name": "AppState",
         "kind": "class",
-        "lineno": 75,
+        "lineno": 72,
         "parent": null,
         "docstring": "Estado compartido de la aplicaci\u00f3n FastAPI."
       },
       {
         "name": "__post_init__",
         "kind": "method",
-        "lineno": 90,
+        "lineno": 87,
         "parent": "AppState",
         "docstring": null
       },
       {
         "name": "startup",
         "kind": "method",
-        "lineno": 99,
+        "lineno": 96,
         "parent": "AppState",
         "docstring": "Inicializa el estado de la aplicaci\u00f3n."
       },
       {
         "name": "shutdown",
         "kind": "method",
-        "lineno": 122,
+        "lineno": 119,
         "parent": "AppState",
         "docstring": "Detiene el estado de la aplicaci\u00f3n."
       },
       {
         "name": "_scheduler_loop",
         "kind": "method",
-        "lineno": 132,
+        "lineno": 129,
         "parent": "AppState",
         "docstring": "Bucle principal del programador de cambios."
       },
       {
         "name": "_serialize_changes",
         "kind": "method",
-        "lineno": 154,
+        "lineno": 151,
         "parent": "AppState",
         "docstring": "Serializa los cambios para la notificaci\u00f3n de eventos."
       },
       {
         "name": "perform_full_scan",
         "kind": "method",
-        "lineno": 165,
+        "lineno": 162,
         "parent": "AppState",
         "docstring": "Realiza un escaneo completo del proyecto."
       },
       {
         "name": "_compute_insights_next_run",
         "kind": "method",
-        "lineno": 187,
+        "lineno": 184,
         "parent": "AppState",
         "docstring": null
       },
       {
         "name": "_build_insights_context",
         "kind": "method",
-        "lineno": 190,
+        "lineno": 187,
         "parent": "AppState",
         "docstring": null
       },
       {
         "name": "to_relative",
         "kind": "method",
-        "lineno": 249,
+        "lineno": 246,
         "parent": "AppState",
         "docstring": "Convierte una ruta absoluta en una ruta relativa al root del proyecto."
       },
       {
         "name": "resolve_path",
         "kind": "method",
-        "lineno": 257,
+        "lineno": 254,
         "parent": "AppState",
         "docstring": "Resuelve una ruta relativa en una ruta absoluta dentro del root del proyecto."
       },
       {
         "name": "_within_root",
         "kind": "method",
-        "lineno": 264,
+        "lineno": 261,
         "parent": "AppState",
         "docstring": "Comprueba si una ruta est\u00e1 dentro del root del proyecto."
       },
       {
         "name": "is_watcher_running",
         "kind": "method",
-        "lineno": 272,
+        "lineno": 269,
         "parent": "AppState",
         "docstring": "Comprueba si el observador de archivos est\u00e1 en ejecuci\u00f3n."
       },
       {
         "name": "get_settings_payload",
         "kind": "method",
-        "lineno": 276,
+        "lineno": 273,
         "parent": "AppState",
         "docstring": "Obtiene el payload de configuraci\u00f3n para la API."
       },
       {
         "name": "get_status_payload",
         "kind": "method",
-        "lineno": 280,
+        "lineno": 277,
         "parent": "AppState",
         "docstring": "Obtiene el payload de estado para la API."
       },
       {
         "name": "update_settings",
         "kind": "method",
-        "lineno": 294,
+        "lineno": 295,
         "parent": "AppState",
         "docstring": "Actualiza la configuraci\u00f3n de la aplicaci\u00f3n."
       },
       {
         "name": "_build_components",
         "kind": "method",
-        "lineno": 378,
+        "lineno": 379,
         "parent": "AppState",
         "docstring": "(Re)construye los componentes de la aplicaci\u00f3n a partir de la configuraci\u00f3n."
       },
       {
         "name": "_build_linters_config",
         "kind": "method",
-        "lineno": 410,
+        "lineno": 411,
         "parent": "AppState",
         "docstring": "Construye la configuraci\u00f3n para el servicio de linters."
       },
       {
         "name": "_build_insights_config",
         "kind": "method",
-        "lineno": 439,
+        "lineno": 440,
         "parent": "AppState",
         "docstring": "Construye la configuraci\u00f3n para el servicio de insights."
       },
       {
         "name": "_apply_settings",
         "kind": "method",
-        "lineno": 449,
+        "lineno": 450,
         "parent": "AppState",
         "docstring": "Aplica la nueva configuraci\u00f3n a la aplicaci\u00f3n."
       },
       {
         "name": "run_linters_now",
         "kind": "method",
-        "lineno": 497,
+        "lineno": 498,
         "parent": "AppState",
         "docstring": "Ejecuta el pipeline de linters inmediatamente y devuelve el ID del reporte."
       },
       {
         "name": "run_insights_now",
         "kind": "method",
-        "lineno": 501,
+        "lineno": 502,
         "parent": "AppState",
         "docstring": "Genera insights inmediatamente usando la configuraci\u00f3n actual."
       },
       {
         "name": "build_insights_context",
         "kind": "method",
-        "lineno": 513,
+        "lineno": 512,
         "parent": "AppState",
         "docstring": "Expone el contexto usado por el generador de insights."
       },
       {
         "name": "_cancel_background_tasks",
         "kind": "method",
-        "lineno": 517,
+        "lineno": 516,
         "parent": "AppState",
         "docstring": "Cancela y limpia timers/tareas de linters e insights."
       },
       {
         "name": "_cancel_insights_tasks",
         "kind": "method",
-        "lineno": 523,
+        "lineno": 522,
         "parent": "AppState",
         "docstring": null
       }
@@ -5403,7 +5403,7 @@
   {
     "path": "code_map/state_reporter.py",
     "relative": true,
-    "modified_at": "2025-11-29T05:30:01.748712+00:00",
+    "modified_at": "2025-11-29T06:40:37.066541+00:00",
     "symbols": [
       {
         "name": "_serialize_capability",
@@ -5446,152 +5446,152 @@
   {
     "path": "code_map/terminal/agent_events.py",
     "relative": true,
-    "modified_at": "2025-11-25T06:27:02.862636+00:00",
+    "modified_at": "2025-11-29T09:07:26.010051+00:00",
     "symbols": [
       {
         "name": "CommandExecution",
         "kind": "class",
-        "lineno": 21,
+        "lineno": 20,
         "parent": null,
         "docstring": "Track a command execution from start to end"
       },
       {
         "name": "duration",
         "kind": "method",
-        "lineno": 33,
+        "lineno": 32,
         "parent": "CommandExecution",
         "docstring": "Get command execution duration"
       },
       {
         "name": "duration_seconds",
         "kind": "method",
-        "lineno": 40,
+        "lineno": 39,
         "parent": "CommandExecution",
         "docstring": "Get duration in seconds"
       },
       {
         "name": "FileChange",
         "kind": "class",
-        "lineno": 48,
+        "lineno": 47,
         "parent": null,
         "docstring": "Track a file change during session"
       },
       {
         "name": "TestRun",
         "kind": "class",
-        "lineno": 59,
+        "lineno": 58,
         "parent": null,
         "docstring": "Track a test execution"
       },
       {
         "name": "success_rate",
         "kind": "method",
-        "lineno": 72,
+        "lineno": 71,
         "parent": "TestRun",
         "docstring": "Calculate test success rate"
       },
       {
         "name": "AgentSessionState",
         "kind": "class",
-        "lineno": 80,
+        "lineno": 79,
         "parent": null,
         "docstring": "Maintain state of an agent session"
       },
       {
         "name": "update_metrics",
         "kind": "method",
-        "lineno": 96,
+        "lineno": 95,
         "parent": "AgentSessionState",
         "docstring": "Update session metrics"
       },
       {
         "name": "AgentEventManager",
         "kind": "class",
-        "lineno": 118,
+        "lineno": 123,
         "parent": null,
         "docstring": "Manages agent events and session state"
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 121,
+        "lineno": 126,
         "parent": "AgentEventManager",
         "docstring": "Initialize event manager for a session"
       },
       {
         "name": "register_handler",
         "kind": "method",
-        "lineno": 131,
+        "lineno": 133,
         "parent": "AgentEventManager",
         "docstring": "Register a handler for specific event type"
       },
       {
         "name": "subscribe",
         "kind": "method",
-        "lineno": 135,
+        "lineno": 137,
         "parent": "AgentEventManager",
         "docstring": "Subscribe to all events"
       },
       {
         "name": "process_event",
         "kind": "method",
-        "lineno": 139,
+        "lineno": 141,
         "parent": "AgentEventManager",
         "docstring": "Process an agent event and update state\n\nArgs:\n    event: The agent event to process"
       },
       {
         "name": "_call_handler",
         "kind": "method",
-        "lineno": 169,
+        "lineno": 171,
         "parent": "AgentEventManager",
         "docstring": "Call a handler, supporting both sync and async functions"
       },
       {
         "name": "_update_state",
         "kind": "method",
-        "lineno": 176,
+        "lineno": 178,
         "parent": "AgentEventManager",
         "docstring": "Update session state based on event"
       },
       {
         "name": "get_timeline",
         "kind": "method",
-        "lineno": 258,
+        "lineno": 270,
         "parent": "AgentEventManager",
         "docstring": "Get timeline of session events\n\nReturns:\n    List of timeline entries with timestamps and descriptions"
       },
       {
         "name": "_get_event_description",
         "kind": "method",
-        "lineno": 279,
+        "lineno": 291,
         "parent": "AgentEventManager",
         "docstring": "Generate human-readable description for event"
       },
       {
         "name": "_get_event_phase",
         "kind": "method",
-        "lineno": 300,
+        "lineno": 312,
         "parent": "AgentEventManager",
         "docstring": "Get phase indicator for event"
       },
       {
         "name": "get_state_summary",
         "kind": "method",
-        "lineno": 314,
+        "lineno": 326,
         "parent": "AgentEventManager",
         "docstring": "Get summary of current session state"
       },
       {
         "name": "_get_test_summary",
         "kind": "method",
-        "lineno": 328,
+        "lineno": 348,
         "parent": "AgentEventManager",
         "docstring": "Get summary of all test runs"
       },
       {
         "name": "export_session",
         "kind": "method",
-        "lineno": 344,
+        "lineno": 364,
         "parent": "AgentEventManager",
         "docstring": "Export complete session data for persistence or analysis"
       }
@@ -5601,7 +5601,7 @@
   {
     "path": "code_map/terminal/agent_parser.py",
     "relative": true,
-    "modified_at": "2025-11-26T09:43:45.022774+00:00",
+    "modified_at": "2025-11-29T09:21:57.183260+00:00",
     "symbols": [
       {
         "name": "AgentEventType",
@@ -5648,140 +5648,140 @@
       {
         "name": "parse_line",
         "kind": "method",
-        "lineno": 209,
+        "lineno": 204,
         "parent": "AgentOutputParser",
         "docstring": "Parse a single line of terminal output\n\nArgs:\n    line: Raw line from terminal\n\nReturns:\n    List of detected events, or None if no events detected"
       },
       {
         "name": "parse_chunk",
         "kind": "method",
-        "lineno": 307,
+        "lineno": 304,
         "parent": "AgentOutputParser",
         "docstring": "Parse a chunk of terminal output\n\nArgs:\n    text: Multi-line terminal output\n\nReturns:\n    List of all detected events"
       },
       {
         "name": "_create_event",
         "kind": "method",
-        "lineno": 327,
+        "lineno": 324,
         "parent": "AgentOutputParser",
         "docstring": "Create an event from parsed data"
       },
       {
         "name": "_strip_ansi",
         "kind": "method",
-        "lineno": 351,
+        "lineno": 348,
         "parent": "AgentOutputParser",
         "docstring": "Remove ANSI escape codes from text"
       },
       {
         "name": "_extract_npm_command",
         "kind": "method",
-        "lineno": 358,
+        "lineno": 355,
         "parent": "AgentOutputParser",
         "docstring": "Extract details from npm commands"
       },
       {
         "name": "_extract_pip_command",
         "kind": "method",
-        "lineno": 367,
+        "lineno": 364,
         "parent": "AgentOutputParser",
         "docstring": "Extract details from pip commands"
       },
       {
         "name": "_extract_pytest_command",
         "kind": "method",
-        "lineno": 376,
+        "lineno": 373,
         "parent": "AgentOutputParser",
         "docstring": "Extract pytest command details"
       },
       {
         "name": "_extract_npm_test",
         "kind": "method",
-        "lineno": 383,
+        "lineno": 377,
         "parent": "AgentOutputParser",
         "docstring": "Extract npm test command details"
       },
       {
         "name": "_extract_git_status",
         "kind": "method",
-        "lineno": 391,
+        "lineno": 382,
         "parent": "AgentOutputParser",
         "docstring": "Extract git status command"
       },
       {
         "name": "_extract_git_diff",
         "kind": "method",
-        "lineno": 395,
+        "lineno": 386,
         "parent": "AgentOutputParser",
         "docstring": "Extract git diff command"
       },
       {
         "name": "_extract_git_command",
         "kind": "method",
-        "lineno": 399,
+        "lineno": 390,
         "parent": "AgentOutputParser",
         "docstring": "Extract git command details"
       },
       {
         "name": "_extract_file_read",
         "kind": "method",
-        "lineno": 408,
+        "lineno": 399,
         "parent": "AgentOutputParser",
         "docstring": "Extract file read operation"
       },
       {
         "name": "_extract_file_write",
         "kind": "method",
-        "lineno": 416,
+        "lineno": 404,
         "parent": "AgentOutputParser",
         "docstring": "Extract file write operation"
       },
       {
         "name": "_extract_file_delete",
         "kind": "method",
-        "lineno": 424,
+        "lineno": 409,
         "parent": "AgentOutputParser",
         "docstring": "Extract file delete operation"
       },
       {
         "name": "_extract_build_command",
         "kind": "method",
-        "lineno": 433,
+        "lineno": 415,
         "parent": "AgentOutputParser",
         "docstring": "Extract build command details"
       },
       {
         "name": "_parse_pytest_summary",
         "kind": "method",
-        "lineno": 443,
+        "lineno": 425,
         "parent": "AgentOutputParser",
         "docstring": "Parse pytest summary line"
       },
       {
         "name": "_parse_pytest_failure",
         "kind": "method",
-        "lineno": 457,
+        "lineno": 439,
         "parent": "AgentOutputParser",
         "docstring": "Parse pytest failure"
       },
       {
         "name": "_parse_jest_pass",
         "kind": "method",
-        "lineno": 472,
+        "lineno": 454,
         "parent": "AgentOutputParser",
         "docstring": "Parse Jest passing test"
       },
       {
         "name": "_parse_jest_fail",
         "kind": "method",
-        "lineno": 487,
+        "lineno": 469,
         "parent": "AgentOutputParser",
         "docstring": "Parse Jest failing test"
       },
       {
         "name": "_parse_jest_summary",
         "kind": "method",
-        "lineno": 502,
+        "lineno": 484,
         "parent": "AgentOutputParser",
         "docstring": "Parse Jest test summary"
       }
@@ -5791,7 +5791,7 @@
   {
     "path": "code_map/terminal/claude_runner.py",
     "relative": true,
-    "modified_at": "2025-11-28T06:46:50.867338+00:00",
+    "modified_at": "2025-11-29T09:23:55.307011+00:00",
     "symbols": [
       {
         "name": "find_claude_cli",
@@ -5803,168 +5803,168 @@
       {
         "name": "ClaudeRunnerConfig",
         "kind": "class",
-        "lineno": 64,
+        "lineno": 74,
         "parent": null,
         "docstring": "Configuration for Claude Code runner"
       },
       {
         "name": "ClaudeAgentRunner",
         "kind": "class",
-        "lineno": 75,
+        "lineno": 92,
         "parent": null,
         "docstring": "Executes Claude Code in JSON streaming mode with bidirectional communication.\n\nRuns `claude -p --output-format stream-json --input-format stream-json --verbose`\nand streams parsed JSON events line by line. Supports interactive permission handling."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 83,
+        "lineno": 100,
         "parent": "ClaudeAgentRunner",
         "docstring": null
       },
       {
         "name": "run_prompt",
         "kind": "method",
-        "lineno": 108,
+        "lineno": 126,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute a prompt and stream JSON events\n\nArgs:\n    prompt: The prompt to send to Claude Code\n    on_event: Callback for each parsed JSON event\n    on_error: Optional callback for stderr output\n    on_done: Optional callback when process completes\n    on_permission_request: Optional callback for permission requests (returns Future)\n    on_tool_approval_request: Optional callback for tool approval requests (toolApproval mode)\n\nReturns:\n    Exit code from the process"
       },
       {
         "name": "_is_tool_use_event",
         "kind": "method",
-        "lineno": 375,
+        "lineno": 454,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if event is a tool_use event.\n\nClaude CLI emits tool_use in two formats:\n1. Simplified: {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n2. Full message: {\"type\": \"assistant\", \"message\": {\"content\": [{\"type\": \"tool_use\", ...}]}}"
       },
       {
         "name": "_extract_tool_use_from_event",
         "kind": "method",
-        "lineno": 401,
+        "lineno": 480,
         "parent": "ClaudeAgentRunner",
         "docstring": "Extract tool_use info from event.\n\nReturns (tool_name, tool_input, tool_id) or None if not found."
       },
       {
         "name": "_handle_tool_approval",
         "kind": "method",
-        "lineno": 432,
+        "lineno": 511,
         "parent": "ClaudeAgentRunner",
         "docstring": "Handle tool approval flow for toolApproval mode.\n\nIn plan mode, Claude proposes tool_use but doesn't execute.\nWe intercept, show preview to user, and execute manually if approved."
       },
       {
         "name": "_execute_tool",
         "kind": "method",
-        "lineno": 578,
+        "lineno": 688,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute a tool manually.\n\nReturns dict with \"content\" and \"is_error\" keys."
       },
       {
         "name": "_execute_write",
         "kind": "method",
-        "lineno": 610,
+        "lineno": 720,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Write tool"
       },
       {
         "name": "_execute_edit",
         "kind": "method",
-        "lineno": 633,
+        "lineno": 743,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Edit tool"
       },
       {
         "name": "_execute_read",
         "kind": "method",
-        "lineno": 677,
+        "lineno": 787,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Read tool"
       },
       {
         "name": "_execute_bash",
         "kind": "method",
-        "lineno": 718,
+        "lineno": 828,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Bash tool"
       },
       {
         "name": "_execute_glob",
         "kind": "method",
-        "lineno": 763,
+        "lineno": 873,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Glob tool"
       },
       {
         "name": "_execute_grep",
         "kind": "method",
-        "lineno": 791,
+        "lineno": 901,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Grep tool"
       },
       {
         "name": "_send_tool_result_to_claude",
         "kind": "method",
-        "lineno": 844,
+        "lineno": 959,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send tool result back to Claude via stdin"
       },
       {
         "name": "_send_tool_rejection_to_claude",
         "kind": "method",
-        "lineno": 886,
+        "lineno": 1014,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send tool rejection back to Claude"
       },
       {
         "name": "respond_to_tool_approval",
         "kind": "method",
-        "lineno": 893,
+        "lineno": 1024,
         "parent": "ClaudeAgentRunner",
         "docstring": "Respond to a pending tool approval request.\n\nArgs:\n    request_id: ID of the approval request\n    approved: Whether to approve the tool use\n    feedback: Optional feedback (for rejection)\n\nReturns:\n    True if response was processed, False if request not found"
       },
       {
         "name": "_is_permission_request",
         "kind": "method",
-        "lineno": 911,
+        "lineno": 1046,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if an event is a permission request.\n\nClaude sends permission requests in stream-json mode in these ways:\n1. Explicit \"permission_request\" type event\n2. Tool use events may have \"requires_permission\" flag\n3. Events may contain permission prompts in the message"
       },
       {
         "name": "_handle_permission_request",
         "kind": "method",
-        "lineno": 943,
+        "lineno": 1081,
         "parent": "ClaudeAgentRunner",
         "docstring": "Handle a permission request from Claude"
       },
       {
         "name": "_send_permission_response",
         "kind": "method",
-        "lineno": 969,
+        "lineno": 1104,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send a permission response to Claude"
       },
       {
         "name": "send_user_input",
         "kind": "method",
-        "lineno": 989,
+        "lineno": 1126,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send additional user input to the running process"
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 1013,
+        "lineno": 1152,
         "parent": "ClaudeAgentRunner",
         "docstring": "Cancel the running process"
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 1053,
+        "lineno": 1192,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if process is currently running"
       },
       {
         "name": "session_broken",
         "kind": "method",
-        "lineno": 1058,
+        "lineno": 1197,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if the Claude session is broken and cannot be continued.\n\nThis happens when we execute tools locally (in toolApproval mode with plan)\nafter Claude has already exited. Claude doesn't know about our local execution,\nso continuing the session would cause API errors."
       }
@@ -5974,7 +5974,7 @@
   {
     "path": "code_map/terminal/gemini_runner.py",
     "relative": true,
-    "modified_at": "2025-11-28T15:50:17.351737+00:00",
+    "modified_at": "2025-11-29T09:23:07.888549+00:00",
     "symbols": [
       {
         "name": "find_gemini_cli",
@@ -5986,84 +5986,84 @@
       {
         "name": "GeminiRunnerConfig",
         "kind": "class",
-        "lineno": 49,
+        "lineno": 51,
         "parent": null,
         "docstring": "Configuration for Gemini Code runner"
       },
       {
         "name": "GeminiAgentRunner",
         "kind": "class",
-        "lineno": 59,
+        "lineno": 62,
         "parent": null,
         "docstring": "Executes Gemini CLI in JSON streaming mode with bidirectional communication."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 64,
+        "lineno": 67,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "run_prompt",
         "kind": "method",
-        "lineno": 81,
+        "lineno": 85,
         "parent": "GeminiAgentRunner",
         "docstring": "Execute a prompt and stream JSON events"
       },
       {
         "name": "_map_event",
         "kind": "method",
-        "lineno": 217,
+        "lineno": 234,
         "parent": "GeminiAgentRunner",
         "docstring": "Map Gemini event to Claude event format"
       },
       {
         "name": "_is_tool_use_event",
         "kind": "method",
-        "lineno": 257,
+        "lineno": 271,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_extract_tool_use_from_event",
         "kind": "method",
-        "lineno": 260,
+        "lineno": 274,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_handle_tool_approval",
         "kind": "method",
-        "lineno": 270,
+        "lineno": 284,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_execute_tool",
         "kind": "method",
-        "lineno": 345,
+        "lineno": 359,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_execute_bash",
         "kind": "method",
-        "lineno": 355,
+        "lineno": 372,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 372,
+        "lineno": 389,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "respond_to_tool_approval",
         "kind": "method",
-        "lineno": 377,
+        "lineno": 394,
         "parent": "GeminiAgentRunner",
         "docstring": "Respond to a pending tool approval request."
       }
@@ -6073,7 +6073,7 @@
   {
     "path": "code_map/terminal/json_parser.py",
     "relative": true,
-    "modified_at": "2025-11-26T16:06:57.026949+00:00",
+    "modified_at": "2025-11-29T09:09:15.763035+00:00",
     "symbols": [
       {
         "name": "EventType",
@@ -6085,98 +6085,98 @@
       {
         "name": "EventSubtype",
         "kind": "class",
-        "lineno": 26,
+        "lineno": 27,
         "parent": null,
         "docstring": "Subtypes for more specific event classification"
       },
       {
         "name": "ClaudeEvent",
         "kind": "class",
-        "lineno": 38,
+        "lineno": 40,
         "parent": null,
         "docstring": "Parsed event from Claude Code JSON stream"
       },
       {
         "name": "to_dict",
         "kind": "method",
-        "lineno": 53,
+        "lineno": 56,
         "parent": "ClaudeEvent",
         "docstring": "Convert to dictionary for JSON serialization"
       },
       {
         "name": "to_json",
         "kind": "method",
-        "lineno": 67,
+        "lineno": 70,
         "parent": "ClaudeEvent",
         "docstring": "Convert to JSON string"
       },
       {
         "name": "ContentBlock",
         "kind": "class",
-        "lineno": 73,
+        "lineno": 76,
         "parent": null,
         "docstring": "A content block from assistant messages"
       },
       {
         "name": "JSONStreamParser",
         "kind": "class",
-        "lineno": 82,
+        "lineno": 86,
         "parent": null,
         "docstring": "Parser for Claude Code JSON streaming output\n\nHandles the line-by-line JSON format:\n- system: init info (session_id, tools, model)\n- assistant: text or tool_use content\n- user: tool_result content"
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 92,
+        "lineno": 96,
         "parent": "JSONStreamParser",
         "docstring": null
       },
       {
         "name": "parse_line",
         "kind": "method",
-        "lineno": 98,
+        "lineno": 102,
         "parent": "JSONStreamParser",
         "docstring": "Parse a single JSON line from Claude Code output\n\nArgs:\n    line: Raw JSON string (single line)\n\nReturns:\n    ClaudeEvent or None if parsing fails"
       },
       {
         "name": "_parse_system",
         "kind": "method",
-        "lineno": 140,
+        "lineno": 144,
         "parent": "JSONStreamParser",
         "docstring": "Parse system events (init, config)"
       },
       {
         "name": "_parse_assistant",
         "kind": "method",
-        "lineno": 173,
+        "lineno": 177,
         "parent": "JSONStreamParser",
         "docstring": "Parse assistant messages (text, tool_use)"
       },
       {
         "name": "_parse_user",
         "kind": "method",
-        "lineno": 230,
+        "lineno": 233,
         "parent": "JSONStreamParser",
         "docstring": "Parse user messages (tool_result)"
       },
       {
         "name": "_parse_result",
         "kind": "method",
-        "lineno": 258,
+        "lineno": 261,
         "parent": "JSONStreamParser",
         "docstring": "Parse result events (final output)"
       },
       {
         "name": "get_session_info",
         "kind": "method",
-        "lineno": 269,
+        "lineno": 272,
         "parent": "JSONStreamParser",
         "docstring": "Get current session information"
       },
       {
         "name": "reset",
         "kind": "method",
-        "lineno": 278,
+        "lineno": 281,
         "parent": "JSONStreamParser",
         "docstring": "Reset parser state for new session"
       }
@@ -6186,12 +6186,12 @@
   {
     "path": "code_map/terminal/mcp_proxy_runner.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:45:36.682320+00:00",
+    "modified_at": "2025-11-29T09:07:26.004275+00:00",
     "symbols": [
       {
         "name": "MCPProxyRunnerConfig",
         "kind": "class",
-        "lineno": 58,
+        "lineno": 57,
         "parent": null,
         "docstring": "Configuration for MCP Proxy Runner"
       },
@@ -6219,77 +6219,77 @@
       {
         "name": "_start_process",
         "kind": "method",
-        "lineno": 125,
+        "lineno": 128,
         "parent": "MCPProxyRunner",
         "docstring": "Start the Claude subprocess."
       },
       {
         "name": "_send_initial_prompt",
         "kind": "method",
-        "lineno": 137,
+        "lineno": 140,
         "parent": "MCPProxyRunner",
         "docstring": "Send the initial prompt to Claude."
       },
       {
         "name": "_create_stdout_reader",
         "kind": "method",
-        "lineno": 153,
+        "lineno": 161,
         "parent": "MCPProxyRunner",
         "docstring": "Create coroutine for reading stdout."
       },
       {
         "name": "_create_stderr_reader",
         "kind": "method",
-        "lineno": 193,
+        "lineno": 200,
         "parent": "MCPProxyRunner",
         "docstring": "Create coroutine for reading stderr."
       },
       {
         "name": "_create_mcp_config",
         "kind": "method",
-        "lineno": 226,
+        "lineno": 233,
         "parent": "MCPProxyRunner",
         "docstring": "Create temporary MCP config file for the tool proxy server"
       },
       {
         "name": "_cleanup_mcp_config",
         "kind": "method",
-        "lineno": 263,
+        "lineno": 273,
         "parent": "MCPProxyRunner",
         "docstring": "Remove temporary MCP config file"
       },
       {
         "name": "run_prompt",
         "kind": "method",
-        "lineno": 273,
+        "lineno": 283,
         "parent": "MCPProxyRunner",
         "docstring": "Execute a prompt with MCP proxy tool approval.\n\nArgs:\n    prompt: The prompt to send to Claude\n    on_event: Callback for each JSON event from Claude\n    on_error: Callback for stderr output\n    on_done: Callback when process completes\n\nReturns:\n    Exit code from the process"
       },
       {
         "name": "_wait_for_process",
         "kind": "method",
-        "lineno": 343,
+        "lineno": 353,
         "parent": "MCPProxyRunner",
         "docstring": "Wait for process to complete, handling timeout."
       },
       {
         "name": "send_user_input",
         "kind": "method",
-        "lineno": 360,
+        "lineno": 367,
         "parent": "MCPProxyRunner",
         "docstring": "Send additional user input to the running process"
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 383,
+        "lineno": 392,
         "parent": "MCPProxyRunner",
         "docstring": "Cancel the running process"
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 413,
+        "lineno": 422,
         "parent": "MCPProxyRunner",
         "docstring": "Check if process is running"
       }
@@ -6299,7 +6299,7 @@
   {
     "path": "code_map/terminal/pty_parser.py",
     "relative": true,
-    "modified_at": "2025-11-28T09:06:36.158744+00:00",
+    "modified_at": "2025-11-29T09:21:22.455187+00:00",
     "symbols": [
       {
         "name": "EventType",
@@ -6311,112 +6311,112 @@
       {
         "name": "ParsedEvent",
         "kind": "class",
-        "lineno": 40,
+        "lineno": 41,
         "parent": null,
         "docstring": "A parsed event from Claude Code output."
       },
       {
         "name": "to_dict",
         "kind": "method",
-        "lineno": 47,
+        "lineno": 49,
         "parent": "ParsedEvent",
         "docstring": "Convert to JSON-serializable dictionary."
       },
       {
         "name": "PTYParser",
         "kind": "class",
-        "lineno": 57,
+        "lineno": 59,
         "parent": null,
         "docstring": "Parser for Claude Code PTY output.\n\nExtracts structured events from the raw terminal output, filtering out\nInk's aggressive refresh patterns and ANSI escape codes."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 116,
+        "lineno": 118,
         "parent": "PTYParser",
         "docstring": "Initialize the parser."
       },
       {
         "name": "strip_ansi",
         "kind": "method",
-        "lineno": 129,
+        "lineno": 131,
         "parent": "PTYParser",
         "docstring": "Remove ANSI escape codes from text."
       },
       {
         "name": "is_noise",
         "kind": "method",
-        "lineno": 133,
+        "lineno": 135,
         "parent": "PTYParser",
         "docstring": "Check if a line is noise that should be filtered out."
       },
       {
         "name": "parse_chunk",
         "kind": "method",
-        "lineno": 141,
+        "lineno": 143,
         "parent": "PTYParser",
         "docstring": "Parse a chunk of raw PTY output.\n\nArgs:\n    raw_chunk: Raw bytes/text from PTY\n\nReturns:\n    List of parsed events"
       },
       {
         "name": "_parse_line",
         "kind": "method",
-        "lineno": 166,
+        "lineno": 168,
         "parent": "PTYParser",
         "docstring": "Parse a single line of output."
       },
       {
         "name": "reset",
         "kind": "method",
-        "lineno": 259,
+        "lineno": 277,
         "parent": "PTYParser",
         "docstring": "Reset parser state for new session."
       },
       {
         "name": "EventAggregator",
         "kind": "class",
-        "lineno": 266,
+        "lineno": 284,
         "parent": null,
         "docstring": "Aggregates parsed events into higher-level structures.\n\nCombines related events (like multiple thinking indicators) and\ndeduplicates repeated events from Ink's refresh patterns."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 274,
+        "lineno": 292,
         "parent": "EventAggregator",
         "docstring": "Initialize the aggregator."
       },
       {
         "name": "add_events",
         "kind": "method",
-        "lineno": 279,
+        "lineno": 297,
         "parent": "EventAggregator",
         "docstring": "Add events and return deduplicated/aggregated results.\n\nArgs:\n    events: New events to process\n\nReturns:\n    Filtered and aggregated events suitable for emitting"
       },
       {
         "name": "_has_recent_thinking",
         "kind": "method",
-        "lineno": 311,
+        "lineno": 329,
         "parent": "EventAggregator",
         "docstring": "Check if we have a recent thinking event."
       },
       {
         "name": "_has_recent_permission",
         "kind": "method",
-        "lineno": 320,
+        "lineno": 338,
         "parent": "EventAggregator",
         "docstring": "Check if we have a recent identical permission event."
       },
       {
         "name": "reset",
         "kind": "method",
-        "lineno": 328,
+        "lineno": 346,
         "parent": "EventAggregator",
         "docstring": "Reset aggregator state."
       },
       {
         "name": "parse_pty_output",
         "kind": "function",
-        "lineno": 334,
+        "lineno": 352,
         "parent": null,
         "docstring": "Parse raw PTY output into a list of event dictionaries.\n\nArgs:\n    raw_output: Raw PTY output with ANSI codes\n\nReturns:\n    List of event dictionaries ready for JSON serialization"
       }
@@ -6426,19 +6426,19 @@
   {
     "path": "code_map/terminal/pty_runner.py",
     "relative": true,
-    "modified_at": "2025-11-28T12:11:38.129563+00:00",
+    "modified_at": "2025-11-29T09:30:52.654047+00:00",
     "symbols": [
       {
         "name": "RunnerState",
         "kind": "class",
-        "lineno": 32,
+        "lineno": 30,
         "parent": null,
         "docstring": "State of the PTY runner."
       },
       {
         "name": "PTYRunnerConfig",
         "kind": "class",
-        "lineno": 43,
+        "lineno": 42,
         "parent": null,
         "docstring": "Configuration for the PTY runner."
       },
@@ -6459,84 +6459,84 @@
       {
         "name": "state",
         "kind": "method",
-        "lineno": 75,
+        "lineno": 82,
         "parent": "PTYClaudeRunner",
         "docstring": "Get current runner state."
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 80,
+        "lineno": 87,
         "parent": "PTYClaudeRunner",
         "docstring": "Check if a session is active."
       },
       {
         "name": "set_event_callback",
         "kind": "method",
-        "lineno": 84,
+        "lineno": 91,
         "parent": "PTYClaudeRunner",
         "docstring": "Set callback for event emissions."
       },
       {
         "name": "set_permission_callback",
         "kind": "method",
-        "lineno": 88,
+        "lineno": 97,
         "parent": "PTYClaudeRunner",
         "docstring": "Set callback for permission requests (should return Future with response)."
       },
       {
         "name": "start_session",
         "kind": "method",
-        "lineno": 92,
+        "lineno": 106,
         "parent": "PTYClaudeRunner",
         "docstring": "Start a new Claude Code session.\n\nReturns:\n    True if session started successfully"
       },
       {
         "name": "stop_session",
         "kind": "method",
-        "lineno": 160,
+        "lineno": 184,
         "parent": "PTYClaudeRunner",
         "docstring": "Stop the current session."
       },
       {
         "name": "send_prompt",
         "kind": "method",
-        "lineno": 182,
+        "lineno": 208,
         "parent": "PTYClaudeRunner",
         "docstring": "Send a prompt to Claude and yield events as they occur.\n\nArgs:\n    prompt: The prompt to send\n\nYields:\n    Event dictionaries as they are parsed from output"
       },
       {
         "name": "respond_permission",
         "kind": "method",
-        "lineno": 267,
+        "lineno": 297,
         "parent": "PTYClaudeRunner",
         "docstring": "Respond to a pending permission request.\n\nArgs:\n    approved: Whether to allow the operation\n    always: If True and approved, select \"always allow\""
       },
       {
         "name": "_parse_output",
         "kind": "method",
-        "lineno": 294,
+        "lineno": 324,
         "parent": "PTYClaudeRunner",
         "docstring": "Parse raw output through parser and aggregator."
       },
       {
         "name": "_emit_event",
         "kind": "method",
-        "lineno": 299,
+        "lineno": 329,
         "parent": "PTYClaudeRunner",
         "docstring": "Emit an event through the callback."
       },
       {
         "name": "_handle_permission",
         "kind": "method",
-        "lineno": 307,
+        "lineno": 337,
         "parent": "PTYClaudeRunner",
         "docstring": "Handle a permission request."
       },
       {
         "name": "create_pty_runner",
         "kind": "function",
-        "lineno": 350,
+        "lineno": 380,
         "parent": null,
         "docstring": "Create a configured PTY runner.\n\nArgs:\n    working_directory: Directory to run Claude in\n    timeout: Timeout for operations\n\nReturns:\n    Configured PTYClaudeRunner instance"
       }
@@ -6546,7 +6546,7 @@
   {
     "path": "code_map/terminal/pty_shell.py",
     "relative": true,
-    "modified_at": "2025-11-26T13:50:49.850791+00:00",
+    "modified_at": "2025-11-29T09:01:51.125243+00:00",
     "symbols": [
       {
         "name": "PTYShell",
@@ -6565,70 +6565,70 @@
       {
         "name": "spawn",
         "kind": "method",
-        "lineno": 63,
+        "lineno": 65,
         "parent": "PTYShell",
         "docstring": "Spawn shell process with PTY\n\nRaises:\n    OSError: If fork fails"
       },
       {
         "name": "_process_output",
         "kind": "method",
-        "lineno": 98,
+        "lineno": 102,
         "parent": "PTYShell",
         "docstring": "Process output before sending to frontend.\n\nCurrently just passes through - filtering is done in frontend\nfor better control over terminal rendering."
       },
       {
         "name": "_filter_claude_code_output",
         "kind": "method",
-        "lineno": 109,
+        "lineno": 113,
         "parent": "PTYShell",
         "docstring": "Legacy filter - now delegates to _process_output"
       },
       {
         "name": "_set_winsize",
         "kind": "method",
-        "lineno": 115,
+        "lineno": 119,
         "parent": "PTYShell",
         "docstring": "Set terminal window size\n\nArgs:\n    cols: Terminal width\n    rows: Terminal height"
       },
       {
         "name": "set_agent_event_callback",
         "kind": "method",
-        "lineno": 129,
+        "lineno": 133,
         "parent": "PTYShell",
         "docstring": "Set callback for agent events\n\nArgs:\n    callback: Function to call with detected agent events"
       },
       {
         "name": "resize",
         "kind": "method",
-        "lineno": 138,
+        "lineno": 142,
         "parent": "PTYShell",
         "docstring": "Resize terminal\n\nArgs:\n    cols: New terminal width\n    rows: New terminal height"
       },
       {
         "name": "write",
         "kind": "method",
-        "lineno": 151,
+        "lineno": 155,
         "parent": "PTYShell",
         "docstring": "Write data to shell stdin\n\nArgs:\n    data: String to write to shell"
       },
       {
         "name": "read",
         "kind": "method",
-        "lineno": 169,
+        "lineno": 173,
         "parent": "PTYShell",
         "docstring": "Read shell output asynchronously\n\nContinuously reads from shell output and calls callback\nwith received data. Runs until shell process exits.\n\nArgs:\n    callback: Function to call with output data"
       },
       {
         "name": "close",
         "kind": "method",
-        "lineno": 249,
+        "lineno": 257,
         "parent": "PTYShell",
         "docstring": "Close shell process and cleanup resources"
       },
       {
         "name": "__del__",
         "kind": "method",
-        "lineno": 293,
+        "lineno": 301,
         "parent": "PTYShell",
         "docstring": "Cleanup on garbage collection"
       }
@@ -6638,12 +6638,12 @@
   {
     "path": "code_map/terminal/sdk_runner.py",
     "relative": true,
-    "modified_at": "2025-11-28T13:30:25.435090+00:00",
+    "modified_at": "2025-11-29T09:26:22.838983+00:00",
     "symbols": [
       {
         "name": "SDKRunnerConfig",
         "kind": "class",
-        "lineno": 163,
+        "lineno": 162,
         "parent": null,
         "docstring": "Configuration for SDK-based Claude runner"
       },
@@ -6657,140 +6657,140 @@
       {
         "name": "SDKAgentRunner",
         "kind": "class",
-        "lineno": 180,
+        "lineno": 181,
         "parent": null,
         "docstring": "Claude Agent using Anthropic SDK with tool approval workflow.\n\nFlow:\n1. Send user prompt to Claude API\n2. If Claude returns tool_use, intercept and request approval\n3. If approved, execute tool and send result back\n4. Repeat until Claude returns text-only response (end_turn)"
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 197,
+        "lineno": 198,
         "parent": "SDKAgentRunner",
         "docstring": null
       },
       {
         "name": "_build_system_prompt",
         "kind": "method",
-        "lineno": 213,
+        "lineno": 214,
         "parent": "SDKAgentRunner",
         "docstring": "Build the system prompt with working directory context"
       },
       {
         "name": "run_prompt",
         "kind": "method",
-        "lineno": 235,
+        "lineno": 236,
         "parent": "SDKAgentRunner",
         "docstring": "Execute a prompt with tool approval workflow.\n\nArgs:\n    prompt: User prompt\n    on_event: Callback for streaming events to frontend\n    on_error: Callback for errors\n    on_done: Callback when complete\n    on_tool_approval_request: Callback to request tool approval from user\n\nReturns:\n    0 on success, -1 on error"
       },
       {
         "name": "_call_claude_api",
         "kind": "method",
-        "lineno": 381,
+        "lineno": 401,
         "parent": "SDKAgentRunner",
         "docstring": "Call Claude API with current conversation"
       },
       {
         "name": "_process_response_content",
         "kind": "method",
-        "lineno": 396,
+        "lineno": 416,
         "parent": "SDKAgentRunner",
         "docstring": "Process and emit events for response content blocks"
       },
       {
         "name": "_handle_tool_use",
         "kind": "method",
-        "lineno": 422,
+        "lineno": 446,
         "parent": "SDKAgentRunner",
         "docstring": "Handle a tool use block - request approval and execute if approved.\n\nReturns tool_result dict for the API."
       },
       {
         "name": "_execute_tool",
         "kind": "method",
-        "lineno": 539,
+        "lineno": 581,
         "parent": "SDKAgentRunner",
         "docstring": "Execute a tool and return result"
       },
       {
         "name": "_execute_read",
         "kind": "method",
-        "lineno": 566,
+        "lineno": 605,
         "parent": "SDKAgentRunner",
         "docstring": "Execute Read tool"
       },
       {
         "name": "_execute_write",
         "kind": "method",
-        "lineno": 595,
+        "lineno": 637,
         "parent": "SDKAgentRunner",
         "docstring": "Execute Write tool"
       },
       {
         "name": "_execute_edit",
         "kind": "method",
-        "lineno": 611,
+        "lineno": 656,
         "parent": "SDKAgentRunner",
         "docstring": "Execute Edit tool"
       },
       {
         "name": "_execute_bash",
         "kind": "method",
-        "lineno": 643,
+        "lineno": 694,
         "parent": "SDKAgentRunner",
         "docstring": "Execute Bash tool"
       },
       {
         "name": "_execute_glob",
         "kind": "method",
-        "lineno": 676,
+        "lineno": 732,
         "parent": "SDKAgentRunner",
         "docstring": "Execute Glob tool"
       },
       {
         "name": "_execute_grep",
         "kind": "method",
-        "lineno": 693,
+        "lineno": 749,
         "parent": "SDKAgentRunner",
         "docstring": "Execute Grep tool"
       },
       {
         "name": "_content_block_to_dict",
         "kind": "method",
-        "lineno": 731,
+        "lineno": 791,
         "parent": "SDKAgentRunner",
         "docstring": "Convert a content block to a dict for the API"
       },
       {
         "name": "_emit_event",
         "kind": "method",
-        "lineno": 746,
+        "lineno": 806,
         "parent": "SDKAgentRunner",
         "docstring": "Emit an event to the callback"
       },
       {
         "name": "respond_to_tool_approval",
         "kind": "method",
-        "lineno": 755,
+        "lineno": 815,
         "parent": "SDKAgentRunner",
         "docstring": "Respond to a pending tool approval request.\n\nThis is called by the API when the user approves/rejects in the frontend."
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 768,
+        "lineno": 827,
         "parent": "SDKAgentRunner",
         "docstring": "Cancel the running conversation"
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 774,
+        "lineno": 833,
         "parent": "SDKAgentRunner",
         "docstring": "Check if conversation is running"
       },
       {
         "name": "clear_conversation",
         "kind": "method",
-        "lineno": 778,
+        "lineno": 837,
         "parent": "SDKAgentRunner",
         "docstring": "Clear the conversation history"
       }
@@ -6800,12 +6800,12 @@
   {
     "path": "code_map/terminal/tool_approval.py",
     "relative": true,
-    "modified_at": "2025-11-27T21:00:35.069583+00:00",
+    "modified_at": "2025-11-29T09:07:26.011275+00:00",
     "symbols": [
       {
         "name": "ApprovalStatus",
         "kind": "class",
-        "lineno": 25,
+        "lineno": 24,
         "parent": null,
         "docstring": "Status of a tool approval request"
       },
@@ -6819,98 +6819,98 @@
       {
         "name": "to_dict",
         "kind": "method",
-        "lineno": 57,
+        "lineno": 58,
         "parent": "ToolApprovalRequest",
         "docstring": "Convert to dictionary for JSON serialization"
       },
       {
         "name": "ToolApprovalManager",
         "kind": "class",
-        "lineno": 74,
+        "lineno": 75,
         "parent": null,
         "docstring": "Manages tool approval workflow with preview generation.\n\nIntercepts tool_use events, generates previews/diffs, and waits\nfor user approval before allowing execution."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 91,
+        "lineno": 92,
         "parent": "ToolApprovalManager",
         "docstring": null
       },
       {
         "name": "process_tool_use",
         "kind": "method",
-        "lineno": 108,
+        "lineno": 109,
         "parent": "ToolApprovalManager",
         "docstring": "Process a tool_use event and wait for approval.\n\nArgs:\n    tool_name: Name of the tool being invoked\n    tool_input: Input parameters for the tool\n    tool_use_id: Unique ID for this tool use\n    on_approval_request: Callback to send approval request to frontend\n\nReturns:\n    Tuple of (approved: bool, user_feedback: Optional[str])"
       },
       {
         "name": "respond_to_approval",
         "kind": "method",
-        "lineno": 184,
+        "lineno": 210,
         "parent": "ToolApprovalManager",
         "docstring": "Respond to a pending approval request.\n\nArgs:\n    request_id: ID of the approval request\n    approved: Whether to approve the tool use\n    feedback: Optional feedback from user (for rejection)\n\nReturns:\n    True if response was processed, False if request not found"
       },
       {
         "name": "_create_approval_request",
         "kind": "method",
-        "lineno": 215,
+        "lineno": 245,
         "parent": "ToolApprovalManager",
         "docstring": "Create an approval request with preview data"
       },
       {
         "name": "_generate_file_preview",
         "kind": "method",
-        "lineno": 240,
+        "lineno": 270,
         "parent": "ToolApprovalManager",
         "docstring": "Generate diff preview for file modification tools"
       },
       {
         "name": "_generate_command_preview",
         "kind": "method",
-        "lineno": 370,
+        "lineno": 414,
         "parent": "ToolApprovalManager",
         "docstring": "Generate preview for command execution tools"
       },
       {
         "name": "_generate_generic_preview",
         "kind": "method",
-        "lineno": 390,
+        "lineno": 434,
         "parent": "ToolApprovalManager",
         "docstring": "Generate generic preview for other tools"
       },
       {
         "name": "_generate_diff",
         "kind": "method",
-        "lineno": 399,
+        "lineno": 443,
         "parent": "ToolApprovalManager",
         "docstring": "Generate unified diff between two strings"
       },
       {
         "name": "_resolve_path",
         "kind": "method",
-        "lineno": 420,
+        "lineno": 466,
         "parent": "ToolApprovalManager",
         "docstring": "Resolve file path relative to cwd"
       },
       {
         "name": "_summarize_input",
         "kind": "method",
-        "lineno": 427,
+        "lineno": 473,
         "parent": "ToolApprovalManager",
         "docstring": "Create a summary of tool input for display"
       },
       {
         "name": "get_pending_requests",
         "kind": "method",
-        "lineno": 437,
+        "lineno": 485,
         "parent": "ToolApprovalManager",
         "docstring": "Get all pending approval requests"
       },
       {
         "name": "has_pending_requests",
         "kind": "method",
-        "lineno": 441,
+        "lineno": 489,
         "parent": "ToolApprovalManager",
         "docstring": "Check if there are pending approval requests"
       }
@@ -6920,7 +6920,7 @@
   {
     "path": "code_map/ts_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-29T04:58:10.412809+00:00",
+    "modified_at": "2025-11-29T06:40:37.066946+00:00",
     "symbols": [
       {
         "name": "_TsParser",
@@ -7307,7 +7307,7 @@
   {
     "path": "code_map/watcher.py",
     "relative": true,
-    "modified_at": "2025-11-29T04:56:08.986598+00:00",
+    "modified_at": "2025-11-29T06:40:37.068541+00:00",
     "symbols": [
       {
         "name": "_EventHandler",
@@ -7468,19 +7468,6 @@
     "errors": []
   },
   {
-    "path": "frontend/dist/assets/index-AdKkI6Mp.js",
-    "relative": true,
-    "modified_at": "2025-11-29T06:37:38.833083+00:00",
-    "symbols": [],
-    "errors": [
-      {
-        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
-        "lineno": null,
-        "col_offset": null
-      }
-    ]
-  },
-  {
     "path": "frontend/dist/assets/index-BBIFfjU4.js",
     "relative": true,
     "modified_at": "2025-11-25T08:25:21.846113+00:00",
@@ -7493,6 +7480,19 @@
     "modified_at": "2025-11-11T17:12:55.237322+00:00",
     "symbols": [],
     "errors": []
+  },
+  {
+    "path": "frontend/dist/assets/index-BU6PMEsW.js",
+    "relative": true,
+    "modified_at": "2025-11-29T21:22:15.268902+00:00",
+    "symbols": [],
+    "errors": [
+      {
+        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
+        "lineno": null,
+        "col_offset": null
+      }
+    ]
   },
   {
     "path": "frontend/dist/assets/index-BtluEvpg.js",
@@ -7532,7 +7532,7 @@
   {
     "path": "frontend/dist/index.html",
     "relative": true,
-    "modified_at": "2025-11-29T06:37:38.831833+00:00",
+    "modified_at": "2025-11-29T21:22:15.268902+00:00",
     "symbols": [
       {
         "name": "root",
@@ -7562,7 +7562,7 @@
   {
     "path": "frontend/src/App.tsx",
     "relative": true,
-    "modified_at": "2025-11-28T18:58:11.666231+00:00",
+    "modified_at": "2025-11-29T06:40:37.068541+00:00",
     "symbols": [
       {
         "name": "App",
@@ -7907,7 +7907,7 @@
   {
     "path": "frontend/src/api/types.ts",
     "relative": true,
-    "modified_at": "2025-11-29T05:48:02.864008+00:00",
+    "modified_at": "2025-11-29T06:40:37.068541+00:00",
     "symbols": [],
     "errors": []
   },
@@ -8208,68 +8208,75 @@
   {
     "path": "frontend/src/components/ClaudeAgentView.tsx",
     "relative": true,
-    "modified_at": "2025-11-28T13:12:07.079542+00:00",
+    "modified_at": "2025-11-29T21:04:13.409659+00:00",
     "symbols": [
+      {
+        "name": "extractResultContent",
+        "kind": "function",
+        "lineno": 49,
+        "parent": null,
+        "docstring": null
+      },
       {
         "name": "ClaudeAgentView",
         "kind": "function",
-        "lineno": 30,
+        "lineno": 78,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "stripApi",
         "kind": "function",
-        "lineno": 81,
+        "lineno": 129,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleGlobalKeyDown",
         "kind": "function",
-        "lineno": 167,
+        "lineno": 215,
         "parent": null,
         "docstring": null
       },
       {
         "name": "AgentHeader",
         "kind": "function",
-        "lineno": 475,
+        "lineno": 525,
         "parent": null,
         "docstring": null
       },
       {
         "name": "EmptyState",
         "kind": "function",
-        "lineno": 579,
+        "lineno": 629,
         "parent": null,
         "docstring": null
       },
       {
         "name": "MessageItem",
         "kind": "function",
-        "lineno": 596,
+        "lineno": 648,
         "parent": null,
         "docstring": null
       },
       {
         "name": "PermissionDenialsBanner",
         "kind": "function",
-        "lineno": 714,
+        "lineno": 803,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncateInput",
         "kind": "function",
-        "lineno": 774,
+        "lineno": 864,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncatePath",
         "kind": "function",
-        "lineno": 784,
+        "lineno": 874,
         "parent": null,
         "docstring": "============================================================================"
       }
@@ -8552,7 +8559,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-11-28T18:58:16.103283+00:00",
+    "modified_at": "2025-11-29T06:40:37.068541+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -8689,7 +8696,7 @@
   {
     "path": "frontend/src/components/OllamaInsightsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-29T06:30:36.436155+00:00",
+    "modified_at": "2025-11-29T06:40:37.070541+00:00",
     "symbols": [
       {
         "name": "normalizeFocus",
@@ -8760,7 +8767,7 @@
   {
     "path": "frontend/src/components/OverviewDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-11-29T06:31:59.262484+00:00",
+    "modified_at": "2025-11-29T06:40:37.073540+00:00",
     "symbols": [
       {
         "name": "formatDateTime",
@@ -9497,6 +9504,210 @@
     "errors": []
   },
   {
+    "path": "frontend/src/components/icons/AgentIcons.tsx",
+    "relative": true,
+    "modified_at": "2025-11-29T08:16:13.149920+00:00",
+    "symbols": [
+      {
+        "name": "MessageCircleIcon",
+        "kind": "function",
+        "lineno": 19,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "BrainIcon",
+        "kind": "function",
+        "lineno": 40,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "LoaderIcon",
+        "kind": "function",
+        "lineno": 69,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "LockIcon",
+        "kind": "function",
+        "lineno": 97,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "ZapIcon",
+        "kind": "function",
+        "lineno": 119,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "ClipboardListIcon",
+        "kind": "function",
+        "lineno": 140,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "AlertTriangleIcon",
+        "kind": "function",
+        "lineno": 166,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "TerminalIcon",
+        "kind": "function",
+        "lineno": 189,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "PencilIcon",
+        "kind": "function",
+        "lineno": 211,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "FileTextIcon",
+        "kind": "function",
+        "lineno": 233,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "EditIcon",
+        "kind": "function",
+        "lineno": 258,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "SearchIcon",
+        "kind": "function",
+        "lineno": 280,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "GlobeIcon",
+        "kind": "function",
+        "lineno": 302,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "CheckSquareIcon",
+        "kind": "function",
+        "lineno": 325,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "NotebookIcon",
+        "kind": "function",
+        "lineno": 347,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "WrenchIcon",
+        "kind": "function",
+        "lineno": 373,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "SparklesIcon",
+        "kind": "function",
+        "lineno": 394,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "TheaterIcon",
+        "kind": "function",
+        "lineno": 419,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "BookIcon",
+        "kind": "function",
+        "lineno": 448,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "BrainCogIcon",
+        "kind": "function",
+        "lineno": 469,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "RefreshIcon",
+        "kind": "function",
+        "lineno": 500,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "CircleIcon",
+        "kind": "function",
+        "lineno": 524,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "InfoIcon",
+        "kind": "function",
+        "lineno": 545,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "XCircleIcon",
+        "kind": "function",
+        "lineno": 568,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "CheckCircleIcon",
+        "kind": "function",
+        "lineno": 591,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "ChevronRightIcon",
+        "kind": "function",
+        "lineno": 613,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "ChevronDownIcon",
+        "kind": "function",
+        "lineno": 634,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "getToolIconComponent",
+        "kind": "function",
+        "lineno": 659,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "frontend/src/components/settings/BackendUrlSection.tsx",
     "relative": true,
     "modified_at": "2025-11-14T11:23:03.603312+00:00",
@@ -10209,117 +10420,117 @@
   {
     "path": "frontend/src/stores/claudeSessionStore.ts",
     "relative": true,
-    "modified_at": "2025-11-28T18:49:47.345928+00:00",
+    "modified_at": "2025-11-29T08:18:03.151980+00:00",
     "symbols": [
       {
         "name": "selectConnected",
         "kind": "function",
-        "lineno": 1154,
+        "lineno": 1163,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "selectRunning",
         "kind": "function",
-        "lineno": 1155,
+        "lineno": 1164,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectMessages",
         "kind": "function",
-        "lineno": 1156,
+        "lineno": 1165,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectSessionInfo",
         "kind": "function",
-        "lineno": 1157,
+        "lineno": 1166,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectLastError",
         "kind": "function",
-        "lineno": 1159,
+        "lineno": 1168,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectActiveToolCalls",
         "kind": "function",
-        "lineno": 1160,
+        "lineno": 1169,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPermission",
         "kind": "function",
-        "lineno": 1162,
+        "lineno": 1171,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionDenials",
         "kind": "function",
-        "lineno": 1164,
+        "lineno": 1173,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingToolApproval",
         "kind": "function",
-        "lineno": 1166,
+        "lineno": 1175,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingMCPApproval",
         "kind": "function",
-        "lineno": 1168,
+        "lineno": 1177,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYSessionActive",
         "kind": "function",
-        "lineno": 1170,
+        "lineno": 1179,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPTYPermission",
         "kind": "function",
-        "lineno": 1172,
+        "lineno": 1181,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYThinking",
         "kind": "function",
-        "lineno": 1174,
+        "lineno": 1183,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionMode",
         "kind": "function",
-        "lineno": 1176,
+        "lineno": 1185,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPlanDescriptionOnly",
         "kind": "function",
-        "lineno": 1178,
+        "lineno": 1187,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectToolUseCountInResponse",
         "kind": "function",
-        "lineno": 1180,
+        "lineno": 1189,
         "parent": null,
         "docstring": null
       }
@@ -10522,110 +10733,110 @@
   {
     "path": "frontend/src/types/claude-events.ts",
     "relative": true,
-    "modified_at": "2025-11-28T18:26:53.837017+00:00",
+    "modified_at": "2025-11-29T08:16:28.849763+00:00",
     "symbols": [
       {
         "name": "isPTYPermissionRequestEvent",
         "kind": "function",
-        "lineno": 422,
+        "lineno": 423,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isSystemInitEvent",
         "kind": "function",
-        "lineno": 435,
+        "lineno": 436,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isTextEvent",
         "kind": "function",
-        "lineno": 444,
+        "lineno": 445,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isToolUseEvent",
         "kind": "function",
-        "lineno": 451,
+        "lineno": 452,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isToolResultEvent",
         "kind": "function",
-        "lineno": 460,
+        "lineno": 461,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isDoneEvent",
         "kind": "function",
-        "lineno": 469,
+        "lineno": 470,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isErrorEvent",
         "kind": "function",
-        "lineno": 476,
+        "lineno": 477,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isPermissionRequestEvent",
         "kind": "function",
-        "lineno": 483,
+        "lineno": 484,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isToolApprovalRequestEvent",
         "kind": "function",
-        "lineno": 492,
+        "lineno": 493,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isMCPApprovalRequestEvent",
         "kind": "function",
-        "lineno": 501,
+        "lineno": 502,
         "parent": null,
         "docstring": null
       },
       {
         "name": "isResultEvent",
         "kind": "function",
-        "lineno": 510,
+        "lineno": 511,
         "parent": null,
         "docstring": null
       },
       {
         "name": "hasPermissionDenials",
         "kind": "function",
-        "lineno": 519,
+        "lineno": 520,
         "parent": null,
         "docstring": null
       },
       {
         "name": "getToolIcon",
         "kind": "function",
-        "lineno": 554,
+        "lineno": 555,
         "parent": null,
         "docstring": null
       },
       {
         "name": "formatToolInput",
         "kind": "function",
-        "lineno": 574,
+        "lineno": 575,
         "parent": null,
         "docstring": null
       },
       {
         "name": "generateMessageId",
         "kind": "function",
-        "lineno": 586,
+        "lineno": 587,
         "parent": null,
         "docstring": null
       }
@@ -53547,7 +53758,7 @@
   {
     "path": "stage_config.py",
     "relative": true,
-    "modified_at": "2025-11-10T21:23:34.671933+00:00",
+    "modified_at": "2025-11-29T09:09:16.443284+00:00",
     "symbols": [
       {
         "name": "StageThresholds",
@@ -53657,14 +53868,14 @@
       {
         "name": "_determine_confidence",
         "kind": "function",
-        "lineno": 464,
+        "lineno": 463,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_append_substage_hint",
         "kind": "function",
-        "lineno": 495,
+        "lineno": 494,
         "parent": null,
         "docstring": null
       }
@@ -54009,40 +54220,40 @@
   {
     "path": "test_structured.py",
     "relative": true,
-    "modified_at": "2025-11-26T09:44:37.567727+00:00",
+    "modified_at": "2025-11-29T09:07:25.993274+00:00",
     "symbols": [
       {
         "name": "TestStructuredOutput",
         "kind": "class",
-        "lineno": 6,
+        "lineno": 5,
         "parent": null,
         "docstring": null
       },
       {
         "name": "setUp",
         "kind": "method",
-        "lineno": 7,
+        "lineno": 6,
         "parent": "TestStructuredOutput",
         "docstring": null
       },
       {
         "name": "test_thinking_filtering",
         "kind": "method",
-        "lineno": 10,
+        "lineno": 9,
         "parent": "TestStructuredOutput",
         "docstring": "Test that Thinking blocks are filtered"
       },
       {
         "name": "test_prompt_filtering",
         "kind": "method",
-        "lineno": 38,
+        "lineno": 37,
         "parent": "TestStructuredOutput",
         "docstring": "Test that prompts are filtered"
       },
       {
         "name": "test_tool_use_preservation",
         "kind": "method",
-        "lineno": 45,
+        "lineno": 44,
         "parent": "TestStructuredOutput",
         "docstring": "Test that tool use is preserved"
       }
@@ -54059,7 +54270,7 @@
   {
     "path": "tests/test_agent_bridge.py",
     "relative": true,
-    "modified_at": "2025-11-23T20:12:47.353319+00:00",
+    "modified_at": "2025-11-29T09:10:16.958467+00:00",
     "symbols": [
       {
         "name": "temp_root",
@@ -54235,117 +54446,117 @@
   {
     "path": "tests/test_agent_controller.py",
     "relative": true,
-    "modified_at": "2025-11-24T09:47:18.855193+00:00",
+    "modified_at": "2025-11-29T09:07:26.001275+00:00",
     "symbols": [
       {
         "name": "TestAgentTask",
         "kind": "class",
-        "lineno": 15,
+        "lineno": 14,
         "parent": null,
         "docstring": "Tests para AgentTask"
       },
       {
         "name": "test_create_task",
         "kind": "method",
-        "lineno": 18,
+        "lineno": 17,
         "parent": "TestAgentTask",
         "docstring": "Test creaci\u00f3n de tarea"
       },
       {
         "name": "test_task_to_dict",
         "kind": "method",
-        "lineno": 35,
+        "lineno": 34,
         "parent": "TestAgentTask",
         "docstring": "Test serializaci\u00f3n de tarea"
       },
       {
         "name": "TestAgentController",
         "kind": "class",
-        "lineno": 52,
+        "lineno": 51,
         "parent": null,
         "docstring": "Tests para AgentController"
       },
       {
         "name": "test_controller_initialization_without_key",
         "kind": "method",
-        "lineno": 55,
+        "lineno": 54,
         "parent": "TestAgentController",
         "docstring": "Test inicializaci\u00f3n sin API key"
       },
       {
         "name": "test_get_status_unconfigured",
         "kind": "method",
-        "lineno": 74,
+        "lineno": 73,
         "parent": "TestAgentController",
         "docstring": "Test get_status sin configuraci\u00f3n"
       },
       {
         "name": "test_pause_task_nonexistent",
         "kind": "method",
-        "lineno": 85,
+        "lineno": 84,
         "parent": "TestAgentController",
         "docstring": "Test pausar tarea inexistente"
       },
       {
         "name": "test_resume_task_nonexistent",
         "kind": "method",
-        "lineno": 92,
+        "lineno": 91,
         "parent": "TestAgentController",
         "docstring": "Test reanudar tarea inexistente"
       },
       {
         "name": "test_cancel_task_nonexistent",
         "kind": "method",
-        "lineno": 99,
+        "lineno": 98,
         "parent": "TestAgentController",
         "docstring": "Test cancelar tarea inexistente"
       },
       {
         "name": "test_get_task_nonexistent",
         "kind": "method",
-        "lineno": 106,
+        "lineno": 105,
         "parent": "TestAgentController",
         "docstring": "Test obtener tarea inexistente"
       },
       {
         "name": "test_list_tasks_empty",
         "kind": "method",
-        "lineno": 113,
+        "lineno": 112,
         "parent": "TestAgentController",
         "docstring": "Test listar tareas cuando no hay ninguna"
       },
       {
         "name": "test_clear_completed_tasks_empty",
         "kind": "method",
-        "lineno": 120,
+        "lineno": 119,
         "parent": "TestAgentController",
         "docstring": "Test limpiar tareas cuando no hay ninguna"
       },
       {
         "name": "test_pause_resume_cycle",
         "kind": "method",
-        "lineno": 127,
+        "lineno": 126,
         "parent": "TestAgentController",
         "docstring": "Test ciclo de pausar y reanudar tarea"
       },
       {
         "name": "test_cancel_running_task",
         "kind": "method",
-        "lineno": 144,
+        "lineno": 143,
         "parent": "TestAgentController",
         "docstring": "Test cancelar tarea en ejecuci\u00f3n"
       },
       {
         "name": "test_clear_completed_tasks",
         "kind": "method",
-        "lineno": 156,
+        "lineno": 155,
         "parent": "TestAgentController",
         "docstring": "Test limpiar tareas completadas"
       },
       {
         "name": "test_execute_task_unconfigured",
         "kind": "function",
-        "lineno": 183,
+        "lineno": 182,
         "parent": null,
         "docstring": "Test ejecutar tarea sin configuraci\u00f3n"
       }
@@ -54355,110 +54566,110 @@
   {
     "path": "tests/test_agent_parser.py",
     "relative": true,
-    "modified_at": "2025-11-25T06:35:37.033262+00:00",
+    "modified_at": "2025-11-29T09:07:26.002275+00:00",
     "symbols": [
       {
         "name": "TestAgentOutputParser",
         "kind": "class",
-        "lineno": 12,
+        "lineno": 11,
         "parent": null,
         "docstring": "Test agent output parser functionality"
       },
       {
         "name": "setup_method",
         "kind": "method",
-        "lineno": 15,
+        "lineno": 14,
         "parent": "TestAgentOutputParser",
         "docstring": "Set up test parser"
       },
       {
         "name": "test_command_detection",
         "kind": "method",
-        "lineno": 19,
+        "lineno": 18,
         "parent": "TestAgentOutputParser",
         "docstring": "Test detection of command execution"
       },
       {
         "name": "test_test_result_detection",
         "kind": "method",
-        "lineno": 44,
+        "lineno": 43,
         "parent": "TestAgentOutputParser",
         "docstring": "Test detection of test results"
       },
       {
         "name": "test_agent_reasoning_detection",
         "kind": "method",
-        "lineno": 81,
+        "lineno": 80,
         "parent": "TestAgentOutputParser",
         "docstring": "Test detection of agent thinking patterns"
       },
       {
         "name": "test_error_detection",
         "kind": "method",
-        "lineno": 101,
+        "lineno": 100,
         "parent": "TestAgentOutputParser",
         "docstring": "Test detection of errors and warnings"
       },
       {
         "name": "test_file_operations",
         "kind": "method",
-        "lineno": 128,
+        "lineno": 127,
         "parent": "TestAgentOutputParser",
         "docstring": "Test detection of file operations"
       },
       {
         "name": "test_prompt_detection",
         "kind": "method",
-        "lineno": 151,
+        "lineno": 150,
         "parent": "TestAgentOutputParser",
         "docstring": "Test detection of interactive prompts"
       },
       {
         "name": "test_ansi_stripping",
         "kind": "method",
-        "lineno": 167,
+        "lineno": 166,
         "parent": "TestAgentOutputParser",
         "docstring": "Test that ANSI codes are stripped for pattern matching"
       },
       {
         "name": "test_parse_chunk",
         "kind": "method",
-        "lineno": 176,
+        "lineno": 175,
         "parent": "TestAgentOutputParser",
         "docstring": "Test parsing multiple lines at once"
       },
       {
         "name": "test_event_serialization",
         "kind": "method",
-        "lineno": 196,
+        "lineno": 195,
         "parent": "TestAgentOutputParser",
         "docstring": "Test event JSON serialization"
       },
       {
         "name": "test_build_command_detection",
         "kind": "method",
-        "lineno": 214,
+        "lineno": 213,
         "parent": "TestAgentOutputParser",
         "docstring": "Test detection of build commands"
       },
       {
         "name": "test_line_number_tracking",
         "kind": "method",
-        "lineno": 229,
+        "lineno": 228,
         "parent": "TestAgentOutputParser",
         "docstring": "Test that line numbers are tracked"
       },
       {
         "name": "test_no_match_returns_none",
         "kind": "method",
-        "lineno": 238,
+        "lineno": 237,
         "parent": "TestAgentOutputParser",
         "docstring": "Test that non-matching lines return None"
       },
       {
         "name": "test_multiple_events_per_line",
         "kind": "method",
-        "lineno": 246,
+        "lineno": 245,
         "parent": "TestAgentOutputParser",
         "docstring": "Test lines that can trigger multiple event types"
       }
@@ -54876,7 +55087,7 @@
   {
     "path": "tests/test_audit_hooks.py",
     "relative": true,
-    "modified_at": "2025-11-23T19:51:23.447189+00:00",
+    "modified_at": "2025-11-29T09:09:51.720407+00:00",
     "symbols": [
       {
         "name": "temp_root",
@@ -55322,7 +55533,7 @@
   {
     "path": "tests/test_services.py",
     "relative": true,
-    "modified_at": "2025-11-29T05:50:27.674584+00:00",
+    "modified_at": "2025-11-29T06:40:37.074541+00:00",
     "symbols": [
       {
         "name": "_DummyReport",

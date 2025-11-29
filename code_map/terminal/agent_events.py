@@ -5,7 +5,6 @@ Manages event aggregation, session state, and event streaming for agent terminal
 """
 
 import asyncio
-import json
 from typing import Dict, List, Optional, Callable, Any
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -102,8 +101,12 @@ class AgentSessionState:
             "total_test_runs": len(self.test_runs),
             "session_duration": (datetime.now() - self.start_time).total_seconds(),
             "current_phase": self.current_phase,
-            "error_count": sum(1 for e in self.events if e.type == AgentEventType.ERROR),
-            "warning_count": sum(1 for e in self.events if e.type == AgentEventType.WARNING),
+            "error_count": sum(
+                1 for e in self.events if e.type == AgentEventType.ERROR
+            ),
+            "warning_count": sum(
+                1 for e in self.events if e.type == AgentEventType.WARNING
+            ),
         }
 
         # Add test metrics if available
@@ -112,7 +115,9 @@ class AgentSessionState:
             passed_tests = sum(run.passed_tests for run in self.test_runs)
             self.metrics["total_tests"] = total_tests
             self.metrics["tests_passed"] = passed_tests
-            self.metrics["test_success_rate"] = passed_tests / total_tests if total_tests > 0 else 0
+            self.metrics["test_success_rate"] = (
+                passed_tests / total_tests if total_tests > 0 else 0
+            )
 
 
 class AgentEventManager:
@@ -121,10 +126,7 @@ class AgentEventManager:
     def __init__(self, session_id: str):
         """Initialize event manager for a session"""
         self.session_id = session_id
-        self.state = AgentSessionState(
-            session_id=session_id,
-            start_time=datetime.now()
-        )
+        self.state = AgentSessionState(session_id=session_id, start_time=datetime.now())
         self.event_handlers: Dict[AgentEventType, List[Callable]] = defaultdict(list)
         self.subscribers: List[Callable] = []
 
@@ -179,8 +181,8 @@ class AgentEventManager:
         # Command tracking
         if event.type == AgentEventType.COMMAND_START:
             command = CommandExecution(
-                command=event.data.get('command', ''),
-                start_time=datetime.fromisoformat(event.timestamp)
+                command=event.data.get("command", ""),
+                start_time=datetime.fromisoformat(event.timestamp),
             )
             self.state.current_command = command
             self.state.commands.append(command)
@@ -188,20 +190,28 @@ class AgentEventManager:
 
         elif event.type == AgentEventType.COMMAND_END:
             if self.state.current_command:
-                self.state.current_command.end_time = datetime.fromisoformat(event.timestamp)
-                self.state.current_command.exit_code = event.data.get('exit_code', 0)
-                self.state.current_command.status = "completed" if event.data.get('exit_code', 0) == 0 else "failed"
+                self.state.current_command.end_time = datetime.fromisoformat(
+                    event.timestamp
+                )
+                self.state.current_command.exit_code = event.data.get("exit_code", 0)
+                self.state.current_command.status = (
+                    "completed" if event.data.get("exit_code", 0) == 0 else "failed"
+                )
                 self.state.current_command = None
 
         # File tracking
-        elif event.type in [AgentEventType.FILE_READ, AgentEventType.FILE_WRITE, AgentEventType.FILE_DELETE]:
+        elif event.type in [
+            AgentEventType.FILE_READ,
+            AgentEventType.FILE_WRITE,
+            AgentEventType.FILE_DELETE,
+        ]:
             operation_map = {
                 AgentEventType.FILE_READ: "read",
                 AgentEventType.FILE_WRITE: "write",
-                AgentEventType.FILE_DELETE: "delete"
+                AgentEventType.FILE_DELETE: "delete",
             }
 
-            files = event.data.get('files', [event.data.get('file')])
+            files = event.data.get("files", [event.data.get("file")])
             if not isinstance(files, list):
                 files = [files]
 
@@ -210,36 +220,38 @@ class AgentEventManager:
                     change = FileChange(
                         file_path=file_path,
                         operation=operation_map[event.type],
-                        timestamp=datetime.fromisoformat(event.timestamp)
+                        timestamp=datetime.fromisoformat(event.timestamp),
                     )
                     self.state.file_changes.append(change)
 
         # Test tracking
         elif event.type == AgentEventType.TEST_START:
             test_run = TestRun(
-                tool=event.data.get('tool', 'unknown'),
-                start_time=datetime.fromisoformat(event.timestamp)
+                tool=event.data.get("tool", "unknown"),
+                start_time=datetime.fromisoformat(event.timestamp),
             )
             self.state.current_test_run = test_run
             self.state.test_runs.append(test_run)
 
         elif event.type == AgentEventType.TEST_RESULT:
             if self.state.current_test_run:
-                status = event.data.get('status')
-                if status == 'passed':
+                status = event.data.get("status")
+                if status == "passed":
                     self.state.current_test_run.passed_tests += 1
-                elif status == 'failed':
+                elif status == "failed":
                     self.state.current_test_run.failed_tests += 1
                     self.state.current_test_run.failures.append(event.data)
-                elif status == 'skipped':
+                elif status == "skipped":
                     self.state.current_test_run.skipped_tests += 1
 
         elif event.type == AgentEventType.TEST_SUMMARY:
             if self.state.current_test_run:
-                self.state.current_test_run.end_time = datetime.fromisoformat(event.timestamp)
-                self.state.current_test_run.total_tests = event.data.get('total', 0)
-                if 'passed' in event.data:
-                    self.state.current_test_run.passed_tests = event.data['passed']
+                self.state.current_test_run.end_time = datetime.fromisoformat(
+                    event.timestamp
+                )
+                self.state.current_test_run.total_tests = event.data.get("total", 0)
+                if "passed" in event.data:
+                    self.state.current_test_run.passed_tests = event.data["passed"]
                 self.state.current_test_run = None
 
         # Phase tracking
@@ -270,11 +282,11 @@ class AgentEventManager:
                 "type": event.type.value,
                 "description": self._get_event_description(event),
                 "data": event.data,
-                "phase": self._get_event_phase(event)
+                "phase": self._get_event_phase(event),
             }
             timeline.append(entry)
 
-        return sorted(timeline, key=lambda x: x['timestamp'])
+        return sorted(timeline, key=lambda x: x["timestamp"])
 
     def _get_event_description(self, event: AgentEvent) -> str:
         """Generate human-readable description for event"""
@@ -290,9 +302,9 @@ class AgentEventManager:
             AgentEventType.AGENT_PLANNING: "Agent is planning...",
             AgentEventType.AGENT_DECISION: "Agent made a decision",
             AgentEventType.ERROR: f"Error: {event.data.get('command', 'unknown')}",
-            AgentEventType.WARNING: f"Warning detected",
-            AgentEventType.INSTALL_START: f"Installing packages...",
-            AgentEventType.BUILD_START: f"Building project...",
+            AgentEventType.WARNING: "Warning detected",
+            AgentEventType.INSTALL_START: "Installing packages...",
+            AgentEventType.BUILD_START: "Building project...",
         }
 
         return descriptions.get(event.type, event.type.value)
@@ -317,12 +329,20 @@ class AgentEventManager:
             "session_id": self.session_id,
             "current_phase": self.state.current_phase,
             "metrics": self.state.metrics,
-            "active_command": self.state.current_command.command if self.state.current_command else None,
-            "active_test": self.state.current_test_run.tool if self.state.current_test_run else None,
+            "active_command": (
+                self.state.current_command.command
+                if self.state.current_command
+                else None
+            ),
+            "active_test": (
+                self.state.current_test_run.tool
+                if self.state.current_test_run
+                else None
+            ),
             "recent_files": [fc.file_path for fc in self.state.file_changes[-5:]],
             "error_count": self.state.metrics.get("error_count", 0),
             "command_count": len(self.state.commands),
-            "test_summary": self._get_test_summary()
+            "test_summary": self._get_test_summary(),
         }
 
     def _get_test_summary(self) -> Dict:
@@ -338,7 +358,7 @@ class AgentEventManager:
             "total": total,
             "passed": passed,
             "failed": failed,
-            "success_rate": passed / total if total > 0 else 0
+            "success_rate": passed / total if total > 0 else 0,
         }
 
     def export_session(self) -> Dict:
@@ -356,7 +376,7 @@ class AgentEventManager:
                     "end_time": cmd.end_time.isoformat() if cmd.end_time else None,
                     "duration": cmd.duration_seconds,
                     "exit_code": cmd.exit_code,
-                    "status": cmd.status
+                    "status": cmd.status,
                 }
                 for cmd in self.state.commands
             ],
@@ -364,7 +384,7 @@ class AgentEventManager:
                 {
                     "file": fc.file_path,
                     "operation": fc.operation,
-                    "timestamp": fc.timestamp.isoformat()
+                    "timestamp": fc.timestamp.isoformat(),
                 }
                 for fc in self.state.file_changes
             ],
@@ -374,8 +394,8 @@ class AgentEventManager:
                     "total": run.total_tests,
                     "passed": run.passed_tests,
                     "failed": run.failed_tests,
-                    "success_rate": run.success_rate
+                    "success_rate": run.success_rate,
                 }
                 for run in self.state.test_runs
-            ]
+            ],
         }

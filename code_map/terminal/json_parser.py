@@ -8,7 +8,7 @@ and extracts structured events for UI rendering.
 import json
 import logging
 from typing import Any, Optional, List
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class EventType(str, Enum):
     """Types of events from Claude Code JSON stream"""
+
     SYSTEM = "system"
     ASSISTANT = "assistant"
     USER = "user"
@@ -25,6 +26,7 @@ class EventType(str, Enum):
 
 class EventSubtype(str, Enum):
     """Subtypes for more specific event classification"""
+
     INIT = "init"
     TEXT = "text"
     TOOL_USE = "tool_use"
@@ -37,6 +39,7 @@ class EventSubtype(str, Enum):
 @dataclass
 class ClaudeEvent:
     """Parsed event from Claude Code JSON stream"""
+
     type: EventType
     subtype: EventSubtype
     content: Any
@@ -72,6 +75,7 @@ class ClaudeEvent:
 @dataclass
 class ContentBlock:
     """A content block from assistant messages"""
+
     type: str  # "text", "tool_use", "tool_result"
     content: Any
     tool_id: Optional[str] = None
@@ -116,7 +120,7 @@ class JSONStreamParser:
                 type=EventType.UNKNOWN,
                 subtype=EventSubtype.ERROR,
                 content=f"Parse error: {line[:100]}",
-                raw={"error": str(e), "line": line}
+                raw={"error": str(e), "line": line},
             )
 
         event_type = data.get("type", "unknown")
@@ -134,7 +138,7 @@ class JSONStreamParser:
                 type=EventType.UNKNOWN,
                 subtype=EventSubtype.UNKNOWN,
                 content=data,
-                raw=data
+                raw=data,
             )
 
     def _parse_system(self, data: dict) -> ClaudeEvent:
@@ -155,11 +159,11 @@ class JSONStreamParser:
                     "session_id": self.session_id,
                     "model": self.model,
                     "tools": self.tools,
-                    "mcp_servers": self.mcp_servers
+                    "mcp_servers": self.mcp_servers,
                 },
                 raw=data,
                 session_id=self.session_id,
-                model=self.model
+                model=self.model,
             )
 
         return ClaudeEvent(
@@ -167,7 +171,7 @@ class JSONStreamParser:
             subtype=EventSubtype.UNKNOWN,
             content=data,
             raw=data,
-            session_id=self.session_id
+            session_id=self.session_id,
         )
 
     def _parse_assistant(self, data: dict) -> ClaudeEvent:
@@ -177,7 +181,6 @@ class JSONStreamParser:
         usage = message.get("usage")
 
         # Process content blocks
-        events = []
         for block in content_blocks:
             block_type = block.get("type")
 
@@ -188,7 +191,7 @@ class JSONStreamParser:
                     content=block.get("text", ""),
                     raw=data,
                     session_id=self.session_id,
-                    usage=usage
+                    usage=usage,
                 )
 
             elif block_type == "tool_use":
@@ -198,13 +201,13 @@ class JSONStreamParser:
                     content={
                         "id": block.get("id"),
                         "name": block.get("name"),
-                        "input": block.get("input", {})
+                        "input": block.get("input", {}),
                     },
                     raw=data,
                     session_id=self.session_id,
                     tool_id=block.get("id"),
                     tool_name=block.get("name"),
-                    usage=usage
+                    usage=usage,
                 )
 
             elif block_type == "thinking":
@@ -214,7 +217,7 @@ class JSONStreamParser:
                     content=block.get("thinking", ""),
                     raw=data,
                     session_id=self.session_id,
-                    usage=usage
+                    usage=usage,
                 )
 
         # If no recognized blocks, return raw content
@@ -224,7 +227,7 @@ class JSONStreamParser:
             content=content_blocks,
             raw=data,
             session_id=self.session_id,
-            usage=usage
+            usage=usage,
         )
 
     def _parse_user(self, data: dict) -> ClaudeEvent:
@@ -240,11 +243,11 @@ class JSONStreamParser:
                     content={
                         "tool_use_id": block.get("tool_use_id"),
                         "content": block.get("content", ""),
-                        "is_error": block.get("is_error", False)
+                        "is_error": block.get("is_error", False),
                     },
                     raw=data,
                     session_id=self.session_id,
-                    tool_id=block.get("tool_use_id")
+                    tool_id=block.get("tool_use_id"),
                 )
 
         return ClaudeEvent(
@@ -252,7 +255,7 @@ class JSONStreamParser:
             subtype=EventSubtype.UNKNOWN,
             content=content_blocks,
             raw=data,
-            session_id=self.session_id
+            session_id=self.session_id,
         )
 
     def _parse_result(self, data: dict) -> ClaudeEvent:
@@ -263,7 +266,7 @@ class JSONStreamParser:
             content=data.get("result"),
             raw=data,
             session_id=self.session_id,
-            usage=data.get("usage")
+            usage=data.get("usage"),
         )
 
     def get_session_info(self) -> dict:
@@ -272,7 +275,7 @@ class JSONStreamParser:
             "session_id": self.session_id,
             "model": self.model,
             "tools": self.tools,
-            "mcp_servers": self.mcp_servers
+            "mcp_servers": self.mcp_servers,
         }
 
     def reset(self) -> None:

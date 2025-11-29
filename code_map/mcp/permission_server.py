@@ -26,9 +26,7 @@ import asyncio
 import json
 import logging
 import os
-import socket
 import sys
-from pathlib import Path
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -60,7 +58,15 @@ class PermissionServer:
         self._bridge: Optional[Any] = None
 
         # Safe tools that can be auto-approved
-        self.SAFE_TOOLS = {"Read", "Glob", "Grep", "TodoWrite", "WebFetch", "WebSearch", "Task"}
+        self.SAFE_TOOLS = {
+            "Read",
+            "Glob",
+            "Grep",
+            "TodoWrite",
+            "WebFetch",
+            "WebSearch",
+            "Task",
+        }
 
     def set_bridge(self, bridge: Any) -> None:
         """Set ApprovalBridge for embedded mode"""
@@ -68,10 +74,7 @@ class PermissionServer:
         logger.info("PermissionServer: Using embedded bridge")
 
     async def check_permission(
-        self,
-        tool_name: str,
-        tool_input: dict[str, Any],
-        context: str = ""
+        self, tool_name: str, tool_input: dict[str, Any], context: str = ""
     ) -> dict[str, Any]:
         """
         Check if a tool execution should be allowed.
@@ -87,7 +90,10 @@ class PermissionServer:
             {"behavior": "allow", "updatedInput": {...}} or
             {"behavior": "deny", "message": "..."}
         """
-        print(f"DEBUG: [PermissionServer] check_permission called for {tool_name}", flush=True)
+        print(
+            f"DEBUG: [PermissionServer] check_permission called for {tool_name}",
+            flush=True,
+        )
         logger.info(f"Permission check requested for tool: {tool_name}")
 
         # Auto-approve safe tools if configured
@@ -106,41 +112,37 @@ class PermissionServer:
             if result.get("approved", False):
                 return {
                     "behavior": "allow",
-                    "updatedInput": result.get("updated_input", tool_input)
+                    "updatedInput": result.get("updated_input", tool_input),
                 }
             else:
                 return {
                     "behavior": "deny",
-                    "message": result.get("message", "User denied the operation")
+                    "message": result.get("message", "User denied the operation"),
                 }
 
         except Exception as e:
             logger.error(f"Error in permission check: {e}", exc_info=True)
             print(f"DEBUG: [PermissionServer] Error: {e}", flush=True)
             # On error, deny for safety
-            return {
-                "behavior": "deny",
-                "message": f"Permission check failed: {e}"
-            }
+            return {"behavior": "deny", "message": f"Permission check failed: {e}"}
 
     async def _request_via_bridge(
-        self,
-        tool_name: str,
-        tool_input: dict[str, Any],
-        context: str
+        self, tool_name: str, tool_input: dict[str, Any], context: str
     ) -> dict[str, Any]:
         """Request approval via embedded ApprovalBridge"""
-        print(f"DEBUG: [PermissionServer] Using embedded bridge", flush=True)
+        print("DEBUG: [PermissionServer] Using embedded bridge", flush=True)
+        if self._bridge is None:
+            raise RuntimeError("Bridge not set - call set_bridge() first")
         return await self._bridge.request_approval(tool_name, tool_input, context)
 
     async def _request_via_socket(
-        self,
-        tool_name: str,
-        tool_input: dict[str, Any],
-        context: str
+        self, tool_name: str, tool_input: dict[str, Any], context: str
     ) -> dict[str, Any]:
         """Request approval via Unix socket to ATLAS backend"""
-        print(f"DEBUG: [PermissionServer] Connecting to socket {self.socket_path}", flush=True)
+        print(
+            f"DEBUG: [PermissionServer] Connecting to socket {self.socket_path}",
+            flush=True,
+        )
 
         try:
             # Connect to ATLAS backend
@@ -157,20 +159,22 @@ class PermissionServer:
             writer.write(request_json.encode())
             await writer.drain()
 
-            print(f"DEBUG: [PermissionServer] Request sent, waiting for response...", flush=True)
+            print(
+                "DEBUG: [PermissionServer] Request sent, waiting for response...",
+                flush=True,
+            )
 
             # Wait for response with timeout
             try:
                 response_line = await asyncio.wait_for(
-                    reader.readline(),
-                    timeout=self.timeout
+                    reader.readline(), timeout=self.timeout
                 )
                 response = json.loads(response_line.decode())
                 print(f"DEBUG: [PermissionServer] Got response: {response}", flush=True)
                 return response
 
             except asyncio.TimeoutError:
-                print(f"DEBUG: [PermissionServer] Socket timeout", flush=True)
+                print("DEBUG: [PermissionServer] Socket timeout", flush=True)
                 return {"approved": False, "message": "Approval timeout"}
 
             finally:
@@ -178,7 +182,10 @@ class PermissionServer:
                 await writer.wait_closed()
 
         except FileNotFoundError:
-            print(f"DEBUG: [PermissionServer] Socket not found: {self.socket_path}", flush=True)
+            print(
+                f"DEBUG: [PermissionServer] Socket not found: {self.socket_path}",
+                flush=True,
+            )
             logger.warning(f"Socket not found: {self.socket_path}, auto-approving")
             # If backend not running, auto-approve (development mode)
             return {"approved": True, "message": "Backend not connected"}
@@ -200,8 +207,7 @@ def get_server() -> PermissionServer:
         socket_path = os.environ.get("ATLAS_MCP_SOCKET", DEFAULT_SOCKET_PATH)
         auto_approve = os.environ.get("ATLAS_MCP_AUTO_APPROVE", "").lower() == "true"
         _server = PermissionServer(
-            socket_path=socket_path,
-            auto_approve_safe=auto_approve
+            socket_path=socket_path, auto_approve_safe=auto_approve
         )
     return _server
 
@@ -215,6 +221,7 @@ def set_server(server: PermissionServer) -> None:
 # ============================================================================
 # MCP Tool Definition (for FastMCP)
 # ============================================================================
+
 
 def create_mcp_server():
     """
@@ -232,9 +239,7 @@ def create_mcp_server():
 
     @mcp.tool()
     async def check_permission(
-        tool_name: str,
-        tool_input: dict,
-        context: str = ""
+        tool_name: str, tool_input: dict, context: str = ""
     ) -> str:
         """
         Check if a tool execution should be allowed.
@@ -261,6 +266,7 @@ def create_mcp_server():
 # Standalone Entry Point
 # ============================================================================
 
+
 def main():
     """Run the MCP server in standalone mode"""
     import argparse
@@ -269,24 +275,21 @@ def main():
     parser.add_argument(
         "--socket",
         default=DEFAULT_SOCKET_PATH,
-        help="Unix socket path for communication with ATLAS backend"
+        help="Unix socket path for communication with ATLAS backend",
     )
     parser.add_argument(
         "--auto-approve-safe",
         action="store_true",
-        help="Auto-approve safe tools (Read, Glob, etc.)"
+        help="Auto-approve safe tools (Read, Glob, etc.)",
     )
     parser.add_argument(
         "--transport",
         choices=["stdio", "sse", "streamable-http"],
         default="stdio",
-        help="MCP transport type"
+        help="MCP transport type",
     )
     parser.add_argument(
-        "--port",
-        type=int,
-        default=8011,
-        help="Port for HTTP transport"
+        "--port", type=int, default=8011, help="Port for HTTP transport"
     )
 
     args = parser.parse_args()
@@ -299,7 +302,7 @@ def main():
     # Create and run MCP server
     mcp = create_mcp_server()
 
-    print(f"Starting ATLAS MCP Permission Server", file=sys.stderr)
+    print("Starting ATLAS MCP Permission Server", file=sys.stderr)
     print(f"  Socket: {args.socket}", file=sys.stderr)
     print(f"  Transport: {args.transport}", file=sys.stderr)
     print(f"  Auto-approve safe: {args.auto_approve_safe}", file=sys.stderr)

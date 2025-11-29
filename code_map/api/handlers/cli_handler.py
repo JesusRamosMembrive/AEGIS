@@ -41,7 +41,7 @@ class CLIModeHandler(BaseAgentHandler):
         on_permission_request: Optional[Callable[[dict], Awaitable[dict]]] = None,
     ):
         super().__init__(config, callbacks)
-        self._cli_runner = None
+        self._cli_runner: Optional[Any] = None
         self._permission_mode = permission_mode
         self._socket_server = socket_server
         self._parser = parser
@@ -64,7 +64,10 @@ class CLIModeHandler(BaseAgentHandler):
         Returns:
             The asyncio Task running the prompt
         """
-        from code_map.terminal.claude_runner import ClaudeAgentRunner, ClaudeRunnerConfig
+        from code_map.terminal.claude_runner import (
+            ClaudeAgentRunner,
+            ClaudeRunnerConfig,
+        )
         from code_map.mcp.constants import DEFAULT_SOCKET_PATH
 
         # Determine if should continue session
@@ -75,7 +78,9 @@ class CLIModeHandler(BaseAgentHandler):
         # To avoid "unexpected tool_use_id in tool_result" errors, we MUST
         # start a fresh session each time in toolApproval mode.
         if self._permission_mode == "toolApproval":
-            logger.info("toolApproval mode: forcing new session to avoid state mismatch")
+            logger.info(
+                "toolApproval mode: forcing new session to avoid state mismatch"
+            )
             should_continue = False
 
         # Setup MCP approval mode if selected
@@ -90,7 +95,9 @@ class CLIModeHandler(BaseAgentHandler):
             verbose=self.config.verbose,
             permission_mode=self._permission_mode,
             auto_approve_safe_tools=self.config.auto_approve_safe,
-            mcp_socket_path=DEFAULT_SOCKET_PATH if self._permission_mode == "mcpApproval" else "",
+            mcp_socket_path=(
+                DEFAULT_SOCKET_PATH if self._permission_mode == "mcpApproval" else ""
+            ),
         )
         self._cli_runner = ClaudeAgentRunner(config)
         self.runner = self._cli_runner
@@ -100,7 +107,9 @@ class CLIModeHandler(BaseAgentHandler):
         if not should_continue and self._parser:
             self._parser.reset()
 
-        logger.info(f"Running prompt (continue={should_continue}, permission_mode={self._permission_mode}): {prompt[:50]}...")
+        logger.info(
+            f"Running prompt (continue={should_continue}, permission_mode={self._permission_mode}): {prompt[:50]}..."
+        )
 
         async def run_prompt_task():
             try:
@@ -117,12 +126,16 @@ class CLIModeHandler(BaseAgentHandler):
                 # Check if session is broken (tools executed locally in plan mode)
                 if self._cli_runner.session_broken:
                     self._session_broken = True
-                    logger.info("Session broken due to local tool execution, notifying frontend")
+                    logger.info(
+                        "Session broken due to local tool execution, notifying frontend"
+                    )
                     try:
-                        await self.config.websocket.send_json({
-                            "type": "session_broken",
-                            "reason": "Tools were executed locally after Claude exited. Start a new session for the next prompt.",
-                        })
+                        await self.config.websocket.send_json(
+                            {
+                                "type": "session_broken",
+                                "reason": "Tools were executed locally after Claude exited. Start a new session for the next prompt.",
+                            }
+                        )
                     except Exception as e:
                         logger.error(f"Error sending session_broken event: {e}")
 
@@ -196,9 +209,11 @@ class CLIModeHandler(BaseAgentHandler):
             )
 
         # Fallback to toolApproval mode (via runner)
-        if self._cli_runner and hasattr(self._cli_runner, 'respond_to_tool_approval'):
+        if self._cli_runner and hasattr(self._cli_runner, "respond_to_tool_approval"):
             logger.debug("Using runner for approval response")
-            return self._cli_runner.respond_to_tool_approval(request_id, approved, feedback)
+            return self._cli_runner.respond_to_tool_approval(
+                request_id, approved, feedback
+            )
 
         logger.warning("No handler available for CLI approval response")
         return False
@@ -216,7 +231,9 @@ class CLIModeHandler(BaseAgentHandler):
         This is a separate method for the specific mcp_approval_response command.
         """
         if self._socket_server:
-            logger.debug(f"MCP approval response: request_id={request_id}, approved={approved}")
+            logger.debug(
+                f"MCP approval response: request_id={request_id}, approved={approved}"
+            )
             return self._socket_server.respond_to_approval(
                 request_id=request_id,
                 approved=approved,

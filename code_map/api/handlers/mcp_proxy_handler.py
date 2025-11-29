@@ -34,7 +34,7 @@ class MCPProxyModeHandler(BaseAgentHandler):
         socket_server: Any,
     ):
         super().__init__(config, callbacks)
-        self._mcp_proxy_runner = None
+        self._mcp_proxy_runner: Optional[Any] = None
         self._socket_server = socket_server
 
     async def handle_run(self, prompt: str, message: dict) -> asyncio.Task:
@@ -48,7 +48,10 @@ class MCPProxyModeHandler(BaseAgentHandler):
         Returns:
             The asyncio Task running the prompt
         """
-        from code_map.terminal.mcp_proxy_runner import MCPProxyRunner, MCPProxyRunnerConfig
+        from code_map.terminal.mcp_proxy_runner import (
+            MCPProxyRunner,
+            MCPProxyRunnerConfig,
+        )
         from code_map.mcp.constants import DEFAULT_SOCKET_PATH
 
         logger.info("mcpProxy mode: using MCP tool proxy for approval")
@@ -89,7 +92,9 @@ class MCPProxyModeHandler(BaseAgentHandler):
         Args:
             request: ApprovalRequest from the MCP socket server
         """
-        logger.debug(f"mcpProxy approval request for {request.tool_name}, request_id={request.request_id}")
+        logger.debug(
+            f"mcpProxy approval request for {request.tool_name}, request_id={request.request_id}"
+        )
 
         if self.callbacks.on_tool_approval_request:
             await self.callbacks.on_tool_approval_request(request)
@@ -113,7 +118,9 @@ class MCPProxyModeHandler(BaseAgentHandler):
         Routes response through the socket server to the waiting MCP proxy.
         """
         if self._socket_server:
-            logger.debug(f"MCP proxy approval response: request_id={request_id}, approved={approved}")
+            logger.debug(
+                f"MCP proxy approval response: request_id={request_id}, approved={approved}"
+            )
             success = self._socket_server.respond_to_approval(
                 request_id=request_id,
                 approved=approved,
@@ -121,9 +128,13 @@ class MCPProxyModeHandler(BaseAgentHandler):
                 updated_input=None,
             )
             if success:
-                logger.debug(f"Tool approval response (mcpProxy) processed: approved={approved}")
+                logger.debug(
+                    f"Tool approval response (mcpProxy) processed: approved={approved}"
+                )
             else:
-                logger.warning(f"Tool approval response (mcpProxy) failed: request_id={request_id}")
+                logger.warning(
+                    f"Tool approval response (mcpProxy) failed: request_id={request_id}"
+                )
             return success
 
         logger.warning("MCP socket server not available for approval response")

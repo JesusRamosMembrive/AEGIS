@@ -176,6 +176,7 @@ class GitHistory:
         if self.audit_run_id is not None:
             try:
                 from code_map.audit.hooks import audit_run_command
+
                 result = audit_run_command(
                     ["git"] + args,
                     run_id=self.audit_run_id,
@@ -446,9 +447,7 @@ class GitHistory:
                 continue
 
             normalized_path = Path(path_fragment).as_posix()
-            normalized_rename = (
-                Path(rename_from).as_posix() if rename_from else None
-            )
+            normalized_rename = Path(rename_from).as_posix() if rename_from else None
 
             staged_flag = status[0] if len(status) >= 1 else " "
             unstaged_flag = status[1] if len(status) >= 2 else " "
@@ -490,6 +489,7 @@ class GitHistory:
         if self.audit_run_id is not None:
             try:
                 from code_map.audit.hooks import audit_run_command
+
                 result = audit_run_command(
                     ["git", "diff", "HEAD", "--", normalized],
                     run_id=self.audit_run_id,

@@ -23,7 +23,7 @@ ENV_CWD = "ATLAS_CWD"
 # ============================================================================
 
 # User approval timeout - how long to wait for user response
-APPROVAL_TIMEOUT = 300.0  # 5 minutes
+APPROVAL_TIMEOUT = 7200.0  # 2 hours
 
 # Process cancellation timeout
 CANCEL_TIMEOUT = 2.0

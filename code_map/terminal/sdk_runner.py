@@ -13,10 +13,9 @@ Provides full control over tool execution flow:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Awaitable
 import glob as glob_module
@@ -40,19 +39,19 @@ CLAUDE_TOOLS = [
             "properties": {
                 "file_path": {
                     "type": "string",
-                    "description": "Absolute path to the file to read"
+                    "description": "Absolute path to the file to read",
                 },
                 "offset": {
                     "type": "integer",
-                    "description": "Line number to start reading from (0-indexed). Default: 0"
+                    "description": "Line number to start reading from (0-indexed). Default: 0",
                 },
                 "limit": {
                     "type": "integer",
-                    "description": "Number of lines to read. Default: 2000"
-                }
+                    "description": "Number of lines to read. Default: 2000",
+                },
             },
-            "required": ["file_path"]
-        }
+            "required": ["file_path"],
+        },
     },
     {
         "name": "Write",
@@ -62,15 +61,15 @@ CLAUDE_TOOLS = [
             "properties": {
                 "file_path": {
                     "type": "string",
-                    "description": "Absolute path to the file to write"
+                    "description": "Absolute path to the file to write",
                 },
                 "content": {
                     "type": "string",
-                    "description": "Content to write to the file"
-                }
+                    "description": "Content to write to the file",
+                },
             },
-            "required": ["file_path", "content"]
-        }
+            "required": ["file_path", "content"],
+        },
     },
     {
         "name": "Edit",
@@ -80,23 +79,23 @@ CLAUDE_TOOLS = [
             "properties": {
                 "file_path": {
                     "type": "string",
-                    "description": "Absolute path to the file to edit"
+                    "description": "Absolute path to the file to edit",
                 },
                 "old_string": {
                     "type": "string",
-                    "description": "The exact string to find and replace"
+                    "description": "The exact string to find and replace",
                 },
                 "new_string": {
                     "type": "string",
-                    "description": "The string to replace it with"
+                    "description": "The string to replace it with",
                 },
                 "replace_all": {
                     "type": "boolean",
-                    "description": "Replace all occurrences. Default: false (replace first only)"
-                }
+                    "description": "Replace all occurrences. Default: false (replace first only)",
+                },
             },
-            "required": ["file_path", "old_string", "new_string"]
-        }
+            "required": ["file_path", "old_string", "new_string"],
+        },
     },
     {
         "name": "Bash",
@@ -106,15 +105,15 @@ CLAUDE_TOOLS = [
             "properties": {
                 "command": {
                     "type": "string",
-                    "description": "The bash command to execute"
+                    "description": "The bash command to execute",
                 },
                 "timeout": {
                     "type": "integer",
-                    "description": "Timeout in milliseconds. Default: 120000 (2 minutes)"
-                }
+                    "description": "Timeout in milliseconds. Default: 120000 (2 minutes)",
+                },
             },
-            "required": ["command"]
-        }
+            "required": ["command"],
+        },
     },
     {
         "name": "Glob",
@@ -124,15 +123,15 @@ CLAUDE_TOOLS = [
             "properties": {
                 "pattern": {
                     "type": "string",
-                    "description": "Glob pattern to match (e.g., '**/*.py')"
+                    "description": "Glob pattern to match (e.g., '**/*.py')",
                 },
                 "path": {
                     "type": "string",
-                    "description": "Directory to search in. Default: current working directory"
-                }
+                    "description": "Directory to search in. Default: current working directory",
+                },
             },
-            "required": ["pattern"]
-        }
+            "required": ["pattern"],
+        },
     },
     {
         "name": "Grep",
@@ -142,19 +141,19 @@ CLAUDE_TOOLS = [
             "properties": {
                 "pattern": {
                     "type": "string",
-                    "description": "Regular expression pattern to search for"
+                    "description": "Regular expression pattern to search for",
                 },
                 "path": {
                     "type": "string",
-                    "description": "Directory to search in. Default: current working directory"
+                    "description": "Directory to search in. Default: current working directory",
                 },
                 "glob": {
                     "type": "string",
-                    "description": "Glob pattern to filter files. Default: **/*"
-                }
+                    "description": "Glob pattern to filter files. Default: **/*",
+                },
             },
-            "required": ["pattern"]
-        }
+            "required": ["pattern"],
+        },
     },
 ]
 
@@ -162,6 +161,7 @@ CLAUDE_TOOLS = [
 @dataclass
 class SDKRunnerConfig:
     """Configuration for SDK-based Claude runner"""
+
     cwd: str
     model: str = "claude-sonnet-4-20250514"
     max_tokens: int = 8192
@@ -173,6 +173,7 @@ class SDKRunnerConfig:
 @dataclass
 class ConversationMessage:
     """A message in the conversation"""
+
     role: str  # "user" or "assistant"
     content: Any  # str or list of content blocks
 
@@ -238,7 +239,9 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
         on_event: Callable[[dict], Any],
         on_error: Optional[Callable[[str], Any]] = None,
         on_done: Optional[Callable[[], Any]] = None,
-        on_tool_approval_request: Optional[Callable[[ToolApprovalRequest], Awaitable[None]]] = None,
+        on_tool_approval_request: Optional[
+            Callable[[ToolApprovalRequest], Awaitable[None]]
+        ] = None,
     ) -> int:
         """
         Execute a prompt with tool approval workflow.
@@ -258,22 +261,20 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
 
         try:
             # Add user message to conversation
-            self.conversation.append({
-                "role": "user",
-                "content": prompt
-            })
+            self.conversation.append({"role": "user", "content": prompt})
 
             # Send initial user message event
-            await self._emit_event(on_event, {
-                "type": "user",
-                "subtype": "text",
-                "content": {"text": prompt}
-            })
+            await self._emit_event(
+                on_event,
+                {"type": "user", "subtype": "text", "content": {"text": prompt}},
+            )
 
             # Main conversation loop
             while self.running and not self._cancelled:
                 # Call Claude API
-                logger.info(f"[SDKRunner] Calling Claude API with {len(self.conversation)} messages")
+                logger.info(
+                    f"[SDKRunner] Calling Claude API with {len(self.conversation)} messages"
+                )
 
                 try:
                     response = await self._call_claude_api()
@@ -298,19 +299,23 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
                 # Check if we need to handle tool use
                 if stop_reason == "tool_use":
                     # Extract tool uses from response
-                    tool_uses = [block for block in response.content if isinstance(block, ToolUseBlock)]
+                    tool_uses = [
+                        block
+                        for block in response.content
+                        if isinstance(block, ToolUseBlock)
+                    ]
 
                     if not tool_uses:
-                        logger.warning("[SDKRunner] tool_use stop_reason but no tool blocks found")
+                        logger.warning(
+                            "[SDKRunner] tool_use stop_reason but no tool blocks found"
+                        )
                         break
 
                     # Process each tool use
                     tool_results = []
                     for tool_use in tool_uses:
                         tool_result = await self._handle_tool_use(
-                            tool_use,
-                            on_event,
-                            on_tool_approval_request
+                            tool_use, on_event, on_tool_approval_request
                         )
                         tool_results.append(tool_result)
 
@@ -321,45 +326,60 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
                         break
 
                     # Add assistant message and tool results to conversation
-                    self.conversation.append({
-                        "role": "assistant",
-                        "content": [self._content_block_to_dict(block) for block in response.content]
-                    })
+                    self.conversation.append(
+                        {
+                            "role": "assistant",
+                            "content": [
+                                self._content_block_to_dict(block)
+                                for block in response.content
+                            ],
+                        }
+                    )
 
-                    self.conversation.append({
-                        "role": "user",
-                        "content": tool_results
-                    })
+                    self.conversation.append({"role": "user", "content": tool_results})
 
                     # Continue the loop to get Claude's next response
                     continue
 
                 elif stop_reason == "end_turn":
                     # Claude finished naturally - add response to conversation and exit
-                    self.conversation.append({
-                        "role": "assistant",
-                        "content": [self._content_block_to_dict(block) for block in response.content]
-                    })
+                    self.conversation.append(
+                        {
+                            "role": "assistant",
+                            "content": [
+                                self._content_block_to_dict(block)
+                                for block in response.content
+                            ],
+                        }
+                    )
                     break
 
                 else:
                     # Other stop reasons (max_tokens, etc.)
                     logger.warning(f"[SDKRunner] Unexpected stop_reason: {stop_reason}")
-                    self.conversation.append({
-                        "role": "assistant",
-                        "content": [self._content_block_to_dict(block) for block in response.content]
-                    })
+                    self.conversation.append(
+                        {
+                            "role": "assistant",
+                            "content": [
+                                self._content_block_to_dict(block)
+                                for block in response.content
+                            ],
+                        }
+                    )
                     break
 
             # Done
             logger.info("[SDKRunner] Conversation complete")
 
             # Emit done event
-            await self._emit_event(on_event, {
-                "type": "result",
-                "subtype": "success",
-                "content": {"message": "Conversation complete"}
-            })
+            await self._emit_event(
+                on_event,
+                {
+                    "type": "result",
+                    "subtype": "success",
+                    "content": {"message": "Conversation complete"},
+                },
+            )
 
             if on_done:
                 result = on_done()
@@ -388,42 +408,48 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
                 model=self.config.model,
                 max_tokens=self.config.max_tokens,
                 system=self._system_prompt,
-                tools=CLAUDE_TOOLS,
-                messages=self.conversation
-            )
+                tools=CLAUDE_TOOLS,  # type: ignore[arg-type]
+                messages=self.conversation,  # type: ignore[arg-type]
+            ),
         )
 
     async def _process_response_content(
-        self,
-        response: Message,
-        on_event: Callable[[dict], Any]
+        self, response: Message, on_event: Callable[[dict], Any]
     ):
         """Process and emit events for response content blocks"""
         for block in response.content:
             if isinstance(block, TextBlock):
                 # Emit text content
-                await self._emit_event(on_event, {
-                    "type": "assistant",
-                    "subtype": "text",
-                    "content": {"text": block.text}
-                })
+                await self._emit_event(
+                    on_event,
+                    {
+                        "type": "assistant",
+                        "subtype": "text",
+                        "content": {"text": block.text},
+                    },
+                )
             elif isinstance(block, ToolUseBlock):
                 # Emit tool_use event
-                await self._emit_event(on_event, {
-                    "type": "assistant",
-                    "subtype": "tool_use",
-                    "content": {
-                        "id": block.id,
-                        "name": block.name,
-                        "input": block.input
-                    }
-                })
+                await self._emit_event(
+                    on_event,
+                    {
+                        "type": "assistant",
+                        "subtype": "tool_use",
+                        "content": {
+                            "id": block.id,
+                            "name": block.name,
+                            "input": block.input,
+                        },
+                    },
+                )
 
     async def _handle_tool_use(
         self,
         tool_use: ToolUseBlock,
         on_event: Callable[[dict], Any],
-        on_tool_approval_request: Optional[Callable[[ToolApprovalRequest], Awaitable[None]]]
+        on_tool_approval_request: Optional[
+            Callable[[ToolApprovalRequest], Awaitable[None]]
+        ],
     ) -> dict:
         """
         Handle a tool use block - request approval and execute if approved.
@@ -442,21 +468,24 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
             result = await self._execute_tool(tool_name, tool_input)
 
             # Emit tool result event
-            await self._emit_event(on_event, {
-                "type": "user",
-                "subtype": "tool_result",
-                "content": {
-                    "tool_use_id": tool_id,
-                    "content": result.get("content", ""),
-                    "is_error": result.get("is_error", False)
-                }
-            })
+            await self._emit_event(
+                on_event,
+                {
+                    "type": "user",
+                    "subtype": "tool_result",
+                    "content": {
+                        "tool_use_id": tool_id,
+                        "content": result.get("content", ""),
+                        "is_error": result.get("is_error", False),
+                    },
+                },
+            )
 
             return {
                 "type": "tool_result",
                 "tool_use_id": tool_id,
                 "content": result.get("content", ""),
-                "is_error": result.get("is_error", False)
+                "is_error": result.get("is_error", False),
             }
 
         # Tool requires approval
@@ -465,21 +494,24 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
             logger.warning(f"[SDKRunner] No approval handler, rejecting {tool_name}")
             error_msg = f"Tool {tool_name} requires approval but no handler provided"
 
-            await self._emit_event(on_event, {
-                "type": "user",
-                "subtype": "tool_result",
-                "content": {
-                    "tool_use_id": tool_id,
-                    "content": error_msg,
-                    "is_error": True
-                }
-            })
+            await self._emit_event(
+                on_event,
+                {
+                    "type": "user",
+                    "subtype": "tool_result",
+                    "content": {
+                        "tool_use_id": tool_id,
+                        "content": error_msg,
+                        "is_error": True,
+                    },
+                },
+            )
 
             return {
                 "type": "tool_result",
                 "tool_use_id": tool_id,
                 "content": error_msg,
-                "is_error": True
+                "is_error": True,
             }
 
         # Request approval through the manager
@@ -489,51 +521,61 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
             tool_name=tool_name,
             tool_input=tool_input,
             tool_use_id=tool_id,
-            on_approval_request=on_tool_approval_request
+            on_approval_request=on_tool_approval_request,
         )
 
-        logger.info(f"[SDKRunner] Approval result: approved={approved}, feedback={feedback}")
+        logger.info(
+            f"[SDKRunner] Approval result: approved={approved}, feedback={feedback}"
+        )
 
         if approved:
             # Execute the tool
             result = await self._execute_tool(tool_name, tool_input)
 
             # Emit tool result event
-            await self._emit_event(on_event, {
-                "type": "user",
-                "subtype": "tool_result",
-                "content": {
-                    "tool_use_id": tool_id,
-                    "content": result.get("content", ""),
-                    "is_error": result.get("is_error", False)
-                }
-            })
+            await self._emit_event(
+                on_event,
+                {
+                    "type": "user",
+                    "subtype": "tool_result",
+                    "content": {
+                        "tool_use_id": tool_id,
+                        "content": result.get("content", ""),
+                        "is_error": result.get("is_error", False),
+                    },
+                },
+            )
 
             return {
                 "type": "tool_result",
                 "tool_use_id": tool_id,
                 "content": result.get("content", ""),
-                "is_error": result.get("is_error", False)
+                "is_error": result.get("is_error", False),
             }
         else:
             # Rejected
-            error_msg = f"User rejected tool execution: {feedback or 'No reason provided'}"
+            error_msg = (
+                f"User rejected tool execution: {feedback or 'No reason provided'}"
+            )
 
-            await self._emit_event(on_event, {
-                "type": "user",
-                "subtype": "tool_result",
-                "content": {
-                    "tool_use_id": tool_id,
-                    "content": error_msg,
-                    "is_error": True
-                }
-            })
+            await self._emit_event(
+                on_event,
+                {
+                    "type": "user",
+                    "subtype": "tool_result",
+                    "content": {
+                        "tool_use_id": tool_id,
+                        "content": error_msg,
+                        "is_error": True,
+                    },
+                },
+            )
 
             return {
                 "type": "tool_result",
                 "tool_use_id": tool_id,
                 "content": error_msg,
-                "is_error": True
+                "is_error": True,
             }
 
     async def _execute_tool(self, tool_name: str, tool_input: dict) -> dict:
@@ -552,15 +594,12 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
             elif tool_name == "Grep":
                 return await self._execute_grep(tool_input)
             else:
-                return {
-                    "content": f"Unknown tool: {tool_name}",
-                    "is_error": True
-                }
+                return {"content": f"Unknown tool: {tool_name}", "is_error": True}
         except Exception as e:
             logger.error(f"[SDKRunner] Tool execution error: {e}", exc_info=True)
             return {
                 "content": f"Error executing {tool_name}: {str(e)}",
-                "is_error": True
+                "is_error": True,
             }
 
     async def _execute_read(self, tool_input: dict) -> dict:
@@ -575,12 +614,15 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
 
         try:
             if not path.exists():
-                return {"content": f"File does not exist: {file_path}", "is_error": True}
+                return {
+                    "content": f"File does not exist: {file_path}",
+                    "is_error": True,
+                }
 
             content = path.read_text(encoding="utf-8")
             lines = content.splitlines()
 
-            selected_lines = lines[offset:offset + limit]
+            selected_lines = lines[offset : offset + limit]
 
             result_lines = []
             for i, line in enumerate(selected_lines, start=offset + 1):
@@ -604,7 +646,10 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
-            return {"content": f"Wrote {len(content)} characters to {file_path}", "is_error": False}
+            return {
+                "content": f"Wrote {len(content)} characters to {file_path}",
+                "is_error": False,
+            }
         except Exception as e:
             return {"content": f"Error writing {file_path}: {str(e)}", "is_error": True}
 
@@ -621,7 +666,10 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
 
         try:
             if not path.exists():
-                return {"content": f"File does not exist: {file_path}", "is_error": True}
+                return {
+                    "content": f"File does not exist: {file_path}",
+                    "is_error": True,
+                }
 
             content = path.read_text(encoding="utf-8")
 
@@ -636,7 +684,10 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
                 count = 1
 
             path.write_text(new_content, encoding="utf-8")
-            return {"content": f"Replaced {count} occurrence(s) in {file_path}", "is_error": False}
+            return {
+                "content": f"Replaced {count} occurrence(s) in {file_path}",
+                "is_error": False,
+            }
         except Exception as e:
             return {"content": f"Error editing {file_path}: {str(e)}", "is_error": True}
 
@@ -651,14 +702,19 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=self.config.cwd
+                cwd=self.config.cwd,
             )
 
             try:
-                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout_sec)
+                stdout, stderr = await asyncio.wait_for(
+                    proc.communicate(), timeout=timeout_sec
+                )
             except asyncio.TimeoutError:
                 proc.kill()
-                return {"content": f"Command timed out after {timeout_sec}s", "is_error": True}
+                return {
+                    "content": f"Command timed out after {timeout_sec}s",
+                    "is_error": True,
+                }
 
             output = stdout.decode("utf-8", errors="replace")
             error_output = stderr.decode("utf-8", errors="replace")
@@ -666,7 +722,7 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
             if proc.returncode != 0:
                 return {
                     "content": f"Exit code {proc.returncode}\n{output}\n{error_output}".strip(),
-                    "is_error": True
+                    "is_error": True,
                 }
 
             return {"content": output or "(no output)", "is_error": False}
@@ -702,7 +758,9 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
             return {"content": f"Invalid regex: {str(e)}", "is_error": True}
 
         try:
-            files = glob_module.glob(os.path.join(search_path, glob_pattern), recursive=True)
+            files = glob_module.glob(
+                os.path.join(search_path, glob_pattern), recursive=True
+            )
 
             matches = []
             for file_path in files[:100]:
@@ -712,7 +770,9 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
                     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         for line_num, line in enumerate(f, 1):
                             if regex.search(line):
-                                matches.append(f"{file_path}:{line_num}:{line.rstrip()}")
+                                matches.append(
+                                    f"{file_path}:{line_num}:{line.rstrip()}"
+                                )
                                 if len(matches) >= 100:
                                     break
                 except Exception:
@@ -737,7 +797,7 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
                 "type": "tool_use",
                 "id": block.id,
                 "name": block.name,
-                "input": block.input
+                "input": block.input,
             }
         else:
             # Unknown block type
@@ -753,17 +813,16 @@ Important: When you need to make changes to files, ALWAYS use the tools. Do not 
             logger.error(f"[SDKRunner] Error emitting event: {e}")
 
     def respond_to_tool_approval(
-        self,
-        request_id: str,
-        approved: bool,
-        feedback: str | None = None
+        self, request_id: str, approved: bool, feedback: str | None = None
     ) -> bool:
         """
         Respond to a pending tool approval request.
 
         This is called by the API when the user approves/rejects in the frontend.
         """
-        return self._tool_approval_manager.respond_to_approval(request_id, approved, feedback)
+        return self._tool_approval_manager.respond_to_approval(
+            request_id, approved, feedback
+        )
 
     async def cancel(self):
         """Cancel the running conversation"""

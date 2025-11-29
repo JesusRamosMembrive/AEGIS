@@ -15,7 +15,6 @@ from starlette.websockets import WebSocketState
 from code_map.terminal import PTYShell
 from code_map.terminal.agent_parser import AgentEvent
 from code_map.terminal.agent_events import AgentEventManager
-from code_map.terminal.claude_runner import PERMISSION_MODES
 from code_map.terminal.json_parser import JSONStreamParser
 from code_map.terminal.pty_runner import PTYClaudeRunner, PTYRunnerConfig
 from code_map.terminal.gemini_runner import GeminiAgentRunner, GeminiRunnerConfig
@@ -110,7 +109,9 @@ async def terminal_websocket(websocket: WebSocket):
 
         try:
             shell.spawn()
-            logger.info(f"Shell spawned successfully: PID={shell.pid}, FD={shell.master_fd}")
+            logger.info(
+                f"Shell spawned successfully: PID={shell.pid}, FD={shell.master_fd}"
+            )
         except Exception as e:
             logger.error(f"Failed to spawn shell: {e}", exc_info=True)
             await websocket.send_text(f"Failed to spawn shell: {str(e)}\r\n")
@@ -120,7 +121,7 @@ async def terminal_websocket(websocket: WebSocket):
         logger.error(f"Error during WebSocket initialization: {e}", exc_info=True)
         try:
             await websocket.close()
-        except:
+        except Exception:
             pass
         return
 
@@ -133,6 +134,7 @@ async def terminal_websocket(websocket: WebSocket):
     # Create task for reading shell output
     async def read_output():
         """Read shell output and send to WebSocket"""
+
         def send_output(data: str):
             """Callback for shell output - runs in sync context"""
             try:
@@ -213,39 +215,63 @@ async def terminal_websocket(websocket: WebSocket):
                                         shell.enable_agent_parsing = True
 
                                         # Create new parser and event manager
-                                        from code_map.terminal.agent_parser import AgentOutputParser
+                                        from code_map.terminal.agent_parser import (
+                                            AgentOutputParser,
+                                        )
                                         import uuid
+
                                         shell.agent_parser = AgentOutputParser()
-                                        agent_event_manager = AgentEventManager(str(uuid.uuid4()))
+                                        agent_event_manager = AgentEventManager(
+                                            str(uuid.uuid4())
+                                        )
 
                                         # Set callback to send events to WebSocket
                                         async def send_agent_event(event: AgentEvent):
                                             """Send agent event to WebSocket"""
                                             try:
                                                 # Process event in manager
-                                                await agent_event_manager.process_event(event)
+                                                if agent_event_manager is not None:
+                                                    await agent_event_manager.process_event(
+                                                        event
+                                                    )
 
                                                 # Send event to client
-                                                event_msg = f"__AGENT__:event:{event.to_json()}"
-                                                if websocket.application_state == WebSocketState.CONNECTED:
+                                                event_msg = (
+                                                    f"__AGENT__:event:{event.to_json()}"
+                                                )
+                                                if (
+                                                    websocket.application_state
+                                                    == WebSocketState.CONNECTED
+                                                ):
                                                     await websocket.send_text(event_msg)
                                             except Exception as e:
-                                                logger.error(f"Error sending agent event: {e}")
+                                                logger.error(
+                                                    f"Error sending agent event: {e}"
+                                                )
 
                                         # Wrap async callback for sync context
                                         def agent_event_callback(event: AgentEvent):
                                             """Sync wrapper for agent event callback"""
                                             if loop.is_running():
                                                 loop.call_soon_threadsafe(
-                                                    lambda: asyncio.create_task(send_agent_event(event))
+                                                    lambda: asyncio.create_task(
+                                                        send_agent_event(event)
+                                                    )
                                                 )
 
-                                        shell.set_agent_event_callback(agent_event_callback)
+                                        shell.set_agent_event_callback(
+                                            agent_event_callback
+                                        )
                                         logger.info("Agent parsing enabled")
 
                                         # Send confirmation
-                                        if websocket.application_state == WebSocketState.CONNECTED:
-                                            await websocket.send_text("__AGENT__:status:enabled\r\n")
+                                        if (
+                                            websocket.application_state
+                                            == WebSocketState.CONNECTED
+                                        ):
+                                            await websocket.send_text(
+                                                "__AGENT__:status:enabled\r\n"
+                                            )
 
                                 elif cmd == "disable":
                                     # Disable agent parsing
@@ -257,14 +283,24 @@ async def terminal_websocket(websocket: WebSocket):
                                     logger.info("Agent parsing disabled")
 
                                     # Send confirmation
-                                    if websocket.application_state == WebSocketState.CONNECTED:
-                                        await websocket.send_text("__AGENT__:status:disabled\r\n")
+                                    if (
+                                        websocket.application_state
+                                        == WebSocketState.CONNECTED
+                                    ):
+                                        await websocket.send_text(
+                                            "__AGENT__:status:disabled\r\n"
+                                        )
 
                                 elif cmd == "summary" and agent_event_manager:
                                     # Send current session summary
                                     summary = agent_event_manager.get_state_summary()
-                                    summary_msg = f"__AGENT__:summary:{json.dumps(summary)}"
-                                    if websocket.application_state == WebSocketState.CONNECTED:
+                                    summary_msg = (
+                                        f"__AGENT__:summary:{json.dumps(summary)}"
+                                    )
+                                    if (
+                                        websocket.application_state
+                                        == WebSocketState.CONNECTED
+                                    ):
                                         await websocket.send_text(summary_msg)
 
                         except Exception as e:
@@ -302,7 +338,7 @@ async def terminal_websocket(websocket: WebSocket):
             pass
 
         # 3. Now clean up shell resources (including thread join in executor to avoid blocking)
-        import concurrent.futures
+
         loop = asyncio.get_running_loop()
         try:
             # Run blocking shell.close() in thread pool to avoid blocking event loop
@@ -400,7 +436,7 @@ async def agent_websocket(websocket: WebSocket):
                 "request_id": request.request_id,
                 "tool_name": request.tool_name,
                 "tool_input": request.tool_input,
-                "tool_use_id": getattr(request, 'tool_use_id', request.request_id),
+                "tool_use_id": getattr(request, "tool_use_id", request.request_id),
                 "preview_type": request.preview_type,
                 "preview_data": request.preview_data,
                 "file_path": request.file_path,
@@ -408,7 +444,7 @@ async def agent_websocket(websocket: WebSocket):
                 "new_content": request.new_content,
                 "diff_lines": request.diff_lines,
             }
-            if hasattr(request, 'context'):
+            if hasattr(request, "context"):
                 approval_event["context"] = request.context
             await websocket.send_json(approval_event)
             logger.debug(f"Tool approval request sent: {request.tool_name}")
@@ -437,10 +473,12 @@ async def agent_websocket(websocket: WebSocket):
             "request_id": request_id,
             "tool": tool_name,
             "input": tool_input,
-            "raw_event": event
+            "raw_event": event,
         }
 
-        logger.info(f"Sending permission request to frontend: {tool_name} (id={request_id})")
+        logger.info(
+            f"Sending permission request to frontend: {tool_name} (id={request_id})"
+        )
 
         try:
             await websocket.send_json(permission_event)
@@ -533,7 +571,9 @@ async def agent_websocket(websocket: WebSocket):
 
                     permission_mode = message.get("permission_mode", "default")
                     if permission_mode not in EXTENDED_MODES:
-                        logger.warning(f"Invalid permission mode: {permission_mode}, using default")
+                        logger.warning(
+                            f"Invalid permission mode: {permission_mode}, using default"
+                        )
                         permission_mode = "default"
 
                     # Create handler for this mode
@@ -543,32 +583,43 @@ async def agent_websocket(websocket: WebSocket):
                     if not message.get("continue", continue_session):
                         parser.reset()
 
-                    logger.info(f"Running prompt (mode={permission_mode}): {prompt[:50]}...")
+                    logger.info(
+                        f"Running prompt (mode={permission_mode}): {prompt[:50]}..."
+                    )
 
                     # Start execution
                     await handler.handle_run(prompt, message)
 
                 elif command == "permission_response":
-                    if pending_permission_future and not pending_permission_future.done():
+                    if (
+                        pending_permission_future
+                        and not pending_permission_future.done()
+                    ):
                         response = {
                             "approved": message.get("approved", False),
-                            "always": message.get("always", False)
+                            "always": message.get("always", False),
                         }
                         pending_permission_future.set_result(response)
                         logger.info(f"Permission response set: {response}")
                     else:
-                        logger.warning("Received permission_response but no pending request")
+                        logger.warning(
+                            "Received permission_response but no pending request"
+                        )
 
                 elif command == "tool_approval_response":
                     request_id = message.get("request_id", "")
                     approved = message.get("approved", False)
                     feedback = message.get("feedback", "")
 
-                    logger.debug(f"tool_approval_response: request_id={request_id}, approved={approved}")
+                    logger.debug(
+                        f"tool_approval_response: request_id={request_id}, approved={approved}"
+                    )
 
                     # Route to handler or MCP socket server
                     if handler:
-                        handler.handle_tool_approval_response(request_id, approved, feedback)
+                        await handler.handle_tool_approval_response(
+                            request_id, approved, feedback
+                        )
                     elif mcp_state["using_mcp"] and mcp_state["socket_server"]:
                         mcp_state["socket_server"].respond_to_approval(
                             request_id=request_id,
@@ -577,16 +628,29 @@ async def agent_websocket(websocket: WebSocket):
                             updated_input=None,
                         )
                     else:
-                        logger.warning("Received tool_approval_response but no handler available")
+                        logger.warning(
+                            "Received tool_approval_response but no handler available"
+                        )
 
                 elif command == "mcp_approval_response":
-                    if mcp_state["socket_server"]:
-                        request_id = message.get("request_id", "")
-                        approved = message.get("approved", False)
-                        user_message = message.get("message", "")
-                        updated_input = message.get("updated_input")
+                    request_id = message.get("request_id", "")
+                    approved = message.get("approved", False)
+                    user_message = message.get("message", "")
+                    updated_input = message.get("updated_input")
 
-                        logger.debug(f"MCP approval response: request_id={request_id}, approved={approved}")
+                    logger.debug(
+                        f"MCP approval response: request_id={request_id}, approved={approved}"
+                    )
+
+                    # Route to handler first (if available), then fallback to socket server
+                    if handler and hasattr(handler, "handle_mcp_approval_response"):
+                        handler.handle_mcp_approval_response(
+                            request_id=request_id,
+                            approved=approved,
+                            message=user_message,
+                            updated_input=updated_input,
+                        )
+                    elif mcp_state["socket_server"]:
                         mcp_state["socket_server"].respond_to_approval(
                             request_id=request_id,
                             approved=approved,
@@ -594,14 +658,18 @@ async def agent_websocket(websocket: WebSocket):
                             updated_input=updated_input,
                         )
                     else:
-                        logger.warning("Received mcp_approval_response but no MCP socket server")
+                        logger.warning(
+                            "Received mcp_approval_response but no handler or MCP socket server"
+                        )
 
                 elif command == "cancel":
                     if handler and handler.is_running:
                         await handler.handle_cancel()
                         await websocket.send_json({"type": "cancelled"})
                     else:
-                        await websocket.send_json({"type": "cancelled", "note": "No running process"})
+                        await websocket.send_json(
+                            {"type": "cancelled", "note": "No running process"}
+                        )
 
                 elif command == "new_session":
                     continue_session = False
@@ -609,12 +677,14 @@ async def agent_websocket(websocket: WebSocket):
                     await websocket.send_json({"type": "session_reset"})
 
                 elif command == "status":
-                    await websocket.send_json({
-                        "type": "status",
-                        "session_info": parser.get_session_info(),
-                        "running": handler.is_running if handler else False,
-                        "continue_session": continue_session
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "status",
+                            "session_info": parser.get_session_info(),
+                            "running": handler.is_running if handler else False,
+                            "continue_session": continue_session,
+                        }
+                    )
 
                 else:
                     await send_error(f"Unknown command: {command}")
@@ -702,21 +772,19 @@ async def agent_pty_websocket(websocket: WebSocket):
         }
 
         # Send to frontend
-        await send_event({
-            "type": "permission_request",
-            "data": event.get("data", {}),
-            "raw_text": event.get("raw_text", ""),
-        })
+        await send_event(
+            {
+                "type": "permission_request",
+                "data": event.get("data", {}),
+                "raw_text": event.get("raw_text", ""),
+            }
+        )
 
         return pending_permission["future"]
 
     try:
         # Send connected confirmation
-        await websocket.send_json({
-            "type": "connected",
-            "cwd": cwd,
-            "mode": "pty"
-        })
+        await websocket.send_json({"type": "connected", "cwd": cwd, "mode": "pty"})
 
         while True:
             try:
@@ -741,7 +809,9 @@ async def agent_pty_websocket(websocket: WebSocket):
                     runner = PTYClaudeRunner(config)
 
                     # Set event callback
-                    runner.set_event_callback(lambda e: asyncio.create_task(send_event(e)))
+                    runner.set_event_callback(
+                        lambda e: asyncio.create_task(send_event(e))
+                    )
 
                     # Set permission callback
                     runner.set_permission_callback(handle_permission_request)
@@ -757,26 +827,24 @@ async def agent_pty_websocket(websocket: WebSocket):
                         logger.info("PTY: session_started event sent")
                     else:
                         logger.warning("PTY: Sending session failed error")
-                        await send_event({
-                            "type": "error",
-                            "content": "Failed to start PTY session"
-                        })
+                        await send_event(
+                            {"type": "error", "content": "Failed to start PTY session"}
+                        )
 
                 elif command == "run":
                     # Send prompt to Claude
                     if runner is None or not runner.is_running:
-                        await send_event({
-                            "type": "error",
-                            "content": "No active PTY session. Send 'start' first."
-                        })
+                        await send_event(
+                            {
+                                "type": "error",
+                                "content": "No active PTY session. Send 'start' first.",
+                            }
+                        )
                         continue
 
                     prompt = message.get("prompt", "")
                     if not prompt:
-                        await send_event({
-                            "type": "error",
-                            "content": "Empty prompt"
-                        })
+                        await send_event({"type": "error", "content": "Empty prompt"})
                         continue
 
                     logger.info(f"PTY running prompt: {prompt[:50]}...")
@@ -787,10 +855,7 @@ async def agent_pty_websocket(websocket: WebSocket):
                             await send_event(event)
                     except Exception as e:
                         logger.error(f"Error running prompt: {e}")
-                        await send_event({
-                            "type": "error",
-                            "content": str(e)
-                        })
+                        await send_event({"type": "error", "content": str(e)})
 
                     # Send done event
                     await send_event({"type": "done"})
@@ -798,48 +863,54 @@ async def agent_pty_websocket(websocket: WebSocket):
                 elif command == "approve":
                     # Approve pending permission
                     if pending_permission and not pending_permission["future"].done():
-                        pending_permission["future"].set_result({
-                            "approved": True,
-                            "always": False,
-                        })
+                        pending_permission["future"].set_result(
+                            {
+                                "approved": True,
+                                "always": False,
+                            }
+                        )
                         pending_permission = None
                         logger.info("Permission approved")
                     elif runner and runner._process:
                         # Direct key send if no pending future
-                        runner._process.send('y')
+                        runner._process.send("y")
                         logger.info("Sent 'y' key directly")
 
                 elif command == "deny":
                     # Deny pending permission
                     if pending_permission and not pending_permission["future"].done():
-                        pending_permission["future"].set_result({
-                            "approved": False,
-                        })
+                        pending_permission["future"].set_result(
+                            {
+                                "approved": False,
+                            }
+                        )
                         pending_permission = None
                         logger.info("Permission denied")
                     elif runner and runner._process:
                         # Direct key send
-                        runner._process.send('n')
+                        runner._process.send("n")
                         logger.info("Sent 'n' key directly")
 
                 elif command == "always_allow":
                     # Always allow permission
                     if pending_permission and not pending_permission["future"].done():
-                        pending_permission["future"].set_result({
-                            "approved": True,
-                            "always": True,
-                        })
+                        pending_permission["future"].set_result(
+                            {
+                                "approved": True,
+                                "always": True,
+                            }
+                        )
                         pending_permission = None
                         logger.info("Permission always allowed")
                     elif runner and runner._process:
                         # Direct key send
-                        runner._process.send('a')
+                        runner._process.send("a")
                         logger.info("Sent 'a' key directly")
 
                 elif command == "cancel":
                     # Send Ctrl+C to cancel
                     if runner and runner._process:
-                        runner._process.sendcontrol('c')
+                        runner._process.sendcontrol("c")
                         logger.info("Sent Ctrl+C to cancel")
                         await send_event({"type": "cancelled"})
 
@@ -852,26 +923,25 @@ async def agent_pty_websocket(websocket: WebSocket):
 
                 elif command == "status":
                     # Return current status
-                    await send_event({
-                        "type": "status",
-                        "data": {
-                            "running": runner is not None and runner.is_running,
-                            "state": runner.state.value if runner else "idle",
-                            "has_pending_permission": pending_permission is not None,
+                    await send_event(
+                        {
+                            "type": "status",
+                            "data": {
+                                "running": runner is not None and runner.is_running,
+                                "state": runner.state.value if runner else "idle",
+                                "has_pending_permission": pending_permission
+                                is not None,
+                            },
                         }
-                    })
+                    )
 
                 else:
-                    await send_event({
-                        "type": "error",
-                        "content": f"Unknown command: {command}"
-                    })
+                    await send_event(
+                        {"type": "error", "content": f"Unknown command: {command}"}
+                    )
 
             except json.JSONDecodeError as e:
-                await send_event({
-                    "type": "error",
-                    "content": f"Invalid JSON: {e}"
-                })
+                await send_event({"type": "error", "content": f"Invalid JSON: {e}"})
 
     except WebSocketDisconnect:
         logger.info("Agent PTY WebSocket disconnected")
@@ -902,9 +972,8 @@ async def gemini_agent_websocket(websocket: WebSocket):
     settings = load_settings()
     cwd = str(settings.root_path)
 
-    parser = JSONStreamParser()
     runner: GeminiAgentRunner | None = None
-    
+
     async def send_event(event_data: dict):
         """Send parsed event to WebSocket"""
         try:
@@ -913,10 +982,7 @@ async def gemini_agent_websocket(websocket: WebSocket):
             logger.error(f"Error sending event: {e}")
 
     async def send_error(message: str):
-        await websocket.send_json({
-            "type": "error",
-            "content": message
-        })
+        await websocket.send_json({"type": "error", "content": message})
 
     async def send_done():
         await websocket.send_json({"type": "done"})
@@ -942,10 +1008,7 @@ async def gemini_agent_websocket(websocket: WebSocket):
             logger.error(f"Error sending tool approval request: {e}")
 
     try:
-        await websocket.send_json({
-            "type": "connected",
-            "cwd": cwd
-        })
+        await websocket.send_json({"type": "connected", "cwd": cwd})
 
         while True:
             try:
@@ -960,7 +1023,7 @@ async def gemini_agent_websocket(websocket: WebSocket):
                         continue
 
                     permission_mode = message.get("permission_mode", "default")
-                    
+
                     config = GeminiRunnerConfig(
                         cwd=cwd,
                         permission_mode=permission_mode,
@@ -969,20 +1032,22 @@ async def gemini_agent_websocket(websocket: WebSocket):
                     runner = GeminiAgentRunner(config)
 
                     # Run prompt in task
-                    asyncio.create_task(runner.run_prompt(
-                        prompt=prompt,
-                        on_event=send_event,
-                        on_error=send_error,
-                        on_done=send_done,
-                        on_tool_approval_request=handle_tool_approval_request,
-                    ))
+                    asyncio.create_task(
+                        runner.run_prompt(
+                            prompt=prompt,
+                            on_event=send_event,
+                            on_error=send_error,
+                            on_done=send_done,
+                            on_tool_approval_request=handle_tool_approval_request,
+                        )
+                    )
 
                 elif command == "tool_approval_response":
                     if runner:
                         request_id = message.get("request_id", "")
                         approved = message.get("approved", False)
                         feedback = message.get("feedback")
-                        
+
                         runner.respond_to_tool_approval(request_id, approved, feedback)
 
                 elif command == "cancel":

@@ -261,7 +261,9 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
     component_counts: Dict[str, int] = {}
     error_message: Optional[str] = None
 
-    async def run_command(command: Sequence[str], *, cwd: Optional[Path] = None) -> Dict[str, object]:
+    async def run_command(
+        command: Sequence[str], *, cwd: Optional[Path] = None
+    ) -> Dict[str, object]:
         process = await asyncio.create_subprocess_exec(
             *command,
             stdout=PIPE,
@@ -269,7 +271,7 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
             cwd=str(cwd) if cwd else None,
         )
         stdout_bytes, stderr_bytes = await process.communicate()
-        entry = {
+        entry: Dict[str, object] = {
             "command": list(command),
             "stdout": stdout_bytes.decode("utf-8", errors="replace"),
             "stderr": stderr_bytes.decode("utf-8", errors="replace"),
@@ -374,7 +376,8 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
         rev_entry = await run_command(
             ["git", "-C", str(clone_dir), "rev-parse", "HEAD"]
         )
-        source_commit = rev_entry["stdout"].strip() or None
+        stdout = rev_entry["stdout"]
+        source_commit = str(stdout).strip() if stdout else None
 
         await copy_tree("plugins/superclaude", ".claude/plugins/superclaude")
         await copy_tree(".claude/skills", ".claude/skills/superclaude")
@@ -382,7 +385,9 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
         for relative_src, relative_dest in SUPERCLAUDE_DOC_EXPORTS:
             await copy_file(relative_src, relative_dest)
 
-        plugin_commands_dir = workspace / ".claude" / "plugins" / "superclaude" / "commands"
+        plugin_commands_dir = (
+            workspace / ".claude" / "plugins" / "superclaude" / "commands"
+        )
         plugin_command_count = (
             len(list(plugin_commands_dir.glob("*.md")))
             if plugin_commands_dir.exists()
@@ -396,11 +401,7 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
         error_message = str(exc)
 
     success = error_message is None
-    timestamp = (
-        datetime.now(timezone.utc).isoformat()
-        if success
-        else None
-    )
+    timestamp = datetime.now(timezone.utc).isoformat() if success else None
 
     if not component_counts:
         component_counts = dict(SUPERCLAUDE_REFERENCE_COUNTS)

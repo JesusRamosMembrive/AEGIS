@@ -30,7 +30,9 @@ class PTYShell:
     with a shell process running in a PTY.
     """
 
-    def __init__(self, cols: int = 80, rows: int = 24, enable_agent_parsing: bool = False):
+    def __init__(
+        self, cols: int = 80, rows: int = 24, enable_agent_parsing: bool = False
+    ):
         """
         Initialize PTY shell
 
@@ -77,11 +79,13 @@ class PTYShell:
         if self.pid == 0:
             # Child process - execute shell in login + interactive mode
             # Set terminal environment
-            os.environ.update({
-                "TERM": "xterm-256color",
-                "COLORTERM": "truecolor",
-                "LANG": os.environ.get("LANG", "C.UTF-8"),
-            })
+            os.environ.update(
+                {
+                    "TERM": "xterm-256color",
+                    "COLORTERM": "truecolor",
+                    "LANG": os.environ.get("LANG", "C.UTF-8"),
+                }
+            )
             # Force login and interactive shell with -li flags
             os.execvp(shell, [shell, "-li"])
         else:
@@ -195,7 +199,9 @@ class PTYShell:
                     if readable:
                         # Double-check master_fd is still valid
                         if self.master_fd is None:
-                            logger.info("PTY master_fd closed during read, exiting thread")
+                            logger.info(
+                                "PTY master_fd closed during read, exiting thread"
+                            )
                             break
                         data = os.read(self.master_fd, 1024)
                         if not data:
@@ -236,7 +242,9 @@ class PTYShell:
             logger.info("PTY read thread exited")
 
         # Start read thread
-        self.read_thread = threading.Thread(target=read_thread, daemon=True, name="PTYReadThread")
+        self.read_thread = threading.Thread(
+            target=read_thread, daemon=True, name="PTYReadThread"
+        )
         self.read_thread.start()
         logger.info(f"Started PTY read thread: {self.read_thread.name}")
 

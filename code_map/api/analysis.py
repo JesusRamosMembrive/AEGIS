@@ -115,6 +115,7 @@ def _attach_missing_change_nodes(
 
             node = child
 
+
 def _change_payload_for_path(
     history: Optional[GitHistory],
     relative_path: str,

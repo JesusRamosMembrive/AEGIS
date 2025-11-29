@@ -41,13 +41,16 @@ def find_gemini_cli() -> str:
             return str(path)
 
     # Fallback
-    logger.warning("Gemini CLI not found in common locations, using 'gemini' (may fail)")
+    logger.warning(
+        "Gemini CLI not found in common locations, using 'gemini' (may fail)"
+    )
     return "gemini"
 
 
 @dataclass
 class GeminiRunnerConfig:
     """Configuration for Gemini Code runner"""
+
     cwd: str
     continue_session: bool = True
     verbose: bool = True
@@ -73,6 +76,7 @@ class GeminiAgentRunner:
         self._tool_approval_manager = None
         if config.permission_mode == "toolApproval":
             from .tool_approval import ToolApprovalManager
+
             self._tool_approval_manager = ToolApprovalManager(
                 cwd=config.cwd,
                 auto_approve_safe=config.auto_approve_safe_tools,
@@ -94,13 +98,14 @@ class GeminiAgentRunner:
         cmd = [
             gemini_bin,
             prompt,  # Gemini takes prompt as argument
-            "--output-format", "stream-json",
+            "--output-format",
+            "stream-json",
         ]
 
-        # Gemini doesn't seem to have a --continue flag in the same way, 
+        # Gemini doesn't seem to have a --continue flag in the same way,
         # but it manages sessions. We might need to pass session ID if we want to continue.
         # For now, let's rely on its default behavior or add flags if we find them.
-        # Based on help, it has --session or similar? 
+        # Based on help, it has --session or similar?
         # The help said: "index number (use --list-sessions to see available sessions)"
         # Let's assume for now we just run it.
 
@@ -115,7 +120,7 @@ class GeminiAgentRunner:
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=self.config.cwd
+                cwd=self.config.cwd,
             )
 
             logger.info(f"Gemini CLI process started: PID={self.process.pid}")
@@ -131,22 +136,32 @@ class GeminiAgentRunner:
                         if not line:
                             break
 
-                        line_str = line.decode('utf-8').strip()
+                        line_str = line.decode("utf-8").strip()
                         if not line_str:
                             continue
 
                         try:
                             event = json.loads(line_str)
-                            
+
                             # Map Gemini events to Claude format for frontend compatibility
                             mapped_event = self._map_event(event)
-                            
+
                             if mapped_event:
                                 # Check for tool_use in toolApproval mode
-                                if self._is_tool_use_event(mapped_event) and self._tool_approval_manager and on_tool_approval_request:
-                                    logger.info(f"[toolApproval] Intercepting tool_use for approval")
+                                if (
+                                    self._is_tool_use_event(mapped_event)
+                                    and self._tool_approval_manager
+                                    and on_tool_approval_request
+                                ):
+                                    logger.info(
+                                        "[toolApproval] Intercepting tool_use for approval"
+                                    )
                                     approval_task = asyncio.create_task(
-                                        self._handle_tool_approval(mapped_event, on_event, on_tool_approval_request)
+                                        self._handle_tool_approval(
+                                            mapped_event,
+                                            on_event,
+                                            on_tool_approval_request,
+                                        )
                                     )
                                     self._pending_approval_tasks.append(approval_task)
                                 else:
@@ -176,8 +191,8 @@ class GeminiAgentRunner:
                         line = await self.process.stderr.readline()
                         if not line:
                             break
-                        
-                        line_str = line.decode('utf-8').strip()
+
+                        line_str = line.decode("utf-8").strip()
                         if line_str and on_error:
                             result = on_error(line_str)
                             if asyncio.iscoroutine(result):
@@ -189,11 +204,13 @@ class GeminiAgentRunner:
             stderr_task = asyncio.create_task(read_stderr())
 
             await self.process.wait()
-            
+
             await asyncio.gather(stdout_task, stderr_task, return_exceptions=True)
-            
+
             if self._pending_approval_tasks:
-                await asyncio.gather(*self._pending_approval_tasks, return_exceptions=True)
+                await asyncio.gather(
+                    *self._pending_approval_tasks, return_exceptions=True
+                )
                 self._pending_approval_tasks.clear()
 
             if on_done:
@@ -217,17 +234,13 @@ class GeminiAgentRunner:
     def _map_event(self, event: dict) -> Optional[dict]:
         """Map Gemini event to Claude event format"""
         event_type = event.get("type")
-        
+
         if event_type == "message":
             role = event.get("role")
             content = event.get("content")
             if role == "assistant":
-                return {
-                    "type": "assistant",
-                    "subtype": "text",
-                    "content": content
-                }
-        
+                return {"type": "assistant", "subtype": "text", "content": content}
+
         elif event_type == "tool_use":
             return {
                 "type": "assistant",
@@ -235,10 +248,10 @@ class GeminiAgentRunner:
                 "content": {
                     "name": event.get("tool_name"),
                     "input": event.get("parameters"),
-                    "id": event.get("tool_id")
-                }
+                    "id": event.get("tool_id"),
+                },
             }
-            
+
         elif event_type == "tool_result":
             # We might not need to map this if we are intercepting tool use
             # But if Gemini executes it, we should show it
@@ -247,11 +260,12 @@ class GeminiAgentRunner:
                 "subtype": "tool_result",
                 "content": {
                     "tool_use_id": event.get("tool_id"),
-                    "content": event.get("output") or event.get("error", {}).get("message", ""),
-                    "is_error": event.get("status") == "error"
-                }
+                    "content": event.get("output")
+                    or event.get("error", {}).get("message", ""),
+                    "is_error": event.get("status") == "error",
+                },
             }
-            
+
         return None
 
     def _is_tool_use_event(self, event: dict) -> bool:
@@ -270,13 +284,13 @@ class GeminiAgentRunner:
     async def _handle_tool_approval(self, event, on_event, on_tool_approval_request):
         # Similar logic to ClaudeAgentRunner._handle_tool_approval
         # But adapted for Gemini
-        
+
         tool_info = self._extract_tool_use_from_event(event)
         if not tool_info:
             return
 
         tool_name, tool_input, tool_id = tool_info
-        
+
         # Forward event to frontend
         result = on_event(event)
         if asyncio.iscoroutine(result):
@@ -304,7 +318,7 @@ class GeminiAgentRunner:
             # Since I can't easily import private methods, I'll duplicate the logic for now
             # or refactor later.
             tool_result = await self._execute_tool(tool_name, tool_input)
-            
+
             result_event = {
                 "type": "user",
                 "subtype": "tool_result",
@@ -318,14 +332,14 @@ class GeminiAgentRunner:
             result = on_event(result_event)
             if asyncio.iscoroutine(result):
                 await result
-                
-            # Note: We are not sending the result back to Gemini process because 
+
+            # Note: We are not sending the result back to Gemini process because
             # we are running it in a one-off command mode (prompt as arg).
             # So the process likely exits after tool_use or waits?
             # If it waits, we can't easily write to stdin if we didn't set it up for chat loop.
             # The current implementation passes prompt as arg, so it might be a single turn.
             # We'll see.
-            
+
         else:
             # Rejected
             result_event = {
@@ -346,11 +360,14 @@ class GeminiAgentRunner:
         # Simplified version of _execute_tool
         # In a real implementation, we should share this logic
         if tool_name == "run_shell_command":
-             # Gemini uses run_shell_command, Claude uses Bash
-             return await self._execute_bash(tool_input)
-        
+            # Gemini uses run_shell_command, Claude uses Bash
+            return await self._execute_bash(tool_input)
+
         # Add other mappings as needed
-        return {"content": f"Tool {tool_name} not implemented in runner", "is_error": True}
+        return {
+            "content": f"Tool {tool_name} not implemented in runner",
+            "is_error": True,
+        }
 
     async def _execute_bash(self, tool_input: dict) -> dict:
         command = tool_input.get("command", "")
@@ -364,7 +381,7 @@ class GeminiAgentRunner:
             stdout, stderr = await proc.communicate()
             return {
                 "content": stdout.decode("utf-8") + stderr.decode("utf-8"),
-                "is_error": proc.returncode != 0
+                "is_error": proc.returncode != 0,
             }
         except Exception as e:
             return {"content": str(e), "is_error": True}
@@ -374,10 +391,14 @@ class GeminiAgentRunner:
             self.process.terminate()
         self._cancelled = True
 
-    def respond_to_tool_approval(self, request_id: str, approved: bool, feedback: Optional[str] = None) -> bool:
+    def respond_to_tool_approval(
+        self, request_id: str, approved: bool, feedback: Optional[str] = None
+    ) -> bool:
         """
         Respond to a pending tool approval request.
         """
         if self._tool_approval_manager:
-            return self._tool_approval_manager.resolve_request(request_id, approved, feedback)
+            return self._tool_approval_manager.respond_to_approval(
+                request_id, approved, feedback
+            )
         return False

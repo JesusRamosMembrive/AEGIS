@@ -99,13 +99,13 @@ def create_approval_event_sender(
         tool_use_id = None
         context = None
 
-        if include_tool_use_id and hasattr(request, 'tool_use_id'):
+        if include_tool_use_id and hasattr(request, "tool_use_id"):
             tool_use_id = request.tool_use_id
         elif include_tool_use_id:
             # Use request_id as fallback for MCP proxy
             tool_use_id = request.request_id
 
-        if include_context and hasattr(request, 'context'):
+        if include_context and hasattr(request, "context"):
             context = request.context
 
         await send_tool_approval_event(

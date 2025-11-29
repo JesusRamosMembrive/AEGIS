@@ -19,8 +19,7 @@ from ..linters import (
     record_linters_report,
     record_notification,
     run_linters_pipeline,
-    LinterRunOptions,
-    LINTER_TIMEOUT_FAST,  # re-exported en state
+    LinterRunOptions,  # re-exported en state
 )
 
 logger = logging.getLogger(__name__)

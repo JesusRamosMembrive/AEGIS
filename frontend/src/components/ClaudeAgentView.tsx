@@ -13,7 +13,6 @@ import { resolveBackendBaseUrl } from "../api/client";
 import {
   ClaudeMessage,
   PermissionDenial,
-  getToolIcon,
   formatToolInput,
 } from "../types/claude-events";
 import { MarkdownRenderer } from "./MarkdownRenderer";
@@ -22,6 +21,55 @@ import { FileDiffModal } from "./FileDiffModal";
 import { ToolPermissionModal } from "./ToolPermissionModal";
 import { ConnectedToolApprovalModal } from "./ToolApprovalModal";
 import "./ToolApprovalModal.css";
+import {
+  MessageCircleIcon,
+  BrainIcon,
+  LockIcon,
+  ZapIcon,
+  ClipboardListIcon,
+  AlertTriangleIcon,
+  RefreshIcon,
+  CircleIcon,
+  InfoIcon,
+  XCircleIcon,
+  CheckCircleIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+  getToolIconComponent,
+} from "./icons/AgentIcons";
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/**
+ * Extract clean content from tool result.
+ * Handles JSON responses like {"result":"[ERROR] ..."} and extracts just the value.
+ */
+function extractResultContent(content: string): string {
+  const trimmed = content.trim();
+
+  // Try to parse as JSON and extract "result" field
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (typeof parsed.result === "string") {
+        return parsed.result;
+      }
+      // If it has other fields, show them more cleanly
+      if (typeof parsed === "object" && parsed !== null) {
+        const keys = Object.keys(parsed);
+        if (keys.length === 1) {
+          return String(parsed[keys[0]]);
+        }
+      }
+    } catch {
+      // Not valid JSON, return as-is
+    }
+  }
+
+  return trimmed;
+}
 
 // ============================================================================
 // Main Component
@@ -276,7 +324,7 @@ export function ClaudeAgentView() {
       {/* Connection Error Banner */}
       {connectionError && (
         <div className="connection-error-banner" role="alert">
-          <span className="error-icon">⚠</span>
+          <span className="error-icon"><AlertTriangleIcon size={16} /></span>
           <span className="error-message">{connectionError}</span>
           {!isReconnecting && (
             <button onClick={handleReconnect} className="retry-btn">
@@ -318,7 +366,9 @@ export function ClaudeAgentView() {
                 aria-label="Claude is processing your request"
               >
                 <div className="thinking-content">
-                  <span className="thinking-icon" aria-hidden="true">🤔</span>
+                  <span className="thinking-icon" aria-hidden="true">
+                    <BrainIcon size={20} />
+                  </span>
                   <span className="thinking-text">Claude is thinking...</span>
                   {activeToolCalls.size > 0 && (
                     <span className="active-tools" aria-label={`Running ${activeToolCalls.size} tools`}>
@@ -338,7 +388,7 @@ export function ClaudeAgentView() {
             {planDescriptionOnly && !running && (
               <div className="execute-plan-banner" role="status">
                 <div className="plan-banner-content">
-                  <span className="plan-banner-icon" aria-hidden="true">📋</span>
+                  <span className="plan-banner-icon" aria-hidden="true"><ClipboardListIcon size={20} /></span>
                   <span className="plan-banner-text">
                     Claude described changes above. Click "Execute Plan" to apply them automatically.
                   </span>
@@ -348,7 +398,7 @@ export function ClaudeAgentView() {
                   onClick={executePlan}
                   aria-label="Execute the described plan automatically"
                 >
-                  ⚡ Execute Plan
+                  <ZapIcon size={16} /> Execute Plan
                 </button>
               </div>
             )}
@@ -528,7 +578,7 @@ function AgentHeader({
               : "Continue mode: OFF - Will start fresh session"
           }
         >
-          <span className="toggle-icon">{continueSession ? "⟳" : "○"}</span>
+          <span className="toggle-icon">{continueSession ? <RefreshIcon size={12} /> : <CircleIcon size={12} />}</span>
           <span className="toggle-label">
             {continueSession ? "Continue" : "Fresh"}
           </span>
@@ -550,7 +600,7 @@ function AgentHeader({
             className="token-usage"
             title={`Input: ${totalInputTokens.toLocaleString()} | Output: ${totalOutputTokens.toLocaleString()} | Est. cost: $${estimatedCost}`}
           >
-            <span className="token-icon">⚡</span>
+            <span className="token-icon"><ZapIcon size={12} /></span>
             <span className="token-count">{totalTokens.toLocaleString()}</span>
             <span className="token-cost">${estimatedCost}</span>
           </span>
@@ -579,7 +629,9 @@ function AgentHeader({
 function EmptyState() {
   return (
     <div className="claude-empty">
-      <div className="empty-icon">💬</div>
+      <div className="empty-icon">
+        <MessageCircleIcon size={48} />
+      </div>
       <h3>Start a conversation</h3>
       <p>Type a message below to start interacting with Claude Code.</p>
       <p className="empty-hint">
@@ -595,19 +647,45 @@ interface MessageItemProps {
 
 function MessageItem({ message }: MessageItemProps) {
   const [expanded, setExpanded] = useState(false);
+  const isUser = message.role === "user";
 
-  switch (message.type) {
-    case "text":
-      // Ensure content is never undefined/null to avoid rendering "undefined"
-      const textContent = message.content != null ? String(message.content) : "";
-      return (
-        <div className="message message-text" role="listitem" aria-label="Claude response">
-          <div className="message-content">
-            <MarkdownRenderer content={textContent} />
-          </div>
-          <div className="message-meta" aria-label={`Sent at ${message.timestamp.toLocaleTimeString()}`}>
+  // User messages: right-aligned with card
+  if (isUser && message.type === "text") {
+    const textContent = message.content != null ? String(message.content) : "";
+    return (
+      <div className="message-row user" role="listitem" aria-label="Your message">
+        <div className="user-message-card">
+          <div className="user-message-content">{textContent}</div>
+          <div className="message-meta">
             {message.timestamp.toLocaleTimeString()}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Assistant messages: left-aligned without card
+  switch (message.type) {
+    case "text":
+      const textContent = message.content != null ? String(message.content) : "";
+      const isShortText = textContent.length < 100 && !textContent.includes('\n');
+      return (
+        <div className="message-row assistant" role="listitem" aria-label="Claude response">
+          {isShortText ? (
+            <div className="assistant-message assistant-text-inline">
+              <span className="text-icon" aria-hidden="true">
+                <MessageCircleIcon size={14} />
+              </span>
+              <span className="text-content">{textContent}</span>
+            </div>
+          ) : (
+            <div className="assistant-message">
+              <MarkdownRenderer content={textContent} />
+              <div className="message-meta">
+                {message.timestamp.toLocaleTimeString()}
+              </div>
+            </div>
+          )}
         </div>
       );
 
@@ -617,62 +695,75 @@ function MessageItem({ message }: MessageItemProps) {
         name: string;
         input: Record<string, unknown>;
       };
+      const ToolIcon = getToolIconComponent(toolContent.name);
       return (
-        <div className="message message-tool-use" role="listitem" aria-label={`Tool call: ${toolContent.name}`}>
-          <button
-            className="tool-header"
-            onClick={() => setExpanded(!expanded)}
-            aria-expanded={expanded}
-            aria-controls={`tool-details-${toolContent.id}`}
-          >
-            <span className="tool-icon" aria-hidden="true">{getToolIcon(toolContent.name)}</span>
-            <span className="tool-name">{toolContent.name}</span>
-            <span className="tool-expand" aria-hidden="true">{expanded ? "▼" : "▶"}</span>
-          </button>
-          {expanded && (
-            <div id={`tool-details-${toolContent.id}`} className="tool-details">
-              <pre className="tool-input" aria-label="Tool input parameters">
-                {formatToolInput(toolContent.input, 500)}
-              </pre>
+        <div className="message-row assistant" role="listitem" aria-label={`Tool call: ${toolContent.name}`}>
+          <div className="assistant-message message-tool-use">
+            <button
+              className="tool-header"
+              onClick={() => setExpanded(!expanded)}
+              aria-expanded={expanded}
+              aria-controls={`tool-details-${toolContent.id}`}
+            >
+              <span className="tool-icon" aria-hidden="true">
+                <ToolIcon size={16} />
+              </span>
+              <span className="tool-name">{toolContent.name}</span>
+              <span className="tool-expand" aria-hidden="true">
+                {expanded ? <ChevronDownIcon size={12} /> : <ChevronRightIcon size={12} />}
+              </span>
+            </button>
+            {expanded && (
+              <div id={`tool-details-${toolContent.id}`} className="tool-details">
+                <pre className="tool-input" aria-label="Tool input parameters">
+                  {formatToolInput(toolContent.input, 500)}
+                </pre>
+              </div>
+            )}
+            <div className="message-meta">
+              {message.timestamp.toLocaleTimeString()}
             </div>
-          )}
-          <div className="message-meta" aria-label={`Sent at ${message.timestamp.toLocaleTimeString()}`}>
-            {message.timestamp.toLocaleTimeString()}
           </div>
         </div>
       );
 
     case "tool_result":
-      const resultContent = message.content != null ? String(message.content) : "";
+      const rawResultContent = message.content != null ? String(message.content) : "";
+      const resultContent = extractResultContent(rawResultContent);
       const isLong = resultContent.length > 300;
+      const isMultiline = resultContent.includes('\n');
+      const isInline = !isLong && !isMultiline;
       return (
-        <div
-          className={`message message-tool-result ${message.isError ? "error" : ""}`}
-          role="listitem"
-          aria-label={message.isError ? "Tool error result" : "Tool result"}
-        >
-          <div className="result-header">
-            <span className="result-icon" aria-hidden="true">{message.isError ? "!" : ">"}</span>
-            <span className="result-label">{message.isError ? "Error" : "Result"}</span>
-            {isLong && (
-              <button
-                className="result-toggle"
-                onClick={() => setExpanded(!expanded)}
-                aria-expanded={expanded}
-                aria-label={expanded ? "Collapse result" : "Expand result"}
+        <div className="message-row assistant" role="listitem" aria-label={message.isError ? "Tool error result" : "Tool result"}>
+          <div className={`assistant-message message-tool-result ${message.isError ? "error" : ""} ${isInline ? "inline" : ""}`}>
+            <div className="result-header">
+              <span className="result-icon" aria-hidden="true">
+                {message.isError ? <XCircleIcon size={14} /> : <CheckCircleIcon size={14} />}
+              </span>
+              <span className="result-label">{message.isError ? "Error" : "Result"}</span>
+              {isInline ? (
+                <span className="result-inline-content">{resultContent}</span>
+              ) : (
+                isLong && (
+                  <button
+                    className="result-toggle"
+                    onClick={() => setExpanded(!expanded)}
+                    aria-expanded={expanded}
+                    aria-label={expanded ? "Collapse result" : "Expand result"}
+                  >
+                    {expanded ? "Collapse" : "Expand"}
+                  </button>
+                )
+              )}
+            </div>
+            {!isInline && (
+              <pre
+                className={`result-content ${!expanded && isLong ? "truncated" : ""}`}
+                aria-label="Tool output"
               >
-                {expanded ? "Collapse" : "Expand"}
-              </button>
+                {expanded || !isLong ? resultContent : resultContent.substring(0, 300) + "..."}
+              </pre>
             )}
-          </div>
-          <pre
-            className={`result-content ${!expanded && isLong ? "truncated" : ""}`}
-            aria-label="Tool output"
-          >
-            {expanded || !isLong ? resultContent : resultContent.substring(0, 300) + "..."}
-          </pre>
-          <div className="message-meta" aria-label={`Sent at ${message.timestamp.toLocaleTimeString()}`}>
-            {message.timestamp.toLocaleTimeString()}
           </div>
         </div>
       );
@@ -680,18 +771,26 @@ function MessageItem({ message }: MessageItemProps) {
     case "error":
       const errorMsgContent = message.content != null ? String(message.content) : "Unknown error";
       return (
-        <div className="message message-error" role="listitem" aria-label="Error message">
-          <span className="error-icon" aria-hidden="true">!</span>
-          <span className="error-content">{errorMsgContent}</span>
+        <div className="message-row assistant" role="listitem" aria-label="Error message">
+          <div className="assistant-message message-error">
+            <span className="error-icon" aria-hidden="true">
+              <XCircleIcon size={18} />
+            </span>
+            <span className="error-content">{errorMsgContent}</span>
+          </div>
         </div>
       );
 
     case "system":
       const systemMsgContent = message.content != null ? String(message.content) : "";
       return (
-        <div className="message message-system" role="listitem" aria-label="System message">
-          <span className="system-icon" aria-hidden="true">i</span>
-          <span className="system-content">{systemMsgContent}</span>
+        <div className="message-row assistant" role="listitem" aria-label="System message">
+          <div className="assistant-message message-system">
+            <span className="system-icon" aria-hidden="true">
+              <InfoIcon size={16} />
+            </span>
+            <span className="system-content">{systemMsgContent}</span>
+          </div>
         </div>
       );
 
@@ -723,7 +822,7 @@ function PermissionDenialsBanner({
   return (
     <div className="permission-denials-banner" role="alert">
       <div className="denials-header">
-        <span className="denials-icon" aria-hidden="true">🔒</span>
+        <span className="denials-icon" aria-hidden="true"><LockIcon size={18} /></span>
         <span className="denials-title">
           {uniqueTools.length} tool{uniqueTools.length > 1 ? "s" : ""} blocked due to missing permissions
         </span>
@@ -740,10 +839,11 @@ function PermissionDenialsBanner({
         {uniqueTools.map((toolName) => {
           const denial = denials.find((d) => d.tool_name === toolName);
           const isAdding = addingPermissions.has(toolName);
+          const ToolIconComponent = getToolIconComponent(toolName);
           return (
             <div key={toolName} className="denial-item">
               <span className="denial-tool-icon" aria-hidden="true">
-                {getToolIcon(toolName)}
+                <ToolIconComponent size={16} />
               </span>
               <span className="denial-tool-name">{toolName}</span>
               {denial?.tool_input && (
@@ -843,7 +943,8 @@ const styles = `
 .claude-agent-view {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(80vh - 55px); /* Account for parent layout elements */
+  max-height: calc(100vh - 90px);
   background: var(--agent-bg-primary);
   color: var(--agent-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -963,7 +1064,8 @@ const styles = `
 }
 
 .toggle-icon {
-  font-size: 12px;
+  display: flex;
+  align-items: center;
 }
 
 .toggle-label {
@@ -1011,6 +1113,8 @@ const styles = `
 }
 
 .token-icon {
+  display: flex;
+  align-items: center;
   color: var(--agent-accent-yellow);
 }
 
@@ -1029,20 +1133,21 @@ const styles = `
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 6px 12px;
   background: var(--agent-bg-secondary);
   border-bottom: 1px solid var(--agent-border-primary);
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .claude-header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 .claude-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--agent-text-primary);
 }
@@ -1050,13 +1155,13 @@ const styles = `
 .claude-status {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 10px;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
 }
 
@@ -1079,36 +1184,36 @@ const styles = `
 }
 
 .claude-model {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 9px;
+  padding: 1px 6px;
   background: var(--agent-bg-tertiary);
-  border-radius: 4px;
+  border-radius: 3px;
   color: var(--agent-text-secondary);
 }
 
 .claude-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .claude-cwd {
-  font-size: 11px;
+  font-size: 9px;
   color: var(--agent-text-muted);
   font-family: monospace;
 }
 
 .claude-header-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .header-btn {
-  padding: 4px 12px;
-  font-size: 12px;
+  padding: 2px 8px;
+  font-size: 10px;
   background: var(--agent-bg-tertiary);
   border: 1px solid var(--agent-border-secondary);
-  border-radius: 4px;
+  border-radius: 3px;
   color: var(--agent-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
@@ -1135,17 +1240,37 @@ const styles = `
   color: white;
 }
 
-/* Messages Container */
+/* Messages Container - Fixed height scroll */
 .claude-messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 8px 16px;
+  min-height: 0; /* Important for flex scroll */
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for messages */
+.claude-messages-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.claude-messages-container::-webkit-scrollbar-track {
+  background: var(--agent-bg-primary);
+}
+
+.claude-messages-container::-webkit-scrollbar-thumb {
+  background: var(--agent-border-secondary);
+  border-radius: 4px;
+}
+
+.claude-messages-container::-webkit-scrollbar-thumb:hover {
+  background: var(--agent-text-muted);
 }
 
 .claude-messages {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 /* Empty State */
@@ -1179,19 +1304,94 @@ const styles = `
   color: var(--agent-text-disabled);
 }
 
-/* Messages */
+/* Messages - Chat Layout */
+.message-row {
+  display: flex;
+  width: 100%;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.message-row.assistant {
+  justify-content: flex-start;
+}
+
+/* User Messages - Right aligned with card */
+.user-message-card {
+  max-width: 75%;
+  background: var(--agent-accent-blue);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 12px 12px 2px 12px;
+  font-size: 15px;
+  line-height: 1.4;
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.15);
+}
+
+.user-message-card .message-meta {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: right;
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.user-message-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Assistant Messages - Left aligned without card */
+.assistant-message {
+  max-width: 90%;
+  padding: 4px 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.assistant-message.assistant-text-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.assistant-text-inline .text-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--agent-text-muted);
+  margin-top: 1px;
+}
+
+.assistant-text-inline .text-content {
+  font-size: 11px;
+  color: var(--agent-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.assistant-message .message-meta {
+  color: var(--agent-text-disabled);
+  margin-top: 2px;
+  font-size: 9px;
+}
+
+/* Legacy message class for compatibility */
 .message {
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
   background: var(--agent-bg-secondary);
   border: 1px solid var(--agent-border-primary);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .message-meta {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--agent-text-disabled);
-  margin-top: 8px;
+  margin-top: 2px;
   text-align: right;
 }
 
@@ -1200,23 +1400,25 @@ const styles = `
   white-space: pre-wrap;
   word-break: break-word;
   font-family: inherit;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-/* Tool Use */
-.message-tool-use {
+/* Tool Use - inside assistant-message */
+.assistant-message.message-tool-use {
   background: var(--agent-bg-accent);
-  border-color: var(--agent-accent-blue);
+  border: 1px solid var(--agent-accent-blue);
+  border-radius: 6px;
+  padding: 6px 8px;
 }
 
 .tool-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
+  padding: 2px;
+  border-radius: 3px;
   background: transparent;
   border: none;
   width: 100%;
@@ -1231,7 +1433,7 @@ const styles = `
 
 .tool-header:focus {
   outline: 2px solid var(--agent-accent-blue);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .tool-header:focus:not(:focus-visible) {
@@ -1239,83 +1441,100 @@ const styles = `
 }
 
 .tool-icon {
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .tool-name {
   font-weight: 500;
+  font-size: 15px;
   color: var(--agent-accent-blue);
   font-family: monospace;
 }
 
 .tool-expand {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 9px;
   color: var(--agent-text-muted);
 }
 
 .tool-details {
-  margin-top: 8px;
-  padding: 8px;
+  margin-top: 4px;
+  padding: 4px 6px;
   background: var(--agent-bg-primary);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .tool-input {
   margin: 0;
-  font-size: 12px;
+  font-size: 10px;
   font-family: 'JetBrains Mono', monospace;
   color: var(--agent-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-/* Tool Result */
-.message-tool-result {
+/* Tool Result - inside assistant-message */
+.assistant-message.message-tool-result {
   background: var(--agent-bg-accent);
-  border-color: var(--agent-accent-green);
+  border: 1px solid var(--agent-accent-green);
+  border-radius: 6px;
+  padding: 6px 8px;
 }
 
-.message-tool-result.error {
+.assistant-message.message-tool-result.inline {
+  padding: 4px 8px;
+}
+
+.assistant-message.message-tool-result.error {
   border-color: var(--agent-accent-red);
 }
 
 .result-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.assistant-message.message-tool-result.inline .result-header {
+  margin-bottom: 0;
 }
 
 .result-icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--agent-accent-green);
-  color: white;
-  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  color: var(--agent-accent-green);
 }
 
-.message-tool-result.error .result-icon {
-  background: var(--agent-accent-red);
+.assistant-message.message-tool-result.error .result-icon {
+  color: var(--agent-accent-red);
 }
 
 .result-label {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--agent-text-muted);
 }
 
+.result-inline-content {
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--agent-text-secondary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .result-toggle {
   margin-left: auto;
-  padding: 2px 8px;
-  font-size: 10px;
+  padding: 1px 6px;
+  font-size: 9px;
   background: transparent;
   border: 1px solid var(--agent-border-secondary);
-  border-radius: 4px;
+  border-radius: 3px;
   color: var(--agent-text-muted);
   cursor: pointer;
 }
@@ -1326,63 +1545,36 @@ const styles = `
 
 .result-content {
   margin: 0;
-  font-size: 12px;
+  font-size: 15px;
   font-family: 'JetBrains Mono', monospace;
   color: var(--agent-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 400px;
+  max-height: 300px;
   overflow-y: auto;
 }
 
 .result-content.truncated {
-  max-height: 100px;
+  max-height: 80px;
   overflow: hidden;
 }
 
-/* Error Message */
-.message-error {
+/* Error Message - inside assistant-message */
+.assistant-message.message-error {
   background: var(--agent-error-bg);
-  border-color: var(--agent-accent-red);
+  border: 1px solid var(--agent-accent-red);
+  border-radius: 6px;
+  padding: 6px 8px;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
 }
 
 .message-error .error-icon {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--agent-accent-red);
-  color: white;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.message-error .error-content {
-  color: var(--agent-error-text);
-  font-size: 13px;
-}
-
-/* System Message */
-.message-system {
-  background: var(--agent-info-bg);
-  border-color: var(--agent-accent-blue);
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--agent-accent-blue);
-}
-
-.system-icon {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--agent-accent-blue);
   color: white;
   font-size: 10px;
   display: flex;
@@ -1391,25 +1583,54 @@ const styles = `
   flex-shrink: 0;
 }
 
+.message-error .error-content {
+  color: var(--agent-error-text);
+  font-size: 11px;
+}
+
+/* System Message - inside assistant-message */
+.assistant-message.message-system {
+  background: var(--agent-info-bg);
+  border: 1px solid var(--agent-accent-blue);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--agent-accent-blue);
+}
+
+.system-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--agent-accent-blue);
+}
+
 /* Thinking */
 .claude-thinking {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 4px;
+  padding: 8px;
   background: var(--agent-bg-tertiary);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--agent-text-secondary);
 }
 
 .thinking-content {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font-size: 11px;
 }
 
 .thinking-icon {
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  color: var(--agent-accent-purple);
   animation: bounce 1s infinite;
 }
 
@@ -1492,7 +1713,9 @@ const styles = `
 }
 
 .plan-banner-icon {
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  color: var(--agent-accent-blue);
 }
 
 .plan-banner-text {
@@ -1501,6 +1724,9 @@ const styles = `
 }
 
 .execute-plan-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 600;
@@ -1549,25 +1775,26 @@ const styles = `
 
 /* Input Area */
 .claude-input-container {
-  padding: 16px;
+  padding: 8px 12px;
   background: var(--agent-bg-secondary);
   border-top: 1px solid var(--agent-border-primary);
+  flex-shrink: 0; /* Prevent input area from shrinking */
 }
 
 .claude-input-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .claude-input {
   width: 100%;
-  padding: 12px;
+  padding: 8px 10px;
   background: var(--agent-bg-primary);
   border: 1px solid var(--agent-border-secondary);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--agent-text-primary);
-  font-size: 14px;
+  font-size: 12px;
   font-family: inherit;
   resize: none;
   outline: none;
@@ -1590,16 +1817,16 @@ const styles = `
 .claude-input-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
 .claude-send-btn {
-  padding: 8px 24px;
+  padding: 5px 16px;
   background: var(--agent-accent-blue);
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   color: white;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
@@ -1615,12 +1842,12 @@ const styles = `
 }
 
 .claude-cancel-btn {
-  padding: 8px 24px;
+  padding: 5px 16px;
   background: var(--agent-accent-red);
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   color: white;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
@@ -1669,17 +1896,25 @@ const styles = `
     padding: 12px;
   }
 
+  .user-message-card {
+    max-width: 85%;
+  }
+
+  .assistant-message {
+    max-width: 95%;
+  }
+
   .message {
-    padding: 10px;
+    padding: 8px;
   }
 
   .claude-input-container {
-    padding: 12px;
+    padding: 6px 10px;
   }
 
   .tool-input,
   .result-content {
-    font-size: 11px;
+    font-size: 10px;
   }
 }
 
@@ -1775,12 +2010,12 @@ const styles = `
   }
 
   .claude-input-container {
-    padding: 8px;
+    padding: 6px 8px;
   }
 
   .claude-input {
-    padding: 10px;
-    font-size: 14px;
+    padding: 6px 8px;
+    font-size: 12px;
     rows: 2;
   }
 
@@ -1872,7 +2107,9 @@ const styles = `
 }
 
 .denials-icon {
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  color: var(--agent-accent-yellow);
 }
 
 .denials-title {
@@ -1915,7 +2152,9 @@ const styles = `
 }
 
 .denial-tool-icon {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  color: var(--agent-text-secondary);
 }
 
 .denial-tool-name {
