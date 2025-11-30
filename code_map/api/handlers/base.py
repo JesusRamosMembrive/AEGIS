@@ -38,6 +38,7 @@ class HandlerConfig:
 
     cwd: str
     websocket: WebSocket
+    model: str = "claude-sonnet-4-20250514"  # Default Claude model
     continue_session: bool = True
     verbose: bool = True
     auto_approve_safe: bool = False

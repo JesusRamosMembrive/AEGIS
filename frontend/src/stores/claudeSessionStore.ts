@@ -1,12 +1,12 @@
 /**
  * Claude Session Store
  *
- * Manages Claude Code JSON streaming session state using Zustand.
+ * Manages AI Agent (Claude, Codex, Gemini) JSON streaming session state using Zustand.
  * Handles WebSocket connection, message processing, and UI state.
  */
 
 import { create } from "zustand";
-import { devtools, subscribeWithSelector } from "zustand/middleware";
+import { devtools, subscribeWithSelector, persist } from "zustand/middleware";
 import { createLogger } from "../utils/logger";
 import {
   ClaudeEvent,
@@ -34,6 +34,94 @@ import {
 
 // Create namespaced logger
 const log = createLogger("ClaudeSession");
+
+// ============================================================================
+// Agent Types
+// ============================================================================
+
+export type AgentType = "claude" | "codex" | "gemini";
+
+export const AGENT_TYPES: AgentType[] = ["claude", "codex", "gemini"];
+
+export const AGENT_TYPE_LABELS: Record<AgentType, string> = {
+  claude: "Claude Code",
+  codex: "OpenAI Codex",
+  gemini: "Google Gemini",
+};
+
+export const AGENT_TYPE_DESCRIPTIONS: Record<AgentType, string> = {
+  claude: "Anthropic's Claude Code CLI - Advanced coding assistant",
+  codex: "OpenAI's Codex CLI - Powered by GPT models",
+  gemini: "Google's Gemini CLI - Multimodal AI assistant",
+};
+
+// WebSocket endpoint paths for each agent
+export const AGENT_WS_ENDPOINTS: Record<AgentType, string> = {
+  claude: "/api/terminal/ws/agent",
+  codex: "/api/terminal/ws/codex-agent",
+  gemini: "/api/terminal/ws/gemini-agent",
+};
+
+// Available models per agent
+export const AGENT_MODELS: Record<AgentType, string[]> = {
+  claude: ["claude-sonnet-4-20250514", "claude-opus-4-20250514", "claude-3-5-haiku-20241022"],
+  codex: ["gpt-5.1-codex-max", "gpt-5.1-codex", "gpt-5.1-codex-mini", "gpt-5.1"],
+  gemini: ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"],
+};
+
+// Default model per agent
+export const AGENT_DEFAULT_MODELS: Record<AgentType, string> = {
+  claude: "claude-sonnet-4-20250514",
+  codex: "gpt-5.1-codex-max",
+  gemini: "gemini-2.5-flash",
+};
+
+// ============================================================================
+// Slash Commands
+// ============================================================================
+
+export interface SlashCommand {
+  command: string;
+  label: string;
+  description: string;
+  hasArgs?: boolean;
+  argPlaceholder?: string;
+}
+
+// Claude Code slash commands
+export const CLAUDE_SLASH_COMMANDS: SlashCommand[] = [
+  { command: "/clear", label: "Clear", description: "Wipe conversation history and start fresh" },
+  { command: "/compact", label: "Compact", description: "Compress context to save tokens", hasArgs: true, argPlaceholder: "[instructions]" },
+  { command: "/context", label: "Context", description: "View current context usage" },
+  { command: "/cost", label: "Cost", description: "Show token usage and estimated cost" },
+  { command: "/help", label: "Help", description: "Show available commands and shortcuts" },
+  { command: "/memory", label: "Memory", description: "Edit CLAUDE.md project memory file" },
+  { command: "/permissions", label: "Permissions", description: "Manage tool permissions" },
+  { command: "/review", label: "Review", description: "Request a code review" },
+  { command: "/status", label: "Status", description: "View session status and info" },
+];
+
+// Codex CLI slash commands (based on codex CLI help)
+export const CODEX_SLASH_COMMANDS: SlashCommand[] = [
+  { command: "/clear", label: "Clear", description: "Clear conversation history" },
+  { command: "/help", label: "Help", description: "Show available commands" },
+  { command: "/model", label: "Model", description: "Change the model", hasArgs: true, argPlaceholder: "<model-name>" },
+  { command: "/status", label: "Status", description: "View session status" },
+];
+
+// Gemini CLI slash commands
+export const GEMINI_SLASH_COMMANDS: SlashCommand[] = [
+  { command: "/clear", label: "Clear", description: "Clear conversation history" },
+  { command: "/help", label: "Help", description: "Show available commands" },
+  { command: "/status", label: "Status", description: "View session status" },
+];
+
+// Get slash commands for a specific agent type
+export const AGENT_SLASH_COMMANDS: Record<AgentType, SlashCommand[]> = {
+  claude: CLAUDE_SLASH_COMMANDS,
+  codex: CODEX_SLASH_COMMANDS,
+  gemini: GEMINI_SLASH_COMMANDS,
+};
 
 // ============================================================================
 // Types
@@ -122,6 +210,9 @@ export interface PendingPTYPermission {
   timestamp: Date;
 }
 
+// Selected models per agent type
+export type SelectedModels = Record<AgentType, string>;
+
 // ============================================================================
 // Store Interface
 // ============================================================================
@@ -144,6 +235,8 @@ interface ClaudeSessionStore {
   sessionInfo: ClaudeSessionInfo;
   continueSession: boolean;
   permissionMode: PermissionMode;
+  agentType: AgentType;
+  selectedModels: SelectedModels;
 
   // Messages and tool calls
   messages: ClaudeMessage[];
@@ -199,6 +292,9 @@ interface ClaudeSessionStore {
   setError: (error: string | null) => void;
   clearConnectionError: () => void;
   setPermissionMode: (mode: PermissionMode) => void;
+  setAgentType: (type: AgentType) => void;
+  setSelectedModel: (agentType: AgentType, model: string) => void;
+  getCurrentModel: () => string;
 
   // Permission actions
   respondToPermission: (approved: boolean, always?: boolean) => void;
@@ -258,7 +354,8 @@ const RECONNECT_CONFIG = {
 
 export const useClaudeSessionStore = create<ClaudeSessionStore>()(
   devtools(
-    subscribeWithSelector((set, get) => ({
+    persist(
+      subscribeWithSelector((set, get) => ({
       // Initial state
       connected: false,
       connecting: false,
@@ -272,6 +369,8 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       sessionInfo: { ...initialSessionInfo },
       continueSession: true,
       permissionMode: "mcpProxy" as PermissionMode,
+      agentType: "claude" as AgentType,
+      selectedModels: { ...AGENT_DEFAULT_MODELS },
       messages: [],
       activeToolCalls: new Map(),
       completedToolCalls: [],
@@ -422,17 +521,21 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
       // Send a prompt
       sendPrompt: (prompt: string) => {
-        const { _ws, connected, running, continueSession, permissionMode } = get();
+        const { _ws, connected, running, continueSession, permissionMode, agentType, selectedModels } = get();
         if (!_ws || !connected || running) {
           log.warn("Cannot send prompt: not ready");
           return;
         }
 
-        const command: AgentCommand & { permission_mode?: string } = {
+        // Get the selected model for the current agent type
+        const model = selectedModels[agentType] || AGENT_DEFAULT_MODELS[agentType];
+
+        const command: AgentCommand & { permission_mode?: string; model?: string } = {
           command: "run",
           prompt,
           continue: continueSession,
           permission_mode: permissionMode,
+          model,
         };
 
         _ws.send(JSON.stringify(command));
@@ -512,6 +615,27 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       // Set permission mode
       setPermissionMode: (mode: PermissionMode) => {
         set({ permissionMode: mode });
+      },
+
+      // Set agent type
+      setAgentType: (type: AgentType) => {
+        set({ agentType: type });
+      },
+
+      // Set selected model for an agent type
+      setSelectedModel: (agentType: AgentType, model: string) => {
+        set((state) => ({
+          selectedModels: {
+            ...state.selectedModels,
+            [agentType]: model,
+          },
+        }));
+      },
+
+      // Get current selected model for active agent
+      getCurrentModel: () => {
+        const state = get();
+        return state.selectedModels[state.agentType] || AGENT_DEFAULT_MODELS[state.agentType];
       },
 
       // Respond to a permission request
@@ -1029,18 +1153,30 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
               updates.permissionDenials = [...state.permissionDenials, ...newDenials];
             }
 
-            // Handle error result
-            if (event.is_error) {
-              const message: ClaudeMessage = {
-                id: generateMessageId(),
-                type: "error",
-                role: "assistant",
-                content: event.result,
-                timestamp: new Date(),
-                isError: true,
-              };
-              updates.messages = [...state.messages, message];
-              updates.lastError = event.result;
+            // Handle result content - show both errors and successful command output
+            if (event.result && event.result.trim()) {
+              if (event.is_error) {
+                const message: ClaudeMessage = {
+                  id: generateMessageId(),
+                  type: "error",
+                  role: "assistant",
+                  content: event.result,
+                  timestamp: new Date(),
+                  isError: true,
+                };
+                updates.messages = [...state.messages, message];
+                updates.lastError = event.result;
+              } else {
+                // Show successful result (e.g., from slash commands like /memory, /status)
+                const message: ClaudeMessage = {
+                  id: generateMessageId(),
+                  type: "system",
+                  role: "assistant",
+                  content: event.result,
+                  timestamp: new Date(),
+                };
+                updates.messages = [...state.messages, message];
+              }
             }
 
             return updates;
@@ -1150,6 +1286,15 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
         );
       },
     })),
+      {
+        name: "claude-agent-settings",
+        partialize: (state) => ({
+          agentType: state.agentType,
+          permissionMode: state.permissionMode,
+          selectedModels: state.selectedModels,
+        }),
+      }
+    ),
     {
       name: "claude-session-store",
     }
@@ -1184,6 +1329,8 @@ export const selectPTYThinking = (state: ClaudeSessionStore) =>
   state.ptyThinking;
 export const selectPermissionMode = (state: ClaudeSessionStore) =>
   state.permissionMode;
+export const selectAgentType = (state: ClaudeSessionStore) =>
+  state.agentType;
 export const selectPlanDescriptionOnly = (state: ClaudeSessionStore) =>
   state.planDescriptionOnly;
 export const selectToolUseCountInResponse = (state: ClaudeSessionStore) =>

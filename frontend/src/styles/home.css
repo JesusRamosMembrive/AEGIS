@@ -181,6 +181,14 @@
   color: #f8fafc;
 }
 
+.home-hero__acronym {
+  margin: 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #94a3b8;
+  letter-spacing: 0.03em;
+}
+
 .home-hero p {
   margin: 0;
   font-size: 1.03rem;
@@ -435,4 +443,42 @@
     width: 100%;
     text-align: center;
   }
+}
+
+/* ============================================================================
+   Agent Type Selector - used in ClaudeAgentView header
+   ============================================================================ */
+
+.agent-type-select {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+.agent-type-select:hover {
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.15);
+}
+
+.agent-type-select:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.6);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.agent-type-select option {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 8px;
 }

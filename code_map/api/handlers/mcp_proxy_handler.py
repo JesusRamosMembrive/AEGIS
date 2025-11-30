@@ -62,6 +62,7 @@ class MCPProxyModeHandler(BaseAgentHandler):
         # Create the MCP proxy runner
         mcp_proxy_config = MCPProxyRunnerConfig(
             cwd=self.config.cwd,
+            model=self.config.model,
             continue_session=message.get("continue", self.config.continue_session),
             verbose=self.config.verbose,
             socket_path=DEFAULT_SOCKET_PATH,

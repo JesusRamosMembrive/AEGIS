@@ -52,6 +52,7 @@ class GeminiRunnerConfig:
     """Configuration for Gemini Code runner"""
 
     cwd: str
+    model: str = "gemini-2.5-flash"  # Default Gemini model
     continue_session: bool = True
     verbose: bool = True
     timeout: Optional[float] = None
@@ -102,12 +103,9 @@ class GeminiAgentRunner:
             "stream-json",
         ]
 
-        # Gemini doesn't seem to have a --continue flag in the same way,
-        # but it manages sessions. We might need to pass session ID if we want to continue.
-        # For now, let's rely on its default behavior or add flags if we find them.
-        # Based on help, it has --session or similar?
-        # The help said: "index number (use --list-sessions to see available sessions)"
-        # Let's assume for now we just run it.
+        # Add model flag if not using default
+        if self.config.model and self.config.model != "gemini-2.5-flash":
+            cmd.extend(["--model", self.config.model])
 
         logger.info(f"Starting Gemini CLI: {' '.join(cmd)}...")
 
@@ -186,6 +184,15 @@ class GeminiAgentRunner:
                 if self.process.stderr is None:
                     return
 
+                # Informational messages from CLI that should not be shown as errors
+                info_patterns = [
+                    "loaded cached credentials",
+                    "authenticating",
+                    "loading",
+                    "initializing",
+                    "connecting",
+                ]
+
                 while self.running and not self._cancelled:
                     try:
                         line = await self.process.stderr.readline()
@@ -194,6 +201,12 @@ class GeminiAgentRunner:
 
                         line_str = line.decode("utf-8").strip()
                         if line_str and on_error:
+                            # Skip informational messages that aren't real errors
+                            line_lower = line_str.lower()
+                            if any(pattern in line_lower for pattern in info_patterns):
+                                logger.debug(f"[Gemini stderr info] {line_str}")
+                                continue
+
                             result = on_error(line_str)
                             if asyncio.iscoroutine(result):
                                 await result
@@ -235,6 +248,21 @@ class GeminiAgentRunner:
         """Map Gemini event to Claude event format"""
         event_type = event.get("type")
 
+        # Handle init event - contains session info and model
+        if event_type == "init":
+            model = event.get("model", "unknown")
+            session_id = event.get("session_id", "")
+            return {
+                "type": "system",
+                "subtype": "init",
+                "content": {
+                    "session_id": session_id,
+                    "model": f"gemini ({model})" if model else "gemini",
+                    "tools": [],
+                    "mcp_servers": [],
+                },
+            }
+
         if event_type == "message":
             role = event.get("role")
             content = event.get("content")
@@ -263,6 +291,21 @@ class GeminiAgentRunner:
                     "content": event.get("output")
                     or event.get("error", {}).get("message", ""),
                     "is_error": event.get("status") == "error",
+                },
+            }
+
+        # Handle result event - contains token usage stats
+        elif event_type == "result":
+            stats = event.get("stats", {})
+            return {
+                "type": "system",
+                "subtype": "usage",
+                "content": {
+                    "input_tokens": stats.get("input_tokens", 0),
+                    "output_tokens": stats.get("output_tokens", 0),
+                    "cached_input_tokens": 0,
+                    "total_tokens": stats.get("total_tokens", 0),
+                    "duration_ms": stats.get("duration_ms", 0),
                 },
             }
 

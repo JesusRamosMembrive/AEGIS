@@ -58,6 +58,7 @@ class MCPProxyRunnerConfig:
     """Configuration for MCP Proxy Runner"""
 
     cwd: str
+    model: str = "claude-sonnet-4-20250514"  # Default Claude model
     continue_session: bool = True
     verbose: bool = True
     timeout: Optional[float] = None
@@ -105,6 +106,10 @@ class MCPProxyRunner:
 
         if self.config.continue_session:
             cmd.append("--continue")
+
+        # Add model flag if not using default
+        if self.config.model and self.config.model != "claude-sonnet-4-20250514":
+            cmd.extend(["--model", self.config.model])
 
         # Disable native dangerous tools
         disallowed = self.APPROVAL_REQUIRED_TOOLS.copy()

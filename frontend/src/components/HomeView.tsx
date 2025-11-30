@@ -58,9 +58,12 @@ export function HomeView({
           <span className={`home-stage-pill ${detectionTone}`}>
             {stageStatusQuery.isLoading ? "Calculating…" : detectionLabel}
           </span>
-          <h2>ATLAS: Navigate Your Codebase with Precision</h2>
+          <h2>ATLAS: Control Your Code, Guide Your Agents</h2>
+          <p className="home-hero__acronym">
+            Agent Tooling, Linting And Source-mapping
+          </p>
           <p>
-            Automated Tracing, Linting And Source-mapping. Define shared standards, monitor code quality with integrated linters, trace function calls across files, and rely on local AI for contextual insights.
+            Unified control center for code analysis, linting, and AI agent orchestration. Trace dependencies, monitor quality, execute commands remotely, and leverage local AI for contextual insights—all in one place.
           </p>
           <div className="home-hero__credits">
             <span>Programmed by Jesús Ramos Membrive</span>

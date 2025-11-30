@@ -6,7 +6,8 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useClaudeSessionStore, PERMISSION_MODES, PERMISSION_MODE_LABELS, PERMISSION_MODE_DESCRIPTIONS, type PermissionMode } from "../stores/claudeSessionStore";
+import { useClaudeSessionStore, PERMISSION_MODES, PERMISSION_MODE_LABELS, PERMISSION_MODE_DESCRIPTIONS, type PermissionMode, AGENT_TYPES, AGENT_TYPE_LABELS, AGENT_WS_ENDPOINTS, AGENT_MODELS, AGENT_SLASH_COMMANDS, type AgentType, type SlashCommand } from "../stores/claudeSessionStore";
+import { SlashCommandMenu, slashCommandMenuStyles } from "./SlashCommandMenu";
 import { useSessionHistoryStore } from "../stores/sessionHistoryStore";
 import { useBackendStore } from "../state/useBackendStore";
 import { resolveBackendBaseUrl } from "../api/client";
@@ -80,8 +81,11 @@ export function ClaudeAgentView() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [diffTarget, setDiffTarget] = useState<string | null>(null);
   const [addingPermissions, setAddingPermissions] = useState<Set<string>>(new Set());
+  const [slashMenuVisible, setSlashMenuVisible] = useState(false);
+  const [slashFilter, setSlashFilter] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   // Store state
   const {
@@ -117,6 +121,12 @@ export function ClaudeAgentView() {
     clearPermissionDenials,
     // Plan execution action
     executePlan,
+    // Agent type selection
+    agentType,
+    setAgentType,
+    // Model selection
+    selectedModels,
+    setSelectedModel,
   } = useClaudeSessionStore();
 
   // Session history
@@ -124,7 +134,7 @@ export function ClaudeAgentView() {
 
   const backendUrl = useBackendStore((state) => state.backendUrl);
 
-  // Build WebSocket URL
+  // Build WebSocket URL based on selected agent type
   const getWsUrl = useCallback(() => {
     const stripApi = (value: string) =>
       value.endsWith("/api") ? value.slice(0, -4) : value;
@@ -139,8 +149,10 @@ export function ClaudeAgentView() {
     const httpBase = stripApi(sanitized);
     const wsBase = httpBase.replace(/^http/, "ws");
 
-    return `${wsBase}/api/terminal/ws/agent`;
-  }, [backendUrl]);
+    // Get the endpoint for the selected agent type
+    const endpoint = AGENT_WS_ENDPOINTS[agentType];
+    return `${wsBase}${endpoint}`;
+  }, [backendUrl, agentType]);
 
   // Auto-connect on mount
   useEffect(() => {
@@ -150,6 +162,24 @@ export function ClaudeAgentView() {
       connect(wsUrl);
     }
   }, [connected, connecting, connect, getWsUrl]);
+
+  // Reconnect when agent type changes
+  useEffect(() => {
+    // Only reconnect if we were previously connected
+    if (connected) {
+      console.log("[ClaudeAgent] Agent type changed to:", agentType, "- reconnecting...");
+      disconnect();
+      // Clear messages for new agent
+      clearMessages();
+      // Small delay to ensure clean disconnect
+      const timer = setTimeout(() => {
+        const wsUrl = getWsUrl();
+        console.log("[ClaudeAgent] Reconnecting to:", wsUrl);
+        connect(wsUrl);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [agentType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -194,15 +224,63 @@ export function ClaudeAgentView() {
     [promptValue, running, sendPrompt]
   );
 
+  // Handle input change - detect slash commands
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const value = e.target.value;
+      setPromptValue(value);
+
+      // Check if input starts with "/" for slash command menu
+      if (value.startsWith("/")) {
+        // Extract filter text (everything after the /)
+        const filter = value.slice(1).split(" ")[0]; // Only filter on first word
+        setSlashFilter(filter);
+        setSlashMenuVisible(true);
+      } else {
+        setSlashMenuVisible(false);
+        setSlashFilter("");
+      }
+    },
+    []
+  );
+
+  // Handle slash command selection
+  const handleSlashCommandSelect = useCallback(
+    (command: SlashCommand) => {
+      // If command has args, put command with space ready for args
+      // Otherwise, just set the command
+      if (command.hasArgs) {
+        setPromptValue(command.command + " ");
+      } else {
+        setPromptValue(command.command);
+      }
+      setSlashMenuVisible(false);
+      setSlashFilter("");
+      inputRef.current?.focus();
+    },
+    []
+  );
+
+  // Close slash menu
+  const handleSlashMenuClose = useCallback(() => {
+    setSlashMenuVisible(false);
+    setSlashFilter("");
+  }, []);
+
   // Handle key press in textarea
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Don't handle Enter/Tab if slash menu is visible (menu handles it)
+      if (slashMenuVisible && (e.key === "Enter" || e.key === "Tab" || e.key === "ArrowDown" || e.key === "ArrowUp")) {
+        return; // Let the menu handle these keys
+      }
+
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleSubmit();
       }
     },
-    [handleSubmit]
+    [handleSubmit, slashMenuVisible]
   );
 
   // Handle cancel
@@ -309,6 +387,10 @@ export function ClaudeAgentView() {
         sessionInfo={sessionInfo}
         cwd={cwd}
         continueSession={continueSession}
+        agentType={agentType}
+        onAgentTypeChange={setAgentType}
+        selectedModel={selectedModels[agentType]}
+        onModelChange={(model) => setSelectedModel(agentType, model)}
         permissionMode={permissionMode}
         onPermissionModeChange={setPermissionMode}
         totalInputTokens={totalInputTokens}
@@ -369,7 +451,7 @@ export function ClaudeAgentView() {
                   <span className="thinking-icon" aria-hidden="true">
                     <BrainIcon size={20} />
                   </span>
-                  <span className="thinking-text">Claude is thinking...</span>
+                  <span className="thinking-text">The agent is thinking...</span>
                   {activeToolCalls.size > 0 && (
                     <span className="active-tools" aria-label={`Running ${activeToolCalls.size} tools`}>
                       Running {activeToolCalls.size} tool
@@ -427,30 +509,42 @@ export function ClaudeAgentView() {
       </div>
 
       {/* Input Area */}
-      <div className="claude-input-container">
+      <div className="claude-input-container" ref={inputContainerRef}>
         <form onSubmit={handleSubmit} className="claude-input-form" role="form" aria-label="Send message to Claude">
-          <label htmlFor="claude-prompt-input" className="visually-hidden">
-            Enter your message for Claude
-          </label>
-          <textarea
-            id="claude-prompt-input"
-            ref={inputRef}
-            value={promptValue}
-            onChange={(e) => setPromptValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              connected
-                ? "Ask Claude anything... (Enter to send, Shift+Enter for newline)"
-                : "Connecting..."
-            }
-            disabled={!connected || running}
-            className="claude-input"
-            rows={3}
-            aria-describedby="input-hint"
-          />
-          <span id="input-hint" className="visually-hidden">
-            Press Enter to send, Shift+Enter for new line. Press Escape to cancel running operations.
-          </span>
+          <div className="claude-input-wrapper">
+            <label htmlFor="claude-prompt-input" className="visually-hidden">
+              Enter your message for Claude
+            </label>
+            <textarea
+              id="claude-prompt-input"
+              ref={inputRef}
+              value={promptValue}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                connected
+                  ? `Ask ${AGENT_TYPE_LABELS[agentType]} anything... (Type / for commands)`
+                  : "Connecting..."
+              }
+              disabled={!connected || running}
+              className="claude-input"
+              rows={3}
+              aria-describedby="input-hint"
+              aria-haspopup="listbox"
+              aria-expanded={slashMenuVisible}
+            />
+            <span id="input-hint" className="visually-hidden">
+              Press Enter to send, Shift+Enter for new line. Type / to see available commands.
+            </span>
+            {/* Slash Command Menu */}
+            <SlashCommandMenu
+              commands={AGENT_SLASH_COMMANDS[agentType]}
+              filter={slashFilter}
+              onSelect={handleSlashCommandSelect}
+              onClose={handleSlashMenuClose}
+              visible={slashMenuVisible}
+            />
+          </div>
           <div className="claude-input-actions">
             <button
               type="submit"
@@ -475,6 +569,7 @@ export function ClaudeAgentView() {
       </div>
 
       <style>{styles}</style>
+      <style>{slashCommandMenuStyles}</style>
 
       {/* File Diff Modal */}
       {diffTarget && <FileDiffModal path={diffTarget} onClose={() => setDiffTarget(null)} />}
@@ -510,6 +605,10 @@ interface AgentHeaderProps {
   };
   cwd: string | null;
   continueSession: boolean;
+  agentType: AgentType;
+  onAgentTypeChange: (type: AgentType) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
   permissionMode: PermissionMode;
   onPermissionModeChange: (mode: PermissionMode) => void;
   totalInputTokens: number;
@@ -528,6 +627,10 @@ function AgentHeader({
   sessionInfo,
   cwd,
   continueSession,
+  agentType,
+  onAgentTypeChange,
+  selectedModel,
+  onModelChange,
   permissionMode,
   onPermissionModeChange,
   totalInputTokens,
@@ -548,10 +651,13 @@ function AgentHeader({
   const totalTokens = totalInputTokens + totalOutputTokens;
   const estimatedCost = ((totalInputTokens * 3 + totalOutputTokens * 15) / 1_000_000).toFixed(4);
 
+  // Get dynamic title based on agent type
+  const agentTitle = AGENT_TYPE_LABELS[agentType] || "AI Agent";
+
   return (
     <div className="claude-header">
       <div className="claude-header-left">
-        <h2 className="claude-title">Claude Agent</h2>
+        <h2 className="claude-title">{agentTitle}</h2>
         <div className="claude-status">
           <span
             className={`status-dot ${connected ? "connected" : connecting || isReconnecting ? "connecting" : "disconnected"}`}
@@ -574,7 +680,7 @@ function AgentHeader({
           onClick={toggleContinueSession}
           title={
             continueSession
-              ? "Continue mode: ON - Will resume previous Claude session"
+              ? "Continue mode: ON - Will resume previous session"
               : "Continue mode: OFF - Will start fresh session"
           }
         >
@@ -583,6 +689,30 @@ function AgentHeader({
             {continueSession ? "Continue" : "Fresh"}
           </span>
         </button>
+        <select
+          className="agent-type-select"
+          value={agentType}
+          onChange={(e) => onAgentTypeChange(e.target.value as AgentType)}
+          title="Select AI agent CLI to use"
+        >
+          {AGENT_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {AGENT_TYPE_LABELS[type]}
+            </option>
+          ))}
+        </select>
+        <select
+          className="model-select"
+          value={selectedModel}
+          onChange={(e) => onModelChange(e.target.value)}
+          title={`Select model for ${AGENT_TYPE_LABELS[agentType]}`}
+        >
+          {AGENT_MODELS[agentType].map((model) => (
+            <option key={model} value={model}>
+              {model}
+            </option>
+          ))}
+        </select>
         <select
           className="permission-mode-select"
           value={permissionMode}
@@ -1072,6 +1202,34 @@ const styles = `
   font-weight: 500;
 }
 
+/* Model select */
+.model-select {
+  padding: 4px 8px;
+  font-size: 11px;
+  background: var(--agent-bg-tertiary);
+  border: 1px solid var(--agent-border-secondary);
+  border-radius: 4px;
+  color: var(--agent-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+  max-width: 180px;
+}
+
+.model-select:hover {
+  background: var(--agent-border-secondary);
+  color: var(--agent-text-primary);
+}
+
+.model-select:focus {
+  border-color: var(--agent-accent-blue);
+}
+
+.model-select option {
+  background: var(--agent-bg-secondary);
+  color: var(--agent-text-primary);
+}
+
 /* Permission mode select */
 .permission-mode-select {
   padding: 4px 8px;
@@ -1346,15 +1504,15 @@ const styles = `
 .assistant-message {
   max-width: 90%;
   padding: 4px 0;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .assistant-message.assistant-text-inline {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  padding: 2px 0;
+  gap: 8px;
+  padding: 4px 0;
 }
 
 .assistant-text-inline .text-icon {
@@ -1363,14 +1521,15 @@ const styles = `
   justify-content: center;
   flex-shrink: 0;
   color: var(--agent-text-muted);
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .assistant-text-inline .text-content {
-  font-size: 11px;
-  color: var(--agent-text-secondary);
+  font-size: 15px;
+  color: var(--agent-text-primary);
   white-space: pre-wrap;
   word-break: break-word;
+  line-height: 1.5;
 }
 
 .assistant-message .message-meta {
@@ -1785,6 +1944,11 @@ const styles = `
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.claude-input-wrapper {
+  position: relative;
+  width: 100%;
 }
 
 .claude-input {

@@ -627,7 +627,7 @@
   {
     "path": "code_map/api/handlers/base.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.907921+00:00",
+    "modified_at": "2025-11-30T10:54:23.211832+00:00",
     "symbols": [
       {
         "name": "HandlerCallbacks",
@@ -646,49 +646,49 @@
       {
         "name": "BaseAgentHandler",
         "kind": "class",
-        "lineno": 49,
+        "lineno": 50,
         "parent": null,
         "docstring": "Abstract base class for Claude agent execution modes.\n\nEach handler encapsulates the logic for a specific execution mode:\n- SDK Mode: Direct Anthropic SDK with tool interception\n- MCP Proxy Mode: Claude CLI with MCP tool proxy\n- CLI Mode: Standard Claude CLI subprocess\n\nHandlers manage their own runner lifecycle and provide\nconsistent interfaces for the WebSocket endpoint."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 62,
+        "lineno": 63,
         "parent": "BaseAgentHandler",
         "docstring": null
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 70,
+        "lineno": 71,
         "parent": "BaseAgentHandler",
         "docstring": "Check if handler has an active runner."
       },
       {
         "name": "handle_run",
         "kind": "method",
-        "lineno": 75,
+        "lineno": 76,
         "parent": "BaseAgentHandler",
         "docstring": "Handle a 'run' command by starting prompt execution.\n\nArgs:\n    prompt: The user prompt to execute\n    message: Full message dict with additional options\n\nReturns:\n    The asyncio Task running the prompt"
       },
       {
         "name": "handle_cancel",
         "kind": "method",
-        "lineno": 89,
+        "lineno": 90,
         "parent": "BaseAgentHandler",
         "docstring": "Cancel the currently running operation."
       },
       {
         "name": "handle_tool_approval_response",
         "kind": "method",
-        "lineno": 93,
+        "lineno": 94,
         "parent": "BaseAgentHandler",
         "docstring": "Handle tool approval response from frontend.\n\nArgs:\n    request_id: The approval request ID\n    approved: Whether the tool was approved\n    feedback: Optional feedback message\n\nReturns:\n    True if response was processed, False otherwise"
       },
       {
         "name": "cleanup",
         "kind": "method",
-        "lineno": 115,
+        "lineno": 116,
         "parent": "BaseAgentHandler",
         "docstring": "Cleanup handler resources."
       }
@@ -698,7 +698,7 @@
   {
     "path": "code_map/api/handlers/cli_handler.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.907921+00:00",
+    "modified_at": "2025-11-30T10:54:47.255953+00:00",
     "symbols": [
       {
         "name": "CLIModeHandler",
@@ -731,35 +731,35 @@
       {
         "name": "_handle_tool_approval_request",
         "kind": "method",
-        "lineno": 148,
+        "lineno": 149,
         "parent": "CLIModeHandler",
         "docstring": "Forward tool approval request to frontend via callback."
       },
       {
         "name": "_send_mcp_approval_request",
         "kind": "method",
-        "lineno": 155,
+        "lineno": 156,
         "parent": "CLIModeHandler",
         "docstring": "Forward MCP approval request to frontend via WebSocket (mcpApproval mode).\n\nThis is used when permission_mode is 'mcpApproval' with the CLI runner."
       },
       {
         "name": "handle_cancel",
         "kind": "method",
-        "lineno": 183,
+        "lineno": 184,
         "parent": "CLIModeHandler",
         "docstring": "Cancel CLI runner."
       },
       {
         "name": "handle_tool_approval_response",
         "kind": "method",
-        "lineno": 190,
+        "lineno": 191,
         "parent": "CLIModeHandler",
         "docstring": "Handle tool approval response for CLI mode.\n\nRoutes to either MCP socket server (mcpApproval) or runner (toolApproval)."
       },
       {
         "name": "handle_mcp_approval_response",
         "kind": "method",
-        "lineno": 221,
+        "lineno": 222,
         "parent": "CLIModeHandler",
         "docstring": "Handle MCP approval response (mcpApproval mode only).\n\nThis is a separate method for the specific mcp_approval_response command."
       }
@@ -805,7 +805,7 @@
   {
     "path": "code_map/api/handlers/mcp_proxy_handler.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.907921+00:00",
+    "modified_at": "2025-11-30T10:55:40.412457+00:00",
     "symbols": [
       {
         "name": "MCPProxyModeHandler",
@@ -831,21 +831,21 @@
       {
         "name": "_send_approval_request",
         "kind": "method",
-        "lineno": 88,
+        "lineno": 89,
         "parent": "MCPProxyModeHandler",
         "docstring": "Forward MCP proxy approval request to frontend via WebSocket.\n\nArgs:\n    request: ApprovalRequest from the MCP socket server"
       },
       {
         "name": "handle_cancel",
         "kind": "method",
-        "lineno": 102,
+        "lineno": 103,
         "parent": "MCPProxyModeHandler",
         "docstring": "Cancel MCP proxy runner."
       },
       {
         "name": "handle_tool_approval_response",
         "kind": "method",
-        "lineno": 109,
+        "lineno": 110,
         "parent": "MCPProxyModeHandler",
         "docstring": "Handle tool approval response for MCP proxy mode.\n\nRoutes response through the socket server to the waiting MCP proxy."
       }
@@ -855,7 +855,7 @@
   {
     "path": "code_map/api/handlers/sdk_handler.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.907921+00:00",
+    "modified_at": "2025-11-30T10:55:06.586137+00:00",
     "symbols": [
       {
         "name": "SDKModeHandler",
@@ -881,21 +881,21 @@
       {
         "name": "_handle_sdk_tool_approval",
         "kind": "method",
-        "lineno": 72,
+        "lineno": 73,
         "parent": "SDKModeHandler",
         "docstring": "Forward SDK tool approval request to frontend via callback."
       },
       {
         "name": "handle_cancel",
         "kind": "method",
-        "lineno": 79,
+        "lineno": 80,
         "parent": "SDKModeHandler",
         "docstring": "Cancel SDK runner."
       },
       {
         "name": "handle_tool_approval_response",
         "kind": "method",
-        "lineno": 88,
+        "lineno": 89,
         "parent": "SDKModeHandler",
         "docstring": "Handle tool approval response for SDK mode."
       }
@@ -1702,7 +1702,7 @@
   {
     "path": "code_map/api/terminal.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.908431+00:00",
+    "modified_at": "2025-11-30T10:54:29.269783+00:00",
     "symbols": [
       {
         "name": "get_or_create_mcp_socket_server",
@@ -1735,16 +1735,23 @@
       {
         "name": "agent_pty_websocket",
         "kind": "function",
-        "lineno": 714,
+        "lineno": 715,
         "parent": null,
         "docstring": "WebSocket endpoint for Claude Code PTY mode with real terminal interaction.\n\nThis mode spawns Claude in a pseudo-terminal (PTY) for proper Ink UI support,\nparses the terminal output into structured events, and enables real tool approval\nby detecting permission prompts in the output.\n\nClient sends JSON commands:\n- {\"command\": \"start\"} - Start a new PTY session\n- {\"command\": \"run\", \"prompt\": \"...\"} - Send a prompt to Claude\n- {\"command\": \"approve\"} - Approve a pending permission (send 'y')\n- {\"command\": \"deny\"} - Deny a pending permission (send 'n')\n- {\"command\": \"always_allow\"} - Always allow this permission (send 'a')\n- {\"command\": \"cancel\"} - Cancel current operation (send Ctrl+C)\n- {\"command\": \"stop\"} - Stop the PTY session\n\nServer sends JSON events:\n- {\"type\": \"session_started\"}\n- {\"type\": \"thinking\", \"data\": {...}}\n- {\"type\": \"completion\", \"data\": {...}}\n- {\"type\": \"permission_request\", \"data\": {...}}\n- {\"type\": \"message\", \"data\": {...}}\n- {\"type\": \"error\", \"data\": {...}}\n- {\"type\": \"session_ended\"}"
       },
       {
         "name": "gemini_agent_websocket",
         "kind": "function",
-        "lineno": 965,
+        "lineno": 966,
         "parent": null,
         "docstring": "WebSocket endpoint for Gemini Code JSON streaming mode"
+      },
+      {
+        "name": "codex_agent_websocket",
+        "kind": "function",
+        "lineno": 1074,
+        "parent": null,
+        "docstring": "WebSocket endpoint for OpenAI Codex CLI JSON streaming mode\n\nProvides real-time interaction with Codex CLI using JSON events.\nEvents are normalized to the same format as Claude for frontend compatibility.\n\nClient sends:\n- {\"command\": \"run\", \"prompt\": \"...\", \"permission_mode\": \"...\", \"model\": \"...\"}\n- {\"command\": \"cancel\"}\n- {\"command\": \"tool_approval_response\", \"request_id\": \"...\", \"approved\": bool}\n\nServer sends:\n- {\"type\": \"connected\", \"cwd\": \"...\"}\n- {\"type\": \"system\", \"subtype\": \"init\", \"content\": {...}}\n- {\"type\": \"assistant\", \"subtype\": \"text\", \"content\": \"...\"}\n- {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n- {\"type\": \"user\", \"subtype\": \"tool_result\", \"content\": {...}}\n- {\"type\": \"done\"}\n- {\"type\": \"error\", \"content\": \"...\"}\n- {\"type\": \"tool_approval_request\", ...}"
       }
     ],
     "errors": []
@@ -5439,7 +5446,7 @@
   {
     "path": "code_map/terminal/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-28T09:04:11.387338+00:00",
+    "modified_at": "2025-11-30T09:38:08.108220+00:00",
     "symbols": [],
     "errors": []
   },
@@ -5791,7 +5798,7 @@
   {
     "path": "code_map/terminal/claude_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910200+00:00",
+    "modified_at": "2025-11-30T10:53:42.671340+00:00",
     "symbols": [
       {
         "name": "find_claude_cli",
@@ -5810,161 +5817,161 @@
       {
         "name": "ClaudeAgentRunner",
         "kind": "class",
-        "lineno": 92,
+        "lineno": 93,
         "parent": null,
         "docstring": "Executes Claude Code in JSON streaming mode with bidirectional communication.\n\nRuns `claude -p --output-format stream-json --input-format stream-json --verbose`\nand streams parsed JSON events line by line. Supports interactive permission handling."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 100,
+        "lineno": 101,
         "parent": "ClaudeAgentRunner",
         "docstring": null
       },
       {
         "name": "run_prompt",
         "kind": "method",
-        "lineno": 126,
+        "lineno": 127,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute a prompt and stream JSON events\n\nArgs:\n    prompt: The prompt to send to Claude Code\n    on_event: Callback for each parsed JSON event\n    on_error: Optional callback for stderr output\n    on_done: Optional callback when process completes\n    on_permission_request: Optional callback for permission requests (returns Future)\n    on_tool_approval_request: Optional callback for tool approval requests (toolApproval mode)\n\nReturns:\n    Exit code from the process"
       },
       {
         "name": "_is_tool_use_event",
         "kind": "method",
-        "lineno": 454,
+        "lineno": 459,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if event is a tool_use event.\n\nClaude CLI emits tool_use in two formats:\n1. Simplified: {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n2. Full message: {\"type\": \"assistant\", \"message\": {\"content\": [{\"type\": \"tool_use\", ...}]}}"
       },
       {
         "name": "_extract_tool_use_from_event",
         "kind": "method",
-        "lineno": 480,
+        "lineno": 485,
         "parent": "ClaudeAgentRunner",
         "docstring": "Extract tool_use info from event.\n\nReturns (tool_name, tool_input, tool_id) or None if not found."
       },
       {
         "name": "_handle_tool_approval",
         "kind": "method",
-        "lineno": 511,
+        "lineno": 516,
         "parent": "ClaudeAgentRunner",
         "docstring": "Handle tool approval flow for toolApproval mode.\n\nIn plan mode, Claude proposes tool_use but doesn't execute.\nWe intercept, show preview to user, and execute manually if approved."
       },
       {
         "name": "_execute_tool",
         "kind": "method",
-        "lineno": 688,
+        "lineno": 693,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute a tool manually.\n\nReturns dict with \"content\" and \"is_error\" keys."
       },
       {
         "name": "_execute_write",
         "kind": "method",
-        "lineno": 720,
+        "lineno": 725,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Write tool"
       },
       {
         "name": "_execute_edit",
         "kind": "method",
-        "lineno": 743,
+        "lineno": 748,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Edit tool"
       },
       {
         "name": "_execute_read",
         "kind": "method",
-        "lineno": 787,
+        "lineno": 792,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Read tool"
       },
       {
         "name": "_execute_bash",
         "kind": "method",
-        "lineno": 828,
+        "lineno": 833,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Bash tool"
       },
       {
         "name": "_execute_glob",
         "kind": "method",
-        "lineno": 873,
+        "lineno": 878,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Glob tool"
       },
       {
         "name": "_execute_grep",
         "kind": "method",
-        "lineno": 901,
+        "lineno": 906,
         "parent": "ClaudeAgentRunner",
         "docstring": "Execute Grep tool"
       },
       {
         "name": "_send_tool_result_to_claude",
         "kind": "method",
-        "lineno": 959,
+        "lineno": 964,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send tool result back to Claude via stdin"
       },
       {
         "name": "_send_tool_rejection_to_claude",
         "kind": "method",
-        "lineno": 1014,
+        "lineno": 1019,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send tool rejection back to Claude"
       },
       {
         "name": "respond_to_tool_approval",
         "kind": "method",
-        "lineno": 1024,
+        "lineno": 1029,
         "parent": "ClaudeAgentRunner",
         "docstring": "Respond to a pending tool approval request.\n\nArgs:\n    request_id: ID of the approval request\n    approved: Whether to approve the tool use\n    feedback: Optional feedback (for rejection)\n\nReturns:\n    True if response was processed, False if request not found"
       },
       {
         "name": "_is_permission_request",
         "kind": "method",
-        "lineno": 1046,
+        "lineno": 1051,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if an event is a permission request.\n\nClaude sends permission requests in stream-json mode in these ways:\n1. Explicit \"permission_request\" type event\n2. Tool use events may have \"requires_permission\" flag\n3. Events may contain permission prompts in the message"
       },
       {
         "name": "_handle_permission_request",
         "kind": "method",
-        "lineno": 1081,
+        "lineno": 1086,
         "parent": "ClaudeAgentRunner",
         "docstring": "Handle a permission request from Claude"
       },
       {
         "name": "_send_permission_response",
         "kind": "method",
-        "lineno": 1104,
+        "lineno": 1109,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send a permission response to Claude"
       },
       {
         "name": "send_user_input",
         "kind": "method",
-        "lineno": 1126,
+        "lineno": 1131,
         "parent": "ClaudeAgentRunner",
         "docstring": "Send additional user input to the running process"
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 1152,
+        "lineno": 1157,
         "parent": "ClaudeAgentRunner",
         "docstring": "Cancel the running process"
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 1192,
+        "lineno": 1197,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if process is currently running"
       },
       {
         "name": "session_broken",
         "kind": "method",
-        "lineno": 1197,
+        "lineno": 1202,
         "parent": "ClaudeAgentRunner",
         "docstring": "Check if the Claude session is broken and cannot be continued.\n\nThis happens when we execute tools locally (in toolApproval mode with plan)\nafter Claude has already exited. Claude doesn't know about our local execution,\nso continuing the session would cause API errors."
       }
@@ -5972,9 +5979,164 @@
     "errors": []
   },
   {
+    "path": "code_map/terminal/codex_runner.py",
+    "relative": true,
+    "modified_at": "2025-11-30T10:58:53.610283+00:00",
+    "symbols": [
+      {
+        "name": "find_codex_cli",
+        "kind": "function",
+        "lineno": 29,
+        "parent": null,
+        "docstring": "Find the Codex CLI executable.\n\nChecks multiple locations since running with sudo may have different PATH.\n\nReturns:\n    Full path to codex CLI, or \"codex\" if not found (will fail at runtime)"
+      },
+      {
+        "name": "CodexRunnerConfig",
+        "kind": "class",
+        "lineno": 113,
+        "parent": null,
+        "docstring": "Configuration for Codex CLI runner"
+      },
+      {
+        "name": "CodexAgentRunner",
+        "kind": "class",
+        "lineno": 126,
+        "parent": null,
+        "docstring": "Executes Codex CLI in JSON streaming mode with event mapping.\n\nRuns `codex exec \"prompt\" --json` and streams parsed JSON events,\nmapping them to the normalized ATLAS event format for frontend compatibility."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 134,
+        "parent": "CodexAgentRunner",
+        "docstring": null
+      },
+      {
+        "name": "_build_command",
+        "kind": "method",
+        "lineno": 153,
+        "parent": "CodexAgentRunner",
+        "docstring": "Build Codex CLI command with appropriate flags.\n\nArgs:\n    prompt: The user prompt to execute\n\nReturns:\n    List of command arguments"
+      },
+      {
+        "name": "run_prompt",
+        "kind": "method",
+        "lineno": 204,
+        "parent": "CodexAgentRunner",
+        "docstring": "Execute a prompt and stream JSON events.\n\nArgs:\n    prompt: The prompt to send to Codex\n    on_event: Callback for each parsed JSON event (normalized format)\n    on_error: Optional callback for stderr output\n    on_done: Optional callback when process completes\n    on_permission_request: Optional callback for permission requests\n    on_tool_approval_request: Optional callback for tool approval (toolApproval mode)\n\nReturns:\n    Exit code from the process"
+      },
+      {
+        "name": "_map_event",
+        "kind": "method",
+        "lineno": 418,
+        "parent": "CodexAgentRunner",
+        "docstring": "Map Codex event to normalized ATLAS event format.\n\nCodex events are different from Claude events, so we need to translate them.\n\nArgs:\n    event: Raw Codex event from JSONL output\n\nReturns:\n    List of normalized events (can be empty or multiple)"
+      },
+      {
+        "name": "_map_tool_name",
+        "kind": "method",
+        "lineno": 569,
+        "parent": "CodexAgentRunner",
+        "docstring": "Map Codex tool names to Claude equivalents for UI consistency."
+      },
+      {
+        "name": "_is_tool_use_event",
+        "kind": "method",
+        "lineno": 573,
+        "parent": "CodexAgentRunner",
+        "docstring": "Check if event is a tool_use event."
+      },
+      {
+        "name": "_extract_tool_use_from_event",
+        "kind": "method",
+        "lineno": 577,
+        "parent": "CodexAgentRunner",
+        "docstring": "Extract tool_use info from event.\n\nReturns (tool_name, tool_input, tool_id) or None if not found."
+      },
+      {
+        "name": "_handle_tool_approval",
+        "kind": "method",
+        "lineno": 593,
+        "parent": "CodexAgentRunner",
+        "docstring": "Handle tool approval flow for toolApproval mode.\n\nIn read-only sandbox mode, Codex doesn't execute commands.\nWe intercept, show preview to user, and execute manually if approved."
+      },
+      {
+        "name": "_execute_tool",
+        "kind": "method",
+        "lineno": 688,
+        "parent": "CodexAgentRunner",
+        "docstring": "Execute a tool manually.\n\nReturns dict with \"content\" and \"is_error\" keys."
+      },
+      {
+        "name": "_execute_bash",
+        "kind": "method",
+        "lineno": 715,
+        "parent": "CodexAgentRunner",
+        "docstring": "Execute Bash tool"
+      },
+      {
+        "name": "_execute_read",
+        "kind": "method",
+        "lineno": 759,
+        "parent": "CodexAgentRunner",
+        "docstring": "Execute Read tool"
+      },
+      {
+        "name": "_execute_write",
+        "kind": "method",
+        "lineno": 796,
+        "parent": "CodexAgentRunner",
+        "docstring": "Execute Write tool"
+      },
+      {
+        "name": "_execute_edit",
+        "kind": "method",
+        "lineno": 818,
+        "parent": "CodexAgentRunner",
+        "docstring": "Execute Edit tool"
+      },
+      {
+        "name": "cancel",
+        "kind": "method",
+        "lineno": 862,
+        "parent": "CodexAgentRunner",
+        "docstring": "Cancel the running process"
+      },
+      {
+        "name": "respond_to_tool_approval",
+        "kind": "method",
+        "lineno": 897,
+        "parent": "CodexAgentRunner",
+        "docstring": "Respond to a pending tool approval request.\n\nArgs:\n    request_id: ID of the approval request\n    approved: Whether to approve the tool use\n    feedback: Optional feedback (for rejection)\n\nReturns:\n    True if response was processed, False if request not found"
+      },
+      {
+        "name": "is_running",
+        "kind": "method",
+        "lineno": 920,
+        "parent": "CodexAgentRunner",
+        "docstring": "Check if process is currently running"
+      },
+      {
+        "name": "session_broken",
+        "kind": "method",
+        "lineno": 925,
+        "parent": "CodexAgentRunner",
+        "docstring": "Check if the session is broken and cannot be continued.\n\nThis happens when we execute tools locally in toolApproval mode."
+      },
+      {
+        "name": "thread_id",
+        "kind": "method",
+        "lineno": 934,
+        "parent": "CodexAgentRunner",
+        "docstring": "Get the current Codex thread ID"
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "code_map/terminal/gemini_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910200+00:00",
+    "modified_at": "2025-11-30T10:52:40.001744+00:00",
     "symbols": [
       {
         "name": "find_gemini_cli",
@@ -5993,77 +6155,77 @@
       {
         "name": "GeminiAgentRunner",
         "kind": "class",
-        "lineno": 62,
+        "lineno": 63,
         "parent": null,
         "docstring": "Executes Gemini CLI in JSON streaming mode with bidirectional communication."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 67,
+        "lineno": 68,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "run_prompt",
         "kind": "method",
-        "lineno": 85,
+        "lineno": 86,
         "parent": "GeminiAgentRunner",
         "docstring": "Execute a prompt and stream JSON events"
       },
       {
         "name": "_map_event",
         "kind": "method",
-        "lineno": 234,
+        "lineno": 247,
         "parent": "GeminiAgentRunner",
         "docstring": "Map Gemini event to Claude event format"
       },
       {
         "name": "_is_tool_use_event",
         "kind": "method",
-        "lineno": 271,
+        "lineno": 314,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_extract_tool_use_from_event",
         "kind": "method",
-        "lineno": 274,
+        "lineno": 317,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_handle_tool_approval",
         "kind": "method",
-        "lineno": 284,
+        "lineno": 327,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_execute_tool",
         "kind": "method",
-        "lineno": 359,
+        "lineno": 402,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_execute_bash",
         "kind": "method",
-        "lineno": 372,
+        "lineno": 415,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 389,
+        "lineno": 432,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "respond_to_tool_approval",
         "kind": "method",
-        "lineno": 394,
+        "lineno": 437,
         "parent": "GeminiAgentRunner",
         "docstring": "Respond to a pending tool approval request."
       }
@@ -6186,7 +6348,7 @@
   {
     "path": "code_map/terminal/mcp_proxy_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910200+00:00",
+    "modified_at": "2025-11-30T10:55:33.864395+00:00",
     "symbols": [
       {
         "name": "MCPProxyRunnerConfig",
@@ -6198,98 +6360,98 @@
       {
         "name": "MCPProxyRunner",
         "kind": "class",
-        "lineno": 71,
+        "lineno": 72,
         "parent": null,
         "docstring": "Runs Claude CLI with MCP tool proxy for approval-based execution.\n\nUses the user's Claude CLI subscription while providing full control\nover Write, Edit, and Bash operations."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 82,
+        "lineno": 83,
         "parent": "MCPProxyRunner",
         "docstring": null
       },
       {
         "name": "_build_command",
         "kind": "method",
-        "lineno": 93,
+        "lineno": 94,
         "parent": "MCPProxyRunner",
         "docstring": "Build the Claude CLI command with all necessary flags."
       },
       {
         "name": "_start_process",
         "kind": "method",
-        "lineno": 128,
+        "lineno": 133,
         "parent": "MCPProxyRunner",
         "docstring": "Start the Claude subprocess."
       },
       {
         "name": "_send_initial_prompt",
         "kind": "method",
-        "lineno": 140,
+        "lineno": 145,
         "parent": "MCPProxyRunner",
         "docstring": "Send the initial prompt to Claude."
       },
       {
         "name": "_create_stdout_reader",
         "kind": "method",
-        "lineno": 161,
+        "lineno": 166,
         "parent": "MCPProxyRunner",
         "docstring": "Create coroutine for reading stdout."
       },
       {
         "name": "_create_stderr_reader",
         "kind": "method",
-        "lineno": 200,
+        "lineno": 205,
         "parent": "MCPProxyRunner",
         "docstring": "Create coroutine for reading stderr."
       },
       {
         "name": "_create_mcp_config",
         "kind": "method",
-        "lineno": 233,
+        "lineno": 238,
         "parent": "MCPProxyRunner",
         "docstring": "Create temporary MCP config file for the tool proxy server"
       },
       {
         "name": "_cleanup_mcp_config",
         "kind": "method",
-        "lineno": 273,
+        "lineno": 278,
         "parent": "MCPProxyRunner",
         "docstring": "Remove temporary MCP config file"
       },
       {
         "name": "run_prompt",
         "kind": "method",
-        "lineno": 283,
+        "lineno": 288,
         "parent": "MCPProxyRunner",
         "docstring": "Execute a prompt with MCP proxy tool approval.\n\nArgs:\n    prompt: The prompt to send to Claude\n    on_event: Callback for each JSON event from Claude\n    on_error: Callback for stderr output\n    on_done: Callback when process completes\n\nReturns:\n    Exit code from the process"
       },
       {
         "name": "_wait_for_process",
         "kind": "method",
-        "lineno": 353,
+        "lineno": 358,
         "parent": "MCPProxyRunner",
         "docstring": "Wait for process to complete, handling timeout."
       },
       {
         "name": "send_user_input",
         "kind": "method",
-        "lineno": 367,
+        "lineno": 372,
         "parent": "MCPProxyRunner",
         "docstring": "Send additional user input to the running process"
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 392,
+        "lineno": 397,
         "parent": "MCPProxyRunner",
         "docstring": "Cancel the running process"
       },
       {
         "name": "is_running",
         "kind": "method",
-        "lineno": 422,
+        "lineno": 427,
         "parent": "MCPProxyRunner",
         "docstring": "Check if process is running"
       }
@@ -7418,6 +7580,19 @@
     "errors": []
   },
   {
+    "path": "frontend/dist/assets/index-6eDWbfFK.js",
+    "relative": true,
+    "modified_at": "2025-11-30T11:37:27.954420+00:00",
+    "symbols": [],
+    "errors": [
+      {
+        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
+        "lineno": null,
+        "col_offset": null
+      }
+    ]
+  },
+  {
     "path": "frontend/dist/assets/index-BBIFfjU4.js",
     "relative": true,
     "modified_at": "2025-11-25T08:25:21.846113+00:00",
@@ -7430,19 +7605,6 @@
     "modified_at": "2025-11-11T17:12:55.237322+00:00",
     "symbols": [],
     "errors": []
-  },
-  {
-    "path": "frontend/dist/assets/index-BU6PMEsW.js",
-    "relative": true,
-    "modified_at": "2025-11-29T21:22:15.268902+00:00",
-    "symbols": [],
-    "errors": [
-      {
-        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
-        "lineno": null,
-        "col_offset": null
-      }
-    ]
   },
   {
     "path": "frontend/dist/assets/index-BtluEvpg.js",
@@ -7482,7 +7644,7 @@
   {
     "path": "frontend/dist/index.html",
     "relative": true,
-    "modified_at": "2025-11-29T21:22:15.268902+00:00",
+    "modified_at": "2025-11-30T11:37:27.954420+00:00",
     "symbols": [
       {
         "name": "root",
@@ -8158,75 +8320,75 @@
   {
     "path": "frontend/src/components/ClaudeAgentView.tsx",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910991+00:00",
+    "modified_at": "2025-11-30T11:25:50.829856+00:00",
     "symbols": [
       {
         "name": "extractResultContent",
         "kind": "function",
-        "lineno": 49,
+        "lineno": 50,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ClaudeAgentView",
         "kind": "function",
-        "lineno": 78,
+        "lineno": 79,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "stripApi",
         "kind": "function",
-        "lineno": 129,
+        "lineno": 139,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleGlobalKeyDown",
         "kind": "function",
-        "lineno": 215,
+        "lineno": 293,
         "parent": null,
         "docstring": null
       },
       {
         "name": "AgentHeader",
         "kind": "function",
-        "lineno": 525,
+        "lineno": 624,
         "parent": null,
         "docstring": null
       },
       {
         "name": "EmptyState",
         "kind": "function",
-        "lineno": 629,
+        "lineno": 759,
         "parent": null,
         "docstring": null
       },
       {
         "name": "MessageItem",
         "kind": "function",
-        "lineno": 648,
+        "lineno": 778,
         "parent": null,
         "docstring": null
       },
       {
         "name": "PermissionDenialsBanner",
         "kind": "function",
-        "lineno": 813,
+        "lineno": 943,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncateInput",
         "kind": "function",
-        "lineno": 874,
+        "lineno": 1004,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncatePath",
         "kind": "function",
-        "lineno": 884,
+        "lineno": 1014,
         "parent": null,
         "docstring": "============================================================================"
       }
@@ -8524,7 +8686,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-11-26T16:15:30.784636+00:00",
+    "modified_at": "2025-11-30T07:50:39.514051+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -9082,6 +9244,28 @@
         "name": "walk",
         "kind": "function",
         "lineno": 217,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/SlashCommandMenu.tsx",
+    "relative": true,
+    "modified_at": "2025-11-30T11:24:51.519294+00:00",
+    "symbols": [
+      {
+        "name": "SlashCommandMenu",
+        "kind": "function",
+        "lineno": 27,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "handleClickOutside",
+        "kind": "function",
+        "lineno": 110,
         "parent": null,
         "docstring": null
       }
@@ -10370,117 +10554,124 @@
   {
     "path": "frontend/src/stores/claudeSessionStore.ts",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.911235+00:00",
+    "modified_at": "2025-11-30T11:24:15.483953+00:00",
     "symbols": [
       {
         "name": "selectConnected",
         "kind": "function",
-        "lineno": 1163,
+        "lineno": 1296,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "selectRunning",
         "kind": "function",
-        "lineno": 1164,
+        "lineno": 1297,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectMessages",
         "kind": "function",
-        "lineno": 1165,
+        "lineno": 1298,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectSessionInfo",
         "kind": "function",
-        "lineno": 1166,
+        "lineno": 1299,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectLastError",
         "kind": "function",
-        "lineno": 1168,
+        "lineno": 1301,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectActiveToolCalls",
         "kind": "function",
-        "lineno": 1169,
+        "lineno": 1302,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPermission",
         "kind": "function",
-        "lineno": 1171,
+        "lineno": 1304,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionDenials",
         "kind": "function",
-        "lineno": 1173,
+        "lineno": 1306,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingToolApproval",
         "kind": "function",
-        "lineno": 1175,
+        "lineno": 1308,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingMCPApproval",
         "kind": "function",
-        "lineno": 1177,
+        "lineno": 1310,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYSessionActive",
         "kind": "function",
-        "lineno": 1179,
+        "lineno": 1312,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPTYPermission",
         "kind": "function",
-        "lineno": 1181,
+        "lineno": 1314,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYThinking",
         "kind": "function",
-        "lineno": 1183,
+        "lineno": 1316,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionMode",
         "kind": "function",
-        "lineno": 1185,
+        "lineno": 1318,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "selectAgentType",
+        "kind": "function",
+        "lineno": 1320,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPlanDescriptionOnly",
         "kind": "function",
-        "lineno": 1187,
+        "lineno": 1322,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectToolUseCountInResponse",
         "kind": "function",
-        "lineno": 1189,
+        "lineno": 1324,
         "parent": null,
         "docstring": null
       }
@@ -55227,6 +55418,315 @@
         "lineno": 425,
         "parent": "TestIntegrationScenarios",
         "docstring": "Test audit tracking continues after errors."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "tests/test_codex_runner.py",
+    "relative": true,
+    "modified_at": "2025-11-30T10:59:15.714491+00:00",
+    "symbols": [
+      {
+        "name": "TestCodexRunnerConfig",
+        "kind": "class",
+        "lineno": 16,
+        "parent": null,
+        "docstring": "Test CodexRunnerConfig dataclass"
+      },
+      {
+        "name": "test_default_config",
+        "kind": "method",
+        "lineno": 19,
+        "parent": "TestCodexRunnerConfig",
+        "docstring": "Test default configuration values"
+      },
+      {
+        "name": "test_custom_config",
+        "kind": "method",
+        "lineno": 32,
+        "parent": "TestCodexRunnerConfig",
+        "docstring": "Test custom configuration"
+      },
+      {
+        "name": "TestCodexModeMappings",
+        "kind": "class",
+        "lineno": 55,
+        "parent": null,
+        "docstring": "Test ATLAS to Codex mode mappings"
+      },
+      {
+        "name": "test_default_mode",
+        "kind": "method",
+        "lineno": 58,
+        "parent": "TestCodexModeMappings",
+        "docstring": "Test default mode mapping - read-only sandbox"
+      },
+      {
+        "name": "test_accept_edits_mode",
+        "kind": "method",
+        "lineno": 65,
+        "parent": "TestCodexModeMappings",
+        "docstring": "Test acceptEdits mode mapping - workspace-write sandbox"
+      },
+      {
+        "name": "test_bypass_permissions_mode",
+        "kind": "method",
+        "lineno": 70,
+        "parent": "TestCodexModeMappings",
+        "docstring": "Test bypassPermissions mode mapping - full-auto flag"
+      },
+      {
+        "name": "test_dont_ask_mode",
+        "kind": "method",
+        "lineno": 75,
+        "parent": "TestCodexModeMappings",
+        "docstring": "Test dontAsk mode mapping - dangerous bypass flag"
+      },
+      {
+        "name": "test_plan_mode",
+        "kind": "method",
+        "lineno": 80,
+        "parent": "TestCodexModeMappings",
+        "docstring": "Test plan mode mapping - read-only sandbox"
+      },
+      {
+        "name": "test_tool_approval_mode",
+        "kind": "method",
+        "lineno": 85,
+        "parent": "TestCodexModeMappings",
+        "docstring": "Test toolApproval mode mapping - read-only sandbox"
+      },
+      {
+        "name": "TestCodexToolMappings",
+        "kind": "class",
+        "lineno": 91,
+        "parent": null,
+        "docstring": "Test Codex to Claude tool name mappings"
+      },
+      {
+        "name": "test_command_execution_mapping",
+        "kind": "method",
+        "lineno": 94,
+        "parent": "TestCodexToolMappings",
+        "docstring": "Test command execution tools map to Bash"
+      },
+      {
+        "name": "test_file_operation_mappings",
+        "kind": "method",
+        "lineno": 100,
+        "parent": "TestCodexToolMappings",
+        "docstring": "Test file operation tool mappings"
+      },
+      {
+        "name": "test_search_mappings",
+        "kind": "method",
+        "lineno": 106,
+        "parent": "TestCodexToolMappings",
+        "docstring": "Test search tool mappings"
+      },
+      {
+        "name": "TestCodexAgentRunner",
+        "kind": "class",
+        "lineno": 112,
+        "parent": null,
+        "docstring": "Test CodexAgentRunner class"
+      },
+      {
+        "name": "test_runner_initialization",
+        "kind": "method",
+        "lineno": 115,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test basic runner initialization"
+      },
+      {
+        "name": "test_build_command_default_mode",
+        "kind": "method",
+        "lineno": 127,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test command building with default mode"
+      },
+      {
+        "name": "test_build_command_bypass_mode",
+        "kind": "method",
+        "lineno": 146,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test command building with bypassPermissions mode"
+      },
+      {
+        "name": "test_build_command_dont_ask_mode",
+        "kind": "method",
+        "lineno": 156,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test command building with dontAsk mode"
+      },
+      {
+        "name": "test_build_command_custom_model",
+        "kind": "method",
+        "lineno": 166,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test command building with custom model"
+      },
+      {
+        "name": "test_build_command_default_model_not_included",
+        "kind": "method",
+        "lineno": 176,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test default model is not included in command"
+      },
+      {
+        "name": "test_build_command_skip_git_check",
+        "kind": "method",
+        "lineno": 185,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test command building with skip_git_check"
+      },
+      {
+        "name": "test_build_command_add_dirs",
+        "kind": "method",
+        "lineno": 194,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test command building with additional directories"
+      },
+      {
+        "name": "test_build_command_enable_search",
+        "kind": "method",
+        "lineno": 208,
+        "parent": "TestCodexAgentRunner",
+        "docstring": "Test command building with search enabled"
+      },
+      {
+        "name": "TestCodexEventMapping",
+        "kind": "class",
+        "lineno": 218,
+        "parent": null,
+        "docstring": "Test event mapping from Codex format to ATLAS format"
+      },
+      {
+        "name": "setup_method",
+        "kind": "method",
+        "lineno": 221,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Set up test runner"
+      },
+      {
+        "name": "test_map_reasoning_event",
+        "kind": "method",
+        "lineno": 226,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Test mapping reasoning item to text event (with italic formatting)"
+      },
+      {
+        "name": "test_map_agent_message_event",
+        "kind": "method",
+        "lineno": 244,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Test mapping agent_message item to text event"
+      },
+      {
+        "name": "test_map_command_execution_started",
+        "kind": "method",
+        "lineno": 261,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Test mapping command_execution start to tool_use event"
+      },
+      {
+        "name": "test_map_command_execution_completed",
+        "kind": "method",
+        "lineno": 282,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Test mapping command_execution completion to tool_result event"
+      },
+      {
+        "name": "test_map_command_execution_error",
+        "kind": "method",
+        "lineno": 304,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Test mapping failed command_execution to error tool_result"
+      },
+      {
+        "name": "test_map_turn_completed_with_usage",
+        "kind": "method",
+        "lineno": 324,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Test mapping turn.completed event with token usage"
+      },
+      {
+        "name": "test_map_unknown_event_returns_empty",
+        "kind": "method",
+        "lineno": 343,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Test that unknown events return empty list"
+      },
+      {
+        "name": "test_map_thread_started_stores_id",
+        "kind": "method",
+        "lineno": 353,
+        "parent": "TestCodexEventMapping",
+        "docstring": "Test that thread.started event stores thread_id"
+      },
+      {
+        "name": "TestCodexToolNameMapping",
+        "kind": "class",
+        "lineno": 365,
+        "parent": null,
+        "docstring": "Test the _map_tool_name helper"
+      },
+      {
+        "name": "setup_method",
+        "kind": "method",
+        "lineno": 368,
+        "parent": "TestCodexToolNameMapping",
+        "docstring": "Set up test runner"
+      },
+      {
+        "name": "test_map_known_tool",
+        "kind": "method",
+        "lineno": 373,
+        "parent": "TestCodexToolNameMapping",
+        "docstring": "Test mapping known Codex tool names"
+      },
+      {
+        "name": "test_map_unknown_tool_returns_original",
+        "kind": "method",
+        "lineno": 379,
+        "parent": "TestCodexToolNameMapping",
+        "docstring": "Test that unknown tool names return the original name"
+      },
+      {
+        "name": "TestCodexHelperMethods",
+        "kind": "class",
+        "lineno": 385,
+        "parent": null,
+        "docstring": "Test helper methods"
+      },
+      {
+        "name": "setup_method",
+        "kind": "method",
+        "lineno": 388,
+        "parent": "TestCodexHelperMethods",
+        "docstring": "Set up test runner"
+      },
+      {
+        "name": "test_is_tool_use_event",
+        "kind": "method",
+        "lineno": 393,
+        "parent": "TestCodexHelperMethods",
+        "docstring": "Test tool_use event detection"
+      },
+      {
+        "name": "test_extract_tool_use_from_event",
+        "kind": "method",
+        "lineno": 401,
+        "parent": "TestCodexHelperMethods",
+        "docstring": "Test extraction of tool use details"
+      },
+      {
+        "name": "test_extract_tool_use_from_non_tool_event",
+        "kind": "method",
+        "lineno": 420,
+        "parent": "TestCodexHelperMethods",
+        "docstring": "Test extraction returns None for non-tool events"
       }
     ],
     "errors": []

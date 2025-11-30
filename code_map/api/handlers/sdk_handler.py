@@ -47,6 +47,7 @@ class SDKModeHandler(BaseAgentHandler):
         # SDK mode always uses fresh sessions (conversation history managed internally)
         sdk_config = SDKRunnerConfig(
             cwd=self.config.cwd,
+            model=self.config.model,
             auto_approve_read=self.config.auto_approve_safe,
         )
         self._sdk_runner = SDKAgentRunner(sdk_config)

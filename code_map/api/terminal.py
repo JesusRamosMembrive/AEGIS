@@ -521,6 +521,7 @@ async def agent_websocket(websocket: WebSocket):
         config = HandlerConfig(
             cwd=cwd,
             websocket=websocket,
+            model=message.get("model", "claude-sonnet-4-20250514"),
             continue_session=message.get("continue", continue_session),
             auto_approve_safe=message.get("auto_approve_safe", False),
         )
@@ -1023,9 +1024,11 @@ async def gemini_agent_websocket(websocket: WebSocket):
                         continue
 
                     permission_mode = message.get("permission_mode", "default")
+                    model = message.get("model", "gemini-2.5-flash")
 
                     config = GeminiRunnerConfig(
                         cwd=cwd,
+                        model=model,
                         permission_mode=permission_mode,
                         auto_approve_safe_tools=message.get("auto_approve_safe", False),
                     )
@@ -1062,6 +1065,136 @@ async def gemini_agent_websocket(websocket: WebSocket):
         logger.info("Gemini Agent WebSocket disconnected")
     except Exception as e:
         logger.error(f"Error in Gemini agent session: {e}", exc_info=True)
+    finally:
+        if runner:
+            await runner.cancel()
+
+
+@router.websocket("/ws/codex-agent")
+async def codex_agent_websocket(websocket: WebSocket):
+    """
+    WebSocket endpoint for OpenAI Codex CLI JSON streaming mode
+
+    Provides real-time interaction with Codex CLI using JSON events.
+    Events are normalized to the same format as Claude for frontend compatibility.
+
+    Client sends:
+    - {"command": "run", "prompt": "...", "permission_mode": "...", "model": "..."}
+    - {"command": "cancel"}
+    - {"command": "tool_approval_response", "request_id": "...", "approved": bool}
+
+    Server sends:
+    - {"type": "connected", "cwd": "..."}
+    - {"type": "system", "subtype": "init", "content": {...}}
+    - {"type": "assistant", "subtype": "text", "content": "..."}
+    - {"type": "assistant", "subtype": "tool_use", "content": {...}}
+    - {"type": "user", "subtype": "tool_result", "content": {...}}
+    - {"type": "done"}
+    - {"type": "error", "content": "..."}
+    - {"type": "tool_approval_request", ...}
+    """
+    from code_map.terminal.codex_runner import CodexAgentRunner, CodexRunnerConfig
+
+    await websocket.accept()
+    logger.info("Codex Agent WebSocket connection accepted")
+
+    settings = load_settings()
+    cwd = str(settings.root_path)
+
+    runner: CodexAgentRunner | None = None
+
+    async def send_event(event_data: dict):
+        """Send parsed event to WebSocket"""
+        try:
+            await websocket.send_json(event_data)
+        except Exception as e:
+            logger.error(f"Error sending event: {e}")
+
+    async def send_error(message: str):
+        await websocket.send_json({"type": "error", "content": message})
+
+    async def send_done():
+        await websocket.send_json({"type": "done"})
+
+    async def handle_tool_approval_request(request):
+        """Send tool approval request to frontend"""
+        try:
+            approval_event = {
+                "type": "tool_approval_request",
+                "request_id": request.request_id,
+                "tool_name": request.tool_name,
+                "tool_input": request.tool_input,
+                "tool_use_id": request.tool_use_id,
+                "preview_type": request.preview_type,
+                "preview_data": request.preview_data,
+                "file_path": request.file_path,
+                "original_content": request.original_content,
+                "new_content": request.new_content,
+                "diff_lines": request.diff_lines,
+            }
+            await websocket.send_json(approval_event)
+        except Exception as e:
+            logger.error(f"Error sending tool approval request: {e}")
+
+    try:
+        await websocket.send_json({"type": "connected", "cwd": cwd})
+
+        while True:
+            try:
+                raw_message = await websocket.receive_text()
+                message = json.loads(raw_message)
+                command = message.get("command")
+
+                if command == "run":
+                    prompt = message.get("prompt", "")
+                    if not prompt:
+                        await send_error("Empty prompt")
+                        continue
+
+                    permission_mode = message.get("permission_mode", "default")
+                    model = message.get("model", "o4-mini")
+
+                    config = CodexRunnerConfig(
+                        cwd=cwd,
+                        model=model,
+                        permission_mode=permission_mode,
+                        auto_approve_safe_tools=message.get("auto_approve_safe", False),
+                        skip_git_check=message.get("skip_git_check", False),
+                        enable_search=message.get("enable_search", False),
+                    )
+                    runner = CodexAgentRunner(config)
+
+                    # Run prompt in task
+                    asyncio.create_task(
+                        runner.run_prompt(
+                            prompt=prompt,
+                            on_event=send_event,
+                            on_error=send_error,
+                            on_done=send_done,
+                            on_tool_approval_request=handle_tool_approval_request,
+                        )
+                    )
+
+                elif command == "tool_approval_response":
+                    if runner:
+                        request_id = message.get("request_id", "")
+                        approved = message.get("approved", False)
+                        feedback = message.get("feedback")
+
+                        runner.respond_to_tool_approval(request_id, approved, feedback)
+
+                elif command == "cancel":
+                    if runner:
+                        await runner.cancel()
+                        await websocket.send_json({"type": "cancelled"})
+
+            except json.JSONDecodeError as e:
+                await send_error(f"Invalid JSON: {e}")
+
+    except WebSocketDisconnect:
+        logger.info("Codex Agent WebSocket disconnected")
+    except Exception as e:
+        logger.error(f"Error in Codex agent session: {e}", exc_info=True)
     finally:
         if runner:
             await runner.cancel()

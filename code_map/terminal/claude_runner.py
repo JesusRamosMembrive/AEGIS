@@ -75,6 +75,7 @@ class ClaudeRunnerConfig:
     """Configuration for Claude Code runner"""
 
     cwd: str
+    model: str = "claude-sonnet-4-20250514"  # Default Claude model
     continue_session: bool = True
     verbose: bool = True
     timeout: Optional[float] = None  # None = no timeout
@@ -162,6 +163,10 @@ class ClaudeAgentRunner:
 
         if self.config.continue_session:
             cmd.append("--continue")
+
+        # Add model flag if not using default
+        if self.config.model and self.config.model != "claude-sonnet-4-20250514":
+            cmd.extend(["--model", self.config.model])
 
         # Add permission mode
         # NOTE: Claude Code stream-json mode does NOT support interactive permission prompts.

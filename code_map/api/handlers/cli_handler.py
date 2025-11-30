@@ -91,6 +91,7 @@ class CLIModeHandler(BaseAgentHandler):
         # Create runner with current settings
         config = ClaudeRunnerConfig(
             cwd=self.config.cwd,
+            model=self.config.model,
             continue_session=should_continue,
             verbose=self.config.verbose,
             permission_mode=self._permission_mode,
