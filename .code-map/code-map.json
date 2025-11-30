@@ -1702,54 +1702,75 @@
   {
     "path": "code_map/api/terminal.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:54:29.269783+00:00",
+    "modified_at": "2025-11-30T18:35:35.282768+00:00",
     "symbols": [
       {
         "name": "get_or_create_mcp_socket_server",
         "kind": "function",
-        "lineno": 44,
+        "lineno": 45,
         "parent": null,
         "docstring": "Get or create the global MCP socket server instance.\n\nThe socket server is shared across all WebSocket connections because\nthe MCP Permission Server subprocess needs a single point of communication."
       },
       {
         "name": "stop_mcp_socket_server",
         "kind": "function",
-        "lineno": 68,
+        "lineno": 69,
         "parent": null,
         "docstring": "Stop the global MCP socket server if running."
       },
       {
+        "name": "OpenNativeTerminalRequest",
+        "kind": "class",
+        "lineno": 88,
+        "parent": null,
+        "docstring": "Request body for opening a native system terminal with an agent."
+      },
+      {
+        "name": "OpenNativeTerminalResponse",
+        "kind": "class",
+        "lineno": 94,
+        "parent": null,
+        "docstring": "Response from opening a native terminal."
+      },
+      {
+        "name": "open_native_terminal",
+        "kind": "function",
+        "lineno": 102,
+        "parent": null,
+        "docstring": "Open a native system terminal with the specified agent launched.\n\nSupports Linux (gnome-terminal, konsole, xfce4-terminal, xterm),\nmacOS (Terminal.app, iTerm.app), and Windows (cmd, powershell, Windows Terminal).\n\nThe terminal will be opened in the specified working directory (or project root)\nwith the appropriate agent CLI command ready."
+      },
+      {
         "name": "terminal_websocket",
         "kind": "function",
-        "lineno": 83,
+        "lineno": 272,
         "parent": null,
         "docstring": "WebSocket endpoint for remote terminal access\n\nSpawns a shell process and provides bidirectional communication using text protocol.\n\nClient can send:\n- Raw text for shell input\n- \"__RESIZE__:cols:rows\" for terminal resize\n- \"__AGENT__:enable\" to enable agent parsing\n- \"__AGENT__:disable\" to disable agent parsing\n\nServer sends:\n- Raw text from shell output\n- \"__AGENT__:event:{json}\" for agent events (when enabled)"
       },
       {
         "name": "agent_websocket",
         "kind": "function",
-        "lineno": 358,
+        "lineno": 547,
         "parent": null,
         "docstring": "WebSocket endpoint for Claude Code JSON streaming mode\n\nUses `claude -p --output-format stream-json --verbose` to get structured\noutput instead of TUI rendering. Supports bidirectional communication for\ninteractive permission handling.\n\nClient sends JSON commands:\n- {\"command\": \"run\", \"prompt\": \"...\", \"continue\": true}\n- {\"command\": \"cancel\"}\n- {\"command\": \"new_session\"}\n- {\"command\": \"permission_response\", \"approved\": true, \"always\": false}\n\nServer sends JSON events:\n- {\"type\": \"system\", \"subtype\": \"init\", ...}\n- {\"type\": \"assistant\", \"subtype\": \"text\", \"content\": \"...\"}\n- {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n- {\"type\": \"user\", \"subtype\": \"tool_result\", \"content\": {...}}\n- {\"type\": \"permission_request\", \"tool\": \"...\", \"input\": {...}, \"request_id\": \"...\"}\n- {\"type\": \"done\"}\n- {\"type\": \"error\", \"content\": \"...\"}"
       },
       {
         "name": "agent_pty_websocket",
         "kind": "function",
-        "lineno": 715,
+        "lineno": 904,
         "parent": null,
         "docstring": "WebSocket endpoint for Claude Code PTY mode with real terminal interaction.\n\nThis mode spawns Claude in a pseudo-terminal (PTY) for proper Ink UI support,\nparses the terminal output into structured events, and enables real tool approval\nby detecting permission prompts in the output.\n\nClient sends JSON commands:\n- {\"command\": \"start\"} - Start a new PTY session\n- {\"command\": \"run\", \"prompt\": \"...\"} - Send a prompt to Claude\n- {\"command\": \"approve\"} - Approve a pending permission (send 'y')\n- {\"command\": \"deny\"} - Deny a pending permission (send 'n')\n- {\"command\": \"always_allow\"} - Always allow this permission (send 'a')\n- {\"command\": \"cancel\"} - Cancel current operation (send Ctrl+C)\n- {\"command\": \"stop\"} - Stop the PTY session\n\nServer sends JSON events:\n- {\"type\": \"session_started\"}\n- {\"type\": \"thinking\", \"data\": {...}}\n- {\"type\": \"completion\", \"data\": {...}}\n- {\"type\": \"permission_request\", \"data\": {...}}\n- {\"type\": \"message\", \"data\": {...}}\n- {\"type\": \"error\", \"data\": {...}}\n- {\"type\": \"session_ended\"}"
       },
       {
         "name": "gemini_agent_websocket",
         "kind": "function",
-        "lineno": 966,
+        "lineno": 1155,
         "parent": null,
         "docstring": "WebSocket endpoint for Gemini Code JSON streaming mode"
       },
       {
         "name": "codex_agent_websocket",
         "kind": "function",
-        "lineno": 1074,
+        "lineno": 1263,
         "parent": null,
         "docstring": "WebSocket endpoint for OpenAI Codex CLI JSON streaming mode\n\nProvides real-time interaction with Codex CLI using JSON events.\nEvents are normalized to the same format as Claude for frontend compatibility.\n\nClient sends:\n- {\"command\": \"run\", \"prompt\": \"...\", \"permission_mode\": \"...\", \"model\": \"...\"}\n- {\"command\": \"cancel\"}\n- {\"command\": \"tool_approval_response\", \"request_id\": \"...\", \"approved\": bool}\n\nServer sends:\n- {\"type\": \"connected\", \"cwd\": \"...\"}\n- {\"type\": \"system\", \"subtype\": \"init\", \"content\": {...}}\n- {\"type\": \"assistant\", \"subtype\": \"text\", \"content\": \"...\"}\n- {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n- {\"type\": \"user\", \"subtype\": \"tool_result\", \"content\": {...}}\n- {\"type\": \"done\"}\n- {\"type\": \"error\", \"content\": \"...\"}\n- {\"type\": \"tool_approval_request\", ...}"
       }
@@ -7580,19 +7601,6 @@
     "errors": []
   },
   {
-    "path": "frontend/dist/assets/index-6eDWbfFK.js",
-    "relative": true,
-    "modified_at": "2025-11-30T11:37:27.954420+00:00",
-    "symbols": [],
-    "errors": [
-      {
-        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
-        "lineno": null,
-        "col_offset": null
-      }
-    ]
-  },
-  {
     "path": "frontend/dist/assets/index-BBIFfjU4.js",
     "relative": true,
     "modified_at": "2025-11-25T08:25:21.846113+00:00",
@@ -7628,6 +7636,19 @@
     "errors": []
   },
   {
+    "path": "frontend/dist/assets/index-CeutnGbR.js",
+    "relative": true,
+    "modified_at": "2025-11-30T18:36:31.519032+00:00",
+    "symbols": [],
+    "errors": [
+      {
+        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
+        "lineno": null,
+        "col_offset": null
+      }
+    ]
+  },
+  {
     "path": "frontend/dist/assets/index-D8fI9KxZ.js",
     "relative": true,
     "modified_at": "2025-11-04T17:33:31.756170+00:00",
@@ -7644,7 +7665,7 @@
   {
     "path": "frontend/dist/index.html",
     "relative": true,
-    "modified_at": "2025-11-30T11:37:27.954420+00:00",
+    "modified_at": "2025-11-30T18:36:31.518669+00:00",
     "symbols": [
       {
         "name": "root",
@@ -8320,75 +8341,75 @@
   {
     "path": "frontend/src/components/ClaudeAgentView.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T11:25:50.829856+00:00",
+    "modified_at": "2025-11-30T18:36:18.458762+00:00",
     "symbols": [
       {
         "name": "extractResultContent",
         "kind": "function",
-        "lineno": 50,
+        "lineno": 51,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ClaudeAgentView",
         "kind": "function",
-        "lineno": 79,
+        "lineno": 80,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "stripApi",
         "kind": "function",
-        "lineno": 139,
+        "lineno": 141,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleGlobalKeyDown",
         "kind": "function",
-        "lineno": 293,
+        "lineno": 316,
         "parent": null,
         "docstring": null
       },
       {
         "name": "AgentHeader",
         "kind": "function",
-        "lineno": 624,
+        "lineno": 657,
         "parent": null,
         "docstring": null
       },
       {
         "name": "EmptyState",
         "kind": "function",
-        "lineno": 759,
+        "lineno": 792,
         "parent": null,
         "docstring": null
       },
       {
         "name": "MessageItem",
         "kind": "function",
-        "lineno": 778,
+        "lineno": 811,
         "parent": null,
         "docstring": null
       },
       {
         "name": "PermissionDenialsBanner",
         "kind": "function",
-        "lineno": 943,
+        "lineno": 976,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncateInput",
         "kind": "function",
-        "lineno": 1004,
+        "lineno": 1037,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncatePath",
         "kind": "function",
-        "lineno": 1014,
+        "lineno": 1047,
         "parent": null,
         "docstring": "============================================================================"
       }
@@ -8870,6 +8891,21 @@
         "name": "handleOllamaTestSubmit",
         "kind": "function",
         "lineno": 472,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "frontend/src/components/OpenShellModal.tsx",
+    "relative": true,
+    "modified_at": "2025-11-30T18:34:54.198656+00:00",
+    "symbols": [
+      {
+        "name": "OpenShellModal",
+        "kind": "function",
+        "lineno": 24,
         "parent": null,
         "docstring": null
       }
@@ -10554,124 +10590,124 @@
   {
     "path": "frontend/src/stores/claudeSessionStore.ts",
     "relative": true,
-    "modified_at": "2025-11-30T11:24:15.483953+00:00",
+    "modified_at": "2025-11-30T11:37:18.506333+00:00",
     "symbols": [
       {
         "name": "selectConnected",
         "kind": "function",
-        "lineno": 1296,
+        "lineno": 1308,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "selectRunning",
         "kind": "function",
-        "lineno": 1297,
+        "lineno": 1309,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectMessages",
         "kind": "function",
-        "lineno": 1298,
+        "lineno": 1310,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectSessionInfo",
         "kind": "function",
-        "lineno": 1299,
+        "lineno": 1311,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectLastError",
         "kind": "function",
-        "lineno": 1301,
+        "lineno": 1313,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectActiveToolCalls",
         "kind": "function",
-        "lineno": 1302,
+        "lineno": 1314,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPermission",
         "kind": "function",
-        "lineno": 1304,
+        "lineno": 1316,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionDenials",
         "kind": "function",
-        "lineno": 1306,
+        "lineno": 1318,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingToolApproval",
         "kind": "function",
-        "lineno": 1308,
+        "lineno": 1320,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingMCPApproval",
         "kind": "function",
-        "lineno": 1310,
+        "lineno": 1322,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYSessionActive",
         "kind": "function",
-        "lineno": 1312,
+        "lineno": 1324,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPTYPermission",
         "kind": "function",
-        "lineno": 1314,
+        "lineno": 1326,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYThinking",
         "kind": "function",
-        "lineno": 1316,
+        "lineno": 1328,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionMode",
         "kind": "function",
-        "lineno": 1318,
+        "lineno": 1330,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectAgentType",
         "kind": "function",
-        "lineno": 1320,
+        "lineno": 1332,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPlanDescriptionOnly",
         "kind": "function",
-        "lineno": 1322,
+        "lineno": 1334,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectToolUseCountInResponse",
         "kind": "function",
-        "lineno": 1324,
+        "lineno": 1336,
         "parent": null,
         "docstring": null
       }
