@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useClaudeSessionStore, PERMISSION_MODES, PERMISSION_MODE_LABELS, PERMISSION_MODE_DESCRIPTIONS, type PermissionMode, AGENT_TYPES, AGENT_TYPE_LABELS, AGENT_WS_ENDPOINTS, AGENT_MODELS, AGENT_SLASH_COMMANDS, type AgentType, type SlashCommand } from "../stores/claudeSessionStore";
 import { SlashCommandMenu, slashCommandMenuStyles } from "./SlashCommandMenu";
+import { OpenShellModal, openShellModalStyles } from "./OpenShellModal";
 import { useSessionHistoryStore } from "../stores/sessionHistoryStore";
 import { useBackendStore } from "../state/useBackendStore";
 import { resolveBackendBaseUrl } from "../api/client";
@@ -83,6 +84,7 @@ export function ClaudeAgentView() {
   const [addingPermissions, setAddingPermissions] = useState<Set<string>>(new Set());
   const [slashMenuVisible, setSlashMenuVisible] = useState(false);
   const [slashFilter, setSlashFilter] = useState("");
+  const [openShellModalVisible, setOpenShellModalVisible] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
@@ -244,22 +246,43 @@ export function ClaudeAgentView() {
     []
   );
 
-  // Handle slash command selection
+  // Handle slash command selection - show modal to open native terminal
   const handleSlashCommandSelect = useCallback(
-    (command: SlashCommand) => {
-      // If command has args, put command with space ready for args
-      // Otherwise, just set the command
-      if (command.hasArgs) {
-        setPromptValue(command.command + " ");
-      } else {
-        setPromptValue(command.command);
-      }
+    (_command: SlashCommand) => {
+      // All slash commands require a native terminal - show the modal
       setSlashMenuVisible(false);
       setSlashFilter("");
-      inputRef.current?.focus();
+      setPromptValue("");
+      setOpenShellModalVisible(true);
     },
     []
   );
+
+  // Handle opening native terminal with agent
+  const handleOpenNativeTerminal = useCallback(async () => {
+    try {
+      const baseUrl = resolveBackendBaseUrl(backendUrl) ?? "http://127.0.0.1:8010";
+      const response = await fetch(`${baseUrl}/api/terminal/open-native`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent_type: agentType,
+          working_directory: cwd,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || `Failed to open terminal: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("[ClaudeAgent] Native terminal opened:", result);
+    } catch (error) {
+      console.error("[ClaudeAgent] Failed to open native terminal:", error);
+      alert(`Failed to open terminal: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [backendUrl, agentType, cwd]);
 
   // Close slash menu
   const handleSlashMenuClose = useCallback(() => {
@@ -570,6 +593,16 @@ export function ClaudeAgentView() {
 
       <style>{styles}</style>
       <style>{slashCommandMenuStyles}</style>
+      <style>{openShellModalStyles}</style>
+
+      {/* Open Shell Modal - shown when user selects a slash command */}
+      <OpenShellModal
+        visible={openShellModalVisible}
+        agentType={agentType}
+        workingDirectory={cwd ?? undefined}
+        onClose={() => setOpenShellModalVisible(false)}
+        onConfirm={handleOpenNativeTerminal}
+      />
 
       {/* File Diff Modal */}
       {diffTarget && <FileDiffModal path={diffTarget} onClose={() => setDiffTarget(null)} />}

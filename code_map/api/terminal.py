@@ -9,8 +9,9 @@ Provides WebSocket endpoints for:
 import asyncio
 import logging
 import json
-from typing import Any, Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from typing import Any, Optional, Literal
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
+from pydantic import BaseModel
 from starlette.websockets import WebSocketState
 from code_map.terminal import PTYShell
 from code_map.terminal.agent_parser import AgentEvent
@@ -77,6 +78,194 @@ async def stop_mcp_socket_server():
 
 
 router = APIRouter(prefix="/terminal", tags=["terminal"])
+
+
+# ============================================================================
+# REST Endpoints for Native Terminal Launch
+# ============================================================================
+
+
+class OpenNativeTerminalRequest(BaseModel):
+    """Request body for opening a native system terminal with an agent."""
+    agent_type: Literal["claude", "codex", "gemini"]
+    working_directory: Optional[str] = None
+
+
+class OpenNativeTerminalResponse(BaseModel):
+    """Response from opening a native terminal."""
+    success: bool
+    message: str
+    terminal: Optional[str] = None
+
+
+@router.post("/open-native", response_model=OpenNativeTerminalResponse)
+async def open_native_terminal(request: OpenNativeTerminalRequest):
+    """
+    Open a native system terminal with the specified agent launched.
+
+    Supports Linux (gnome-terminal, konsole, xfce4-terminal, xterm),
+    macOS (Terminal.app, iTerm.app), and Windows (cmd, powershell, Windows Terminal).
+
+    The terminal will be opened in the specified working directory (or project root)
+    with the appropriate agent CLI command ready.
+    """
+    import platform
+    import subprocess
+    import shutil
+
+    # Get working directory
+    settings = load_settings()
+    cwd = request.working_directory or str(settings.root_path)
+
+    # Determine agent command
+    agent_commands = {
+        "claude": "claude",
+        "codex": "codex",
+        "gemini": "gemini",
+    }
+    agent_cmd = agent_commands.get(request.agent_type, "claude")
+
+    # Check if agent CLI is available
+    agent_path = shutil.which(agent_cmd)
+    if not agent_path:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Agent CLI '{agent_cmd}' not found in PATH. Please install it first."
+        )
+
+    system = platform.system()
+    terminal_found = None
+
+    try:
+        if system == "Linux":
+            # Try different Linux terminal emulators
+            linux_terminals = [
+                ("gnome-terminal", ["gnome-terminal", "--working-directory", cwd, "--", agent_cmd]),
+                ("konsole", ["konsole", "--workdir", cwd, "-e", agent_cmd]),
+                ("xfce4-terminal", ["xfce4-terminal", "--working-directory", cwd, "-e", agent_cmd]),
+                ("tilix", ["tilix", "--working-directory", cwd, "-e", agent_cmd]),
+                ("terminator", ["terminator", "--working-directory", cwd, "-e", agent_cmd]),
+                ("alacritty", ["alacritty", "--working-directory", cwd, "-e", agent_cmd]),
+                ("kitty", ["kitty", "--directory", cwd, agent_cmd]),
+                ("xterm", ["xterm", "-e", f"cd {cwd} && {agent_cmd}"]),
+            ]
+
+            for term_name, term_cmd in linux_terminals:
+                if shutil.which(term_name):
+                    terminal_found = term_name
+                    logger.info(f"Opening {term_name} with {agent_cmd} in {cwd}")
+                    subprocess.Popen(
+                        term_cmd,
+                        start_new_session=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    break
+
+            if not terminal_found:
+                raise HTTPException(
+                    status_code=500,
+                    detail="No supported terminal emulator found on Linux. Install gnome-terminal, konsole, or xterm."
+                )
+
+        elif system == "Darwin":
+            # macOS - use osascript to open Terminal.app or iTerm
+            terminal_found = "Terminal.app"
+
+            # Check for iTerm first (preferred by many developers)
+            iterm_script = f'''
+                tell application "iTerm"
+                    activate
+                    tell current window
+                        create tab with default profile
+                        tell current session
+                            write text "cd {cwd} && {agent_cmd}"
+                        end tell
+                    end tell
+                end tell
+            '''
+
+            terminal_script = f'''
+                tell application "Terminal"
+                    activate
+                    do script "cd {cwd} && {agent_cmd}"
+                end tell
+            '''
+
+            # Try iTerm first, fallback to Terminal.app
+            try:
+                # Check if iTerm exists
+                result = subprocess.run(
+                    ["osascript", "-e", 'tell application "System Events" to get name of processes'],
+                    capture_output=True, text=True
+                )
+                if "iTerm" in result.stdout:
+                    terminal_found = "iTerm.app"
+                    subprocess.Popen(
+                        ["osascript", "-e", iterm_script],
+                        start_new_session=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                else:
+                    subprocess.Popen(
+                        ["osascript", "-e", terminal_script],
+                        start_new_session=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+            except Exception:
+                # Fallback to Terminal.app
+                subprocess.Popen(
+                    ["osascript", "-e", terminal_script],
+                    start_new_session=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+
+        elif system == "Windows":
+            # Windows - try Windows Terminal first, fallback to cmd
+            terminal_found = "cmd"
+
+            # Windows Terminal (wt)
+            if shutil.which("wt"):
+                terminal_found = "Windows Terminal"
+                subprocess.Popen(
+                    ["wt", "-d", cwd, agent_cmd],
+                    start_new_session=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    shell=True,
+                )
+            else:
+                # Fallback to cmd
+                subprocess.Popen(
+                    f'start cmd /k "cd /d {cwd} && {agent_cmd}"',
+                    shell=True,
+                    start_new_session=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Unsupported operating system: {system}"
+            )
+
+        return OpenNativeTerminalResponse(
+            success=True,
+            message=f"Opened {terminal_found} with {agent_cmd}",
+            terminal=terminal_found,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error opening native terminal: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to open terminal: {str(e)}"
+        )
 
 
 @router.websocket("/ws")
