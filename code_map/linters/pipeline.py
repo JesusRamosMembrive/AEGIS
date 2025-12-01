@@ -611,7 +611,7 @@ def run_linters_pipeline(
 
     # Get audit run ID from environment if not provided
     if audit_run_id is None:
-        audit_run_id_str = os.getenv("ATLAS_AUDIT_RUN_ID")
+        audit_run_id_str = os.getenv("AEGIS_AUDIT_RUN_ID")
         if audit_run_id_str:
             try:
                 audit_run_id = int(audit_run_id_str)

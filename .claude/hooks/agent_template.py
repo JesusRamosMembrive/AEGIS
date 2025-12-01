@@ -3,7 +3,7 @@
 Agent Template with Audit Integration
 
 Copy this template and adapt it for your Claude Code agent workflows.
-This demonstrates best practices for integrating with the ATLAS audit system.
+This demonstrates best practices for integrating with the AEGIS audit system.
 
 Usage:
     1. Copy this file to your agent script
@@ -17,9 +17,9 @@ import sys
 import traceback
 from pathlib import Path
 
-# Add ATLAS to Python path (adjust if needed)
-ATLAS_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(ATLAS_ROOT))
+# Add AEGIS to Python path (adjust if needed)
+AEGIS_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(AEGIS_ROOT))
 
 from .claude.hooks.audit_bridge import (  # noqa: E402
     start_audit_session,
@@ -53,7 +53,7 @@ def main():
         return
 
     # Store in environment for easy access across functions
-    os.environ["ATLAS_AUDIT_RUN_ID"] = str(run_id)
+    os.environ["AEGIS_AUDIT_RUN_ID"] = str(run_id)
 
     print(f"📋 Started audit session {run_id}")
     print("🌐 View at: http://localhost:8010")

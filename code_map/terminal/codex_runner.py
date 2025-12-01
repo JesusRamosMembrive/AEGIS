@@ -70,7 +70,7 @@ def find_codex_cli() -> str:
     return "codex"
 
 
-# Permission mode mapping from ATLAS modes to Codex CLI flags
+# Permission mode mapping from AEGIS modes to Codex CLI flags
 # Codex CLI only supports:
 #   --sandbox <MODE>: read-only, workspace-write, danger-full-access
 #   --full-auto: auto-approve and use workspace-write sandbox
@@ -128,7 +128,7 @@ class CodexAgentRunner:
     Executes Codex CLI in JSON streaming mode with event mapping.
 
     Runs `codex exec "prompt" --json` and streams parsed JSON events,
-    mapping them to the normalized ATLAS event format for frontend compatibility.
+    mapping them to the normalized AEGIS event format for frontend compatibility.
     """
 
     def __init__(self, config: CodexRunnerConfig):
@@ -417,7 +417,7 @@ class CodexAgentRunner:
 
     def _map_event(self, event: dict) -> list[dict]:
         """
-        Map Codex event to normalized ATLAS event format.
+        Map Codex event to normalized AEGIS event format.
 
         Codex events are different from Claude events, so we need to translate them.
 

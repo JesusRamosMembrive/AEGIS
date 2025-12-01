@@ -31,16 +31,16 @@ export function HomeView({
   const detectionLabel = detectionBadgeLabel(detection);
   const backendOffline =
     statusQuery.isError || (!statusQuery.isFetching && !statusQuery.data && !statusQuery.isLoading);
-  const executableUrl = "https://github.com/jesusramon/atlas/releases/latest";
+  const executableUrl = "https://github.com/jesusramon/aegis/releases/latest";
 
   return (
     <div className="home-view">
       {backendOffline && (
         <div className="home-alert home-alert--error" role="alert">
           <div className="home-alert__text">
-            <strong>ATLAS Backend offline.</strong>
+            <strong>AEGIS Backend offline.</strong>
             <span>
-              Start the local server or download the packaged executable for ATLAS.
+              Start the local server or download the packaged executable for AEGIS.
             </span>
           </div>
           <a
@@ -62,9 +62,9 @@ export function HomeView({
               {stageStatusQuery.isLoading ? "Calculating…" : detectionLabel}
             </span>
           </div>
-          <h2>ATLAS: Control Your Code, Guide Your Agents</h2>
+          <h2>AEGIS: Control Your Code, Guide Your Agents</h2>
           <p className="home-hero__acronym">
-            Agent Tooling, Linting And Source-mapping
+            Agent Execution, Guidance & Inspection System
           </p>
           <p>
             Unified control center for code analysis, linting, and AI agent orchestration. Trace dependencies, monitor quality, execute commands remotely, and leverage local AI for contextual insights—all in one place.
@@ -72,11 +72,11 @@ export function HomeView({
           <div className="home-hero__credits">
             <span>Programmed by Jesús Ramos Membrive</span>
             <a
-              href="https://github.com/JesusRamosMembrive/ATLAS"
+              href="https://github.com/JesusRamosMembrive/AEGIS"
               target="_blank"
               rel="noreferrer"
             >
-              github.com/JesusRamosMembrive/ATLAS
+              github.com/JesusRamosMembrive/AEGIS
             </a>
           </div>
         </div>
@@ -195,7 +195,7 @@ export function HomeView({
             <h3>Docs</h3>
             <p>
               Inspect every markdown file under <code>docs/</code>, keep architecture notes handy,
-              and preview content without leaving ATLAS.
+              and preview content without leaving AEGIS.
             </p>
           </div>
           <span className="home-card-cta">Open Docs →</span>

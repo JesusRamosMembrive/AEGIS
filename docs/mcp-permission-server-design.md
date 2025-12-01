@@ -2,7 +2,7 @@
 
 ## Resumen Ejecutivo
 
-Este documento describe la arquitectura para implementar un sistema de Tool Approval usando `--permission-prompt-tool` de Claude Code con un MCP Server custom que se comunica con el frontend de ATLAS.
+Este documento describe la arquitectura para implementar un sistema de Tool Approval usando `--permission-prompt-tool` de Claude Code con un MCP Server custom que se comunica con el frontend de AEGIS.
 
 ## El Problema Actual
 
@@ -77,7 +77,7 @@ El sistema actual usa `--permission-mode plan`, lo que hace que Claude Code:
 from mcp.server.fastmcp import FastMCP
 import asyncio
 
-mcp = FastMCP("ATLASPermissions")
+mcp = FastMCP("AEGISPermissions")
 
 # Singleton para comunicación con el backend principal
 _approval_bridge = None
@@ -325,11 +325,11 @@ cmd.extend([
 ```json
 {
   "mcpServers": {
-    "atlas_approval": {
+    "aegis_approval": {
       "command": "python",
       "args": ["-m", "code_map.mcp.permission_server"],
       "env": {
-        "ATLAS_SOCKET": "/tmp/atlas_mcp.sock"
+        "AEGIS_SOCKET": "/tmp/aegis_mcp.sock"
       }
     }
   }

@@ -443,7 +443,7 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
             </div>
             <a
               className="overview-alert__cta"
-              href="https://github.com/jesusramos/ATLAS/blob/main/docs/backend_quickstart.md#dependencias-opcionales"
+              href="https://github.com/jesusramos/AEGIS/blob/main/docs/backend_quickstart.md#dependencias-opcionales"
               target="_blank"
               rel="noreferrer"
             >

@@ -1,6 +1,6 @@
 # Agent Audit Bridge
 
-This directory contains the **Agent Audit Bridge** - a simple Python interface that allows Claude Code agents (and other AI agents) to automatically log their work to the ATLAS Agent Monitoring Dashboard.
+This directory contains the **Agent Audit Bridge** - a simple Python interface that allows Claude Code agents (and other AI agents) to automatically log their work to the AEGIS Agent Monitoring Dashboard.
 
 ## Quick Start
 
@@ -107,7 +107,7 @@ with audit_context(run_id, "Analyze authentication flow", phase="plan"):
 ### Helpers
 
 - **`get_current_run_id()`**
-  - Gets run ID from `ATLAS_AUDIT_RUN_ID` environment variable
+  - Gets run ID from `AEGIS_AUDIT_RUN_ID` environment variable
   - Useful for sharing run ID across functions
 
 ## Workflow Phases
@@ -130,7 +130,7 @@ Add audit calls directly to your agent code:
 ```python
 #!/usr/bin/env python3
 import sys
-sys.path.insert(0, '/path/to/ATLAS')
+sys.path.insert(0, '/path/to/AEGIS')
 from .claude.hooks.audit_bridge import *
 
 def my_agent_task():
@@ -154,7 +154,7 @@ def my_agent_task():
 
 ### Option 2: Environment Variable
 
-Set `ATLAS_AUDIT_RUN_ID` once and use `get_current_run_id()`:
+Set `AEGIS_AUDIT_RUN_ID` once and use `get_current_run_id()`:
 
 ```python
 import os
@@ -162,7 +162,7 @@ from .claude.hooks.audit_bridge import *
 
 # In your agent startup
 run_id = start_audit_session("My work session")
-os.environ["ATLAS_AUDIT_RUN_ID"] = str(run_id)
+os.environ["AEGIS_AUDIT_RUN_ID"] = str(run_id)
 
 # Later, in any function
 def some_function():
@@ -174,9 +174,9 @@ def some_function():
 
 Once you start logging, your work appears in real-time on the **Agent Monitoring Dashboard**:
 
-1. **Start the ATLAS backend**:
+1. **Start the AEGIS backend**:
    ```bash
-   cd /path/to/ATLAS
+   cd /path/to/AEGIS
    python -m code_map.cli run --root .
    ```
 
@@ -223,7 +223,7 @@ The bridge gracefully handles cases where the audit system is unavailable:
 - All other functions check for `None` run_id and skip logging
 - Your agent code continues working normally
 
-This means you can use the bridge even in environments where ATLAS isn't available.
+This means you can use the bridge even in environments where AEGIS isn't available.
 
 ## Architecture
 

@@ -1,16 +1,16 @@
 {
   "mcpServers": {
-    "atlas-tools": {
+    "aegis-tools": {
       "command": "python",
       "args": [
         "-m",
         "code_map.mcp.tool_proxy_server",
         "--socket",
-        "/tmp/atlas_tool_approval.sock"
+        "/tmp/aegis_tool_approval.sock"
       ],
       "env": {
-        "ATLAS_TOOL_SOCKET": "/tmp/atlas_tool_approval.sock",
-        "ATLAS_CWD": "${CWD}"
+        "AEGIS_TOOL_SOCKET": "/tmp/aegis_tool_approval.sock",
+        "AEGIS_CWD": "${CWD}"
       }
     }
   }

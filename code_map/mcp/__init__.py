@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 """
-MCP (Model Context Protocol) module for ATLAS.
+MCP (Model Context Protocol) module for AEGIS.
 
 Provides MCP server implementation for tool approval workflow
 with Claude Code's --permission-prompt-tool feature.

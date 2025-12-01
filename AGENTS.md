@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-ATLAS mixes a stage-aware framework, a FastAPI analysis backend, and a React UI. Use this guide to keep code, prompts, and docs predictable.
+AEGIS mixes a stage-aware framework, a FastAPI analysis backend, and a React UI. Use this guide to keep code, prompts, and docs predictable.
 
 ## Project Structure & Module Organization
 - `code_map/`: Python backend (analyzers, tracers, linter pipeline, FastAPI server, `code_map.cli`). Shared models in `models.py`; settings in `settings.py`.

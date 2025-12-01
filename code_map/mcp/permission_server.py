@@ -5,12 +5,12 @@ MCP Permission Server for Claude Code Tool Approval.
 
 This server implements the --permission-prompt-tool interface for Claude Code.
 It receives permission requests from Claude Code and coordinates with the
-ATLAS backend to get user approval via the frontend UI.
+AEGIS backend to get user approval via the frontend UI.
 
 Usage with Claude Code:
     claude -p --permission-prompt-tool mcp__atlas_approval__check_permission "prompt"
 
-The server communicates with the ATLAS backend via Unix socket to:
+The server communicates with the AEGIS backend via Unix socket to:
 1. Receive permission requests from Claude Code
 2. Forward them to the frontend for user approval
 3. Return the user's decision to Claude Code
@@ -31,8 +31,8 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Socket path for communication with ATLAS backend
-DEFAULT_SOCKET_PATH = "/tmp/atlas_mcp_approval.sock"
+# Socket path for communication with AEGIS backend
+DEFAULT_SOCKET_PATH = "/tmp/aegis_mcp_approval.sock"
 
 
 class PermissionServer:
@@ -40,7 +40,7 @@ class PermissionServer:
     MCP Permission Server that handles tool approval requests.
 
     This can run in two modes:
-    1. Standalone: Communicates with ATLAS backend via Unix socket
+    1. Standalone: Communicates with AEGIS backend via Unix socket
     2. Embedded: Uses ApprovalBridge directly (for testing)
     """
 
@@ -138,14 +138,14 @@ class PermissionServer:
     async def _request_via_socket(
         self, tool_name: str, tool_input: dict[str, Any], context: str
     ) -> dict[str, Any]:
-        """Request approval via Unix socket to ATLAS backend"""
+        """Request approval via Unix socket to AEGIS backend"""
         print(
             f"DEBUG: [PermissionServer] Connecting to socket {self.socket_path}",
             flush=True,
         )
 
         try:
-            # Connect to ATLAS backend
+            # Connect to AEGIS backend
             reader, writer = await asyncio.open_unix_connection(self.socket_path)
 
             # Send request
@@ -204,8 +204,8 @@ def get_server() -> PermissionServer:
     """Get or create the global PermissionServer instance"""
     global _server
     if _server is None:
-        socket_path = os.environ.get("ATLAS_MCP_SOCKET", DEFAULT_SOCKET_PATH)
-        auto_approve = os.environ.get("ATLAS_MCP_AUTO_APPROVE", "").lower() == "true"
+        socket_path = os.environ.get("AEGIS_MCP_SOCKET", DEFAULT_SOCKET_PATH)
+        auto_approve = os.environ.get("AEGIS_MCP_AUTO_APPROVE", "").lower() == "true"
         _server = PermissionServer(
             socket_path=socket_path, auto_approve_safe=auto_approve
         )
@@ -235,7 +235,7 @@ def create_mcp_server():
         logger.error("MCP SDK not installed. Run: pip install 'mcp[cli]'")
         raise
 
-    mcp = FastMCP("atlas_approval")
+    mcp = FastMCP("aegis_approval")
 
     @mcp.tool()
     async def check_permission(
@@ -271,11 +271,11 @@ def main():
     """Run the MCP server in standalone mode"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="ATLAS MCP Permission Server")
+    parser = argparse.ArgumentParser(description="AEGIS MCP Permission Server")
     parser.add_argument(
         "--socket",
         default=DEFAULT_SOCKET_PATH,
-        help="Unix socket path for communication with ATLAS backend",
+        help="Unix socket path for communication with AEGIS backend",
     )
     parser.add_argument(
         "--auto-approve-safe",
@@ -295,14 +295,14 @@ def main():
     args = parser.parse_args()
 
     # Configure server
-    os.environ["ATLAS_MCP_SOCKET"] = args.socket
+    os.environ["AEGIS_MCP_SOCKET"] = args.socket
     if args.auto_approve_safe:
-        os.environ["ATLAS_MCP_AUTO_APPROVE"] = "true"
+        os.environ["AEGIS_MCP_AUTO_APPROVE"] = "true"
 
     # Create and run MCP server
     mcp = create_mcp_server()
 
-    print("Starting ATLAS MCP Permission Server", file=sys.stderr)
+    print("Starting AEGIS MCP Permission Server", file=sys.stderr)
     print(f"  Socket: {args.socket}", file=sys.stderr)
     print(f"  Transport: {args.transport}", file=sys.stderr)
     print(f"  Auto-approve safe: {args.auto_approve_safe}", file=sys.stderr)

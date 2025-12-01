@@ -3,7 +3,7 @@
 Agent Audit Bridge for Claude Code
 
 This module provides a simplified interface for Claude Code agents to log
-their actions to the ATLAS audit system. It wraps the core audit hooks from
+their actions to the AEGIS audit system. It wraps the core audit hooks from
 code_map.audit and provides easy-to-use functions that agents can call.
 
 Usage Examples:
@@ -23,7 +23,7 @@ Usage Examples:
     end_audit_session(run_id, success=True)
 
 Integration:
-    This bridge automatically connects to the ATLAS audit database and emits
+    This bridge automatically connects to the AEGIS audit database and emits
     events that appear in real-time on the Agent Monitoring Dashboard.
 
     The backend API serves these events via SSE at:
@@ -510,7 +510,7 @@ def get_current_run_id() -> Optional[int]:
     """
     Get the current audit run ID from environment variable.
 
-    Agents can set ATLAS_AUDIT_RUN_ID in their environment to automatically
+    Agents can set AEGIS_AUDIT_RUN_ID in their environment to automatically
     use the same run ID across all audit calls.
 
     Returns:
@@ -519,13 +519,13 @@ def get_current_run_id() -> Optional[int]:
     Example:
         # In your agent startup:
         run_id = start_audit_session("My work session")
-        os.environ["ATLAS_AUDIT_RUN_ID"] = str(run_id)
+        os.environ["AEGIS_AUDIT_RUN_ID"] = str(run_id)
 
         # Later, in any function:
         current_run = get_current_run_id()
         log_thought(current_run, "Some analysis...")
     """
-    run_id_str = os.environ.get("ATLAS_AUDIT_RUN_ID")
+    run_id_str = os.environ.get("AEGIS_AUDIT_RUN_ID")
     if run_id_str:
         try:
             return int(run_id_str)
@@ -625,7 +625,7 @@ def example_usage():
         return
 
     # Store in environment for convenience
-    os.environ["ATLAS_AUDIT_RUN_ID"] = str(run_id)
+    os.environ["AEGIS_AUDIT_RUN_ID"] = str(run_id)
 
     try:
         # Log planning phase

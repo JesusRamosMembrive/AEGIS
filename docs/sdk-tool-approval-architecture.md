@@ -628,7 +628,7 @@ elif tool_name == "NewTool":
 
 1. Iniciar backend:
 ```bash
-cd /home/jesusramos/Workspace/ATLAS
+cd /home/jesusramos/Workspace/AEGIS
 .venv/bin/python -m code_map.cli run --root .
 ```
 

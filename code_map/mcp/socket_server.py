@@ -2,7 +2,7 @@
 """
 Unix Socket Server for MCP Permission Communication.
 
-This server runs as part of the ATLAS backend and listens for
+This server runs as part of the AEGIS backend and listens for
 permission requests from the MCP Permission Server subprocess.
 
 It bridges the MCP server (running as Claude Code subprocess) with
@@ -27,7 +27,7 @@ class MCPSocketServer:
     """
     Unix Socket server that receives permission requests from MCP server.
 
-    This runs in the main ATLAS backend process and:
+    This runs in the main AEGIS backend process and:
     1. Listens on a Unix socket for requests from MCP Permission Server
     2. Forwards requests to the ApprovalBridge
     3. The bridge notifies the frontend and waits for user response
