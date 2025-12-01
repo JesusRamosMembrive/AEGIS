@@ -234,7 +234,7 @@ class OptionalFilesStatus(BaseModel):
 
 
 class AgentInstallStatus(BaseModel):
-    """Estado de instalación para un agente (Claude o Codex)."""
+    """Estado de instalación para un agente (Claude, Codex o Gemini)."""
 
     expected: List[str]
     present: List[str]
@@ -270,6 +270,7 @@ class StageStatusResponse(BaseModel):
     root_path: str
     claude: AgentInstallStatus
     codex: AgentInstallStatus
+    gemini: AgentInstallStatus
     docs: DocsStatus
     detection: StageDetectionStatus
 
@@ -387,6 +388,10 @@ class StageInitRequest(BaseModel):
     """Petición para inicializar los assets stage-aware."""
 
     agents: AgentSelection = Field(default="both")
+    force: bool = Field(
+        default=False,
+        description="Si True, fuerza reinstalación limpia eliminando archivos existentes.",
+    )
 
 
 class StageInitResponse(BaseModel):

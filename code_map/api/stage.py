@@ -40,9 +40,16 @@ async def initialize_stage_assets(
     request: StageInitRequest,
     state: AppState = Depends(get_app_state),
 ) -> StageInitResponse:
-    """Ejecuta init_project.py sobre el root actual para instalar instrucciones."""
+    """
+    Ejecuta init_project.py sobre el root actual para instalar instrucciones.
+
+    Soporta:
+    - agents: "claude", "codex", "gemini", "both" (claude+codex), "all" (los tres)
+    - force: Si True, fuerza reinstalación limpia
+    """
     agents: AgentSelection = request.agents  # type: ignore[assignment]
-    result = await run_initializer(state.settings.root_path, agents)
+    force: bool = getattr(request, "force", False)
+    result = await run_initializer(state.settings.root_path, agents, force=force)
     return StageInitResponse.model_validate(result)
 
 

@@ -66,7 +66,7 @@
 
 ## 📚 RECURSOS
 
-- **Historial completo**: Ver `.claude/01-session-history.md` para contexto profundo
+- **Historial completo**: Ver `.gemini/01-session-history.md` para contexto profundo
 - **Arquitectura**: Ver `docs/{feature}/architecture.md` para planes detallados
 - **Documentación**: Ver `docs/` para guías técnicas
 

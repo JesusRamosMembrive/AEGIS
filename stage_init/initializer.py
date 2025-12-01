@@ -28,9 +28,10 @@ class InitializationConfig:
 
     project_path: Path
     existing_project: bool
-    agent_selection: str  # claude | codex | both
+    agent_selection: str  # claude | codex | gemini | both | all
     dry_run: bool = False
     run_claude_init: bool = True
+    force: bool = False  # If True, overwrite existing files
 
 
 @dataclass
@@ -41,6 +42,7 @@ class InitializationResult:
     template_summaries: Dict[str, TemplateSummary] = field(default_factory=dict)
     stage_update: Optional[StageUpdateResult] = None
     claude_md_created: bool = False
+    gemini_md_created: bool = False
 
 
 class ProjectInitializer:
@@ -72,6 +74,7 @@ class ProjectInitializer:
             template_destinations,
             placeholders=placeholders,
             dry_run=self.config.dry_run,
+            force=self.config.force,
             logger_override=self.log,
         )
 
@@ -109,6 +112,27 @@ class ProjectInitializer:
                 claude_instructions_appended = append_custom_instructions(
                     claude_md_path,
                     instructions_template,
+                    dry_run=self.config.dry_run,
+                    logger_override=self.log,
+                )
+
+        if self._should_prepare_gemini():
+            self._ensure_agents_directory(dest_dir / ".gemini")
+            gemini_md_path = dest_dir / "GEMINI.md"
+            gemini_templates = template_sources.get("gemini")
+            gemini_instructions_template = (
+                gemini_templates / "CUSTOM_INSTRUCTIONS.md"
+                if gemini_templates
+                else None
+            )
+
+            if not self.config.dry_run and not gemini_md_path.exists():
+                self._write_basic_gemini_md(gemini_md_path, dest_dir.name)
+
+            if gemini_instructions_template and gemini_instructions_template.exists():
+                append_custom_instructions(
+                    gemini_md_path,
+                    gemini_instructions_template,
                     dry_run=self.config.dry_run,
                     logger_override=self.log,
                 )
@@ -179,6 +203,10 @@ class ProjectInitializer:
             template_sources["codex"] = self.template_root / "basic" / ".codex"
             template_destinations["codex"] = dest_dir / ".codex"
 
+        if self._should_prepare_gemini():
+            template_sources["gemini"] = self.template_root / "basic" / ".gemini"
+            template_destinations["gemini"] = dest_dir / ".gemini"
+
         for category, path in template_sources.items():
             if not path.exists():
                 raise FileNotFoundError(
@@ -218,10 +246,13 @@ class ProjectInitializer:
             agents_dir.mkdir(parents=True, exist_ok=True)
 
     def _should_prepare_claude(self) -> bool:
-        return self.config.agent_selection in {"claude", "both"}
+        return self.config.agent_selection in {"claude", "both", "all"}
 
     def _should_prepare_codex(self) -> bool:
-        return self.config.agent_selection in {"codex", "both"}
+        return self.config.agent_selection in {"codex", "both", "all"}
+
+    def _should_prepare_gemini(self) -> bool:
+        return self.config.agent_selection in {"gemini", "both", "all"}
 
     def _write_basic_claude_md(self, claude_md_path: Path, project_name: str) -> bool:
         content = (
@@ -240,4 +271,23 @@ class ProjectInitializer:
             return True
         except OSError as exc:
             self.log.warning("Failed to create fallback CLAUDE.md: %s", exc)
+            return False
+
+    def _write_basic_gemini_md(self, gemini_md_path: Path, project_name: str) -> bool:
+        content = (
+            f"# {project_name}\n\n"
+            "This file contains project context and instructions for Gemini Code.\n\n"
+            "## Project Overview\n\n"
+            "*Add project description here*\n\n"
+            "## Tech Stack\n\n"
+            "*Add technologies used here*\n\n"
+            "## Getting Started\n\n"
+            "*Add setup instructions here*\n"
+        )
+        try:
+            gemini_md_path.write_text(content, encoding="utf-8")
+            self.log.info("Created basic GEMINI.md fallback at %s", gemini_md_path)
+            return True
+        except OSError as exc:
+            self.log.warning("Failed to create fallback GEMINI.md: %s", exc)
             return False
