@@ -53,7 +53,7 @@ class TestCodexRunnerConfig:
 
 
 class TestCodexModeMappings:
-    """Test ATLAS to Codex mode mappings"""
+    """Test AEGIS to Codex mode mappings"""
 
     def test_default_mode(self):
         """Test default mode mapping - read-only sandbox"""
@@ -216,7 +216,7 @@ class TestCodexAgentRunner:
 
 
 class TestCodexEventMapping:
-    """Test event mapping from Codex format to ATLAS format"""
+    """Test event mapping from Codex format to AEGIS format"""
 
     def setup_method(self):
         """Set up test runner"""

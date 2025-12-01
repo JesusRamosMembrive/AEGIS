@@ -123,7 +123,7 @@ export function RemoteTerminalView() {
 
     // Welcome message
     terminal.writeln("\x1b[1;36m╔═══════════════════════════════════════════════════════╗\x1b[0m");
-    terminal.writeln("\x1b[1;36m║\x1b[0m    \x1b[1;33mATLAS Remote Terminal\x1b[0m                           \x1b[1;36m║\x1b[0m");
+    terminal.writeln("\x1b[1;36m║\x1b[0m    \x1b[1;33mAEGIS Remote Terminal\x1b[0m                           \x1b[1;36m║\x1b[0m");
     terminal.writeln("\x1b[1;36m╚═══════════════════════════════════════════════════════╝\x1b[0m");
     terminal.writeln("");
     terminal.writeln("\x1b[2mClick 'Connect' button to start shell session...\x1b[0m");

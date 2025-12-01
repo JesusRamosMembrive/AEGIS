@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# ATLAS Code Map - Desktop App Launcher (Docker Mode)
+# AEGIS Code Map - Desktop App Launcher (Docker Mode)
 # =============================================================================
 # Starts the Docker container and opens the app in kiosk mode (fullscreen)
 #

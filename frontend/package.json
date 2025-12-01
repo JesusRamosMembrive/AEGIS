@@ -1,7 +1,7 @@
 {
-  "name": "atlas-frontend",
+  "name": "aegis-frontend",
   "version": "3.2.0",
-  "description": "ATLAS: Automated Tracing, Linting And Source-mapping - Frontend UI",
+  "description": "AEGIS: Agent Execution, Guidance & Inspection System - Frontend UI",
   "private": true,
   "type": "module",
   "scripts": {

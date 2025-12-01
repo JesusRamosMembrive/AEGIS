@@ -251,17 +251,17 @@ class TestHelpers:
         """Test getting run ID from environment."""
         run_id = audit_bridge.start_audit_session(name="Test Session")
 
-        os.environ["ATLAS_AUDIT_RUN_ID"] = str(run_id)
+        os.environ["AEGIS_AUDIT_RUN_ID"] = str(run_id)
 
         retrieved_run_id = audit_bridge.get_current_run_id()
         assert retrieved_run_id == run_id
 
-        del os.environ["ATLAS_AUDIT_RUN_ID"]
+        del os.environ["AEGIS_AUDIT_RUN_ID"]
 
     def test_get_current_run_id_not_set(self):
         """Test getting run ID when not set."""
-        if "ATLAS_AUDIT_RUN_ID" in os.environ:
-            del os.environ["ATLAS_AUDIT_RUN_ID"]
+        if "AEGIS_AUDIT_RUN_ID" in os.environ:
+            del os.environ["AEGIS_AUDIT_RUN_ID"]
 
         run_id = audit_bridge.get_current_run_id()
         assert run_id is None

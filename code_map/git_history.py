@@ -144,7 +144,7 @@ class GitHistory:
 
         # Try to get audit_run_id from environment if not provided
         if self.audit_run_id is None:
-            audit_run_id_str = os.getenv("ATLAS_AUDIT_RUN_ID")
+            audit_run_id_str = os.getenv("AEGIS_AUDIT_RUN_ID")
             if audit_run_id_str:
                 try:
                     self.audit_run_id = int(audit_run_id_str)

@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# ATLAS Code Map - Local Development Server
+# AEGIS Code Map - Local Development Server
 # =============================================================================
 # Runs the app locally (without Docker) for full agent support.
 # Use this when you need Claude/Codex/Gemini agent functionality.
@@ -16,8 +16,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_PORT=8010
 FRONTEND_PORT=5173
-BACKEND_PID_FILE="/tmp/atlas-backend.pid"
-FRONTEND_PID_FILE="/tmp/atlas-frontend.pid"
+BACKEND_PID_FILE="/tmp/aegis-backend.pid"
+FRONTEND_PID_FILE="/tmp/aegis-frontend.pid"
 
 # Colors for output
 RED='\033[0;31m'
@@ -137,25 +137,15 @@ start_backend() {
     log_step "Starting backend on port $BACKEND_PORT..."
 
     cd "$SCRIPT_DIR"
+    source .venv/bin/activate
 
-    # Use Python from venv to run uvicorn module (more robust than script shebang)
-    local PYTHON="$SCRIPT_DIR/.venv/bin/python"
-    if [ ! -f "$PYTHON" ]; then
-        log_error "Python venv not found at $PYTHON"
-        log_error "Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
-        return 1
-    fi
-
-    # Start uvicorn via python -m (avoids shebang issues with venv)
-    # Skip initial scan to avoid hanging on large directories
+    # Start uvicorn in background
     CODE_MAP_ROOT="${CODE_MAP_ROOT:-$HOME}" \
-    CODE_MAP_SKIP_INITIAL_SCAN="${CODE_MAP_SKIP_INITIAL_SCAN:-1}" \
-    PYTHONPATH="$SCRIPT_DIR" \
-    nohup "$PYTHON" -m uvicorn code_map.server:app \
+    nohup .venv/bin/uvicorn code_map.server:app \
         --host 0.0.0.0 \
         --port $BACKEND_PORT \
         --reload \
-        > /tmp/atlas-backend.log 2>&1 &
+        > /tmp/aegis-backend.log 2>&1 &
 
     local pid=$!
     echo $pid > "$BACKEND_PID_FILE"
@@ -171,7 +161,7 @@ start_backend() {
         ((attempts++))
     done
 
-    log_error "Backend failed to start. Check /tmp/atlas-backend.log"
+    log_error "Backend failed to start. Check /tmp/aegis-backend.log"
     return 1
 }
 
@@ -189,7 +179,7 @@ start_frontend() {
     # Start Vite dev server in background
     VITE_DEPLOY_BACKEND_URL="http://localhost:$BACKEND_PORT" \
     nohup npm run dev -- --port $FRONTEND_PORT --host \
-        > /tmp/atlas-frontend.log 2>&1 &
+        > /tmp/aegis-frontend.log 2>&1 &
 
     local pid=$!
     echo $pid > "$FRONTEND_PID_FILE"
@@ -201,7 +191,7 @@ start_frontend() {
         log_info "Frontend started (PID: $pid)"
         return 0
     else
-        log_error "Frontend failed to start. Check /tmp/atlas-frontend.log"
+        log_error "Frontend failed to start. Check /tmp/aegis-frontend.log"
         return 1
     fi
 }
@@ -249,7 +239,7 @@ launch_browser() {
 show_status() {
     echo ""
     echo "==================================="
-    echo "  ATLAS Code Map - Local Mode"
+    echo "  AEGIS Code Map - Local Mode"
     echo "==================================="
 
     if is_running "$BACKEND_PID_FILE"; then
@@ -266,8 +256,8 @@ show_status() {
 
     echo ""
     echo "Logs:"
-    echo "  Backend:  /tmp/atlas-backend.log"
-    echo "  Frontend: /tmp/atlas-frontend.log"
+    echo "  Backend:  /tmp/aegis-backend.log"
+    echo "  Frontend: /tmp/aegis-frontend.log"
     echo ""
     echo "Stop with: $0 --stop"
     echo "==================================="
@@ -293,7 +283,7 @@ main() {
         --help|-h)
             echo "Usage: $0 [--backend|--stop|--status|--help]"
             echo ""
-            echo "Runs ATLAS locally (not in Docker) for full agent support."
+            echo "Runs AEGIS locally (not in Docker) for full agent support."
             echo ""
             echo "Options:"
             echo "  (none)     Start backend + frontend, open browser"

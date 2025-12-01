@@ -63,7 +63,7 @@ with audit_phase(run_id=123, phase_name="plan"):
 ### Integración con Linters ✅ NUEVO
 `code_map/linters/pipeline.py` modificado:
 - `run_linters_pipeline(audit_run_id=...)` acepta run_id
-- Auto-detección de `ATLAS_AUDIT_RUN_ID` environment variable
+- Auto-detección de `AEGIS_AUDIT_RUN_ID` environment variable
 - Cada linter tool ejecutado genera eventos automáticos
 - Fallback graceful si audit no disponible
 

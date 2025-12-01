@@ -28,7 +28,7 @@ Architecture:
                   └── Request approval via socket
                            │
                            ▼
-                  ATLAS Backend (socket server)
+                  AEGIS Backend (socket server)
                            │
                            └── Send to frontend via WebSocket
                                     │
@@ -259,8 +259,8 @@ class MCPProxyRunner:
                         self.config.cwd,
                     ],
                     "env": {
-                        "ATLAS_TOOL_SOCKET": self.config.socket_path,
-                        "ATLAS_CWD": self.config.cwd,
+                        "AEGIS_TOOL_SOCKET": self.config.socket_path,
+                        "AEGIS_CWD": self.config.cwd,
                     },
                 }
             }

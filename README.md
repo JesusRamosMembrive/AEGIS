@@ -1,10 +1,10 @@
-# ATLAS: Automated Tracing, Linting And Source-mapping
+# AEGIS: Agent Execution, Guidance & Inspection System
 
 **Prevent over-engineering. Guide evolution. Analyze your code. Stay in control.**
 
 A comprehensive toolkit combining:
 1. **Stage-Aware Framework** - Evolutionary development methodology with automatic stage detection
-2. **ATLAS Backend** - FastAPI service for code analysis, call tracing, and quality tooling
+2. **AEGIS Backend** - FastAPI service for code analysis, call tracing, and quality tooling
 
 Automatically detects your project's maturity and provides deep insights into your codebase structure.
 
@@ -31,7 +31,7 @@ Enforces evolutionary development through:
 
 #### 3-Phase Development Workflow
 
-Projects initialized with ATLAS follow a structured workflow:
+Projects initialized with AEGIS follow a structured workflow:
 
 **Phase 1: Planning** (@architect, @stage-keeper)
 - Design stage-appropriate architecture
@@ -49,7 +49,7 @@ Projects initialized with ATLAS follow a structured workflow:
 - Check security, correctness, stage compliance
 - **Output**: `.claude/doc/{feature}/qa-report.md`
 
-### ATLAS Backend
+### AEGIS Backend
 Provides deep code analysis via REST API:
 1. **Call Tracing** - Track function calls within and across files
 2. **Dependency Graphs** - Visualize module and class relationships
@@ -92,7 +92,7 @@ python init_project.py --existing /path/to/project
 python init_project.py --detect-only /path/to/project
 ```
 
-### ATLAS Backend
+### AEGIS Backend
 
 **Start the API server:**
 ```bash
@@ -217,7 +217,7 @@ AI executes. Human decides. Framework enforces.
 ## 📁 Project Structure
 
 ```
-atlas/
+aegis/
 ├── init_project.py              # Stage framework CLI entry point
 ├── assess_stage.py              # Stage detection CLI
 ├── stage_config.py              # Detection algorithms
@@ -306,7 +306,7 @@ python assess_stage.py /path/to/project
 python claude_assess.py /path/to/project
 ```
 
-### ATLAS Backend
+### AEGIS Backend
 
 **Run API server:**
 ```bash
@@ -341,7 +341,7 @@ python -m code_map.cli run --root . --reload
 - **[docs/STAGE_CRITERIA.md](./docs/STAGE_CRITERIA.md)** - Detailed stage criteria
 - **[docs/STAGES_COMPARISON.md](./docs/STAGES_COMPARISON.md)** - Side-by-side comparison
 
-**ATLAS Backend:**
+**AEGIS Backend:**
 - **[CLAUDE.md](./CLAUDE.md)** - Architecture and development guide
 - **API Docs** - Interactive Swagger UI at `/docs` when server is running
 
@@ -437,7 +437,7 @@ python assess_stage.py my-production-app
 - Claude Code CLI (`claude`) - For CLAUDE.md generation
 - `tree` command - For project visualization
 
-### ATLAS Backend
+### AEGIS Backend
 **Required:**
 - Python 3.10+
 - Dependencies: `pip install -r requirements.txt`
@@ -466,8 +466,8 @@ python assess_stage.py my-production-app
 
 ```bash
 # Clone repository
-git clone https://github.com/jesusramon/atlas
-cd atlas
+git clone https://github.com/jesusramon/aegis
+cd aegis
 
 # Stage framework works immediately (no dependencies)
 python init_project.py my-project
@@ -490,76 +490,12 @@ pip install ruff mypy bandit pytest pytest-cov
 # https://ollama.ai/download
 ```
 
-### Docker Setup (Desktop App Mode)
-
-Docker mode runs ATLAS as a desktop-like application with kiosk mode browser.
-
-> **Note:** Agent features (Claude/Codex/Gemini) do NOT work in Docker mode.
-> Use `./start-local.sh` if you need agent functionality.
+### Docker Setup (Coming Soon)
 
 ```bash
-# Start in kiosk mode (fullscreen, no browser UI)
-./start-app.sh
-
-# Start in windowed mode (app-like window)
-./start-app.sh --window
-
-# Stop the container
-./start-app.sh --stop
-
-# Check container status
-docker ps
+# Full stack with Docker Compose
+docker compose up
 ```
-
-The script automatically:
-1. Starts the Docker container
-2. Waits for the API to be ready
-3. Opens the browser in kiosk/window mode
-
-**Manual Docker commands (without browser launch):**
-```bash
-# Start container only
-docker compose up -d
-
-# View logs
-docker logs -f code-map-app
-
-# Stop container
-docker compose down
-```
-
-### Local Setup (With Agent Support)
-
-Local mode provides full agent CLI support (Claude, Codex, Gemini).
-
-```bash
-# Start backend + frontend + open browser
-./start-local.sh
-
-# Start backend only
-./start-local.sh --backend
-
-# Stop all servers
-./start-local.sh --stop
-
-# Check status
-./start-local.sh --status
-```
-
-**Requirements for local mode:**
-- Python venv: `.venv/` with dependencies installed
-- Node.js: `frontend/node_modules/`
-- Optional: `claude`, `codex`, or `gemini` CLI in PATH
-
-**Environment variables:**
-```bash
-# Set project root (default: $HOME)
-CODE_MAP_ROOT=/path/to/projects ./start-local.sh
-```
-
-**Logs:**
-- Backend: `/tmp/atlas-backend.log`
-- Frontend: `/tmp/atlas-frontend.log`
 
 ---
 
@@ -651,12 +587,12 @@ This framework emerged from experience developing with Claude Code and other AI 
 
 ## 📊 Project Status
 
-**Current Version:** 3.2 (ATLAS Integration)
+**Current Version:** 3.2 (AEGIS Integration)
 
 **Recent Updates:**
-- ✅ **v3.2** - Code quality improvements + ATLAS branding (XSS fix, refactoring, config)
+- ✅ **v3.2** - Code quality improvements + AEGIS branding (XSS fix, refactoring, config)
 - ✅ **v3.1** - Cross-file call tracing with import resolution
-- ✅ **v3.0** - Stage detection + ATLAS backend integration
+- ✅ **v3.0** - Stage detection + AEGIS backend integration
 - ✅ **v2.5** - Integrated subagents
 - ✅ **v2.0** - Stage-aware framework focus
 - ✅ **v1.0** - Project initialization
@@ -673,7 +609,7 @@ This framework emerged from experience developing with Claude Code and other AI 
 **Roadmap:**
 - [ ] Stage 3 visual call graph (D3.js/ReactFlow)
 - [ ] Export functionality (DOT, Mermaid, JSON)
-- [x] Docker Compose deployment
+- [ ] Docker Compose deployment
 - [ ] Stage transition validation
 - [ ] Team collaboration features
 - [ ] IDE integrations (VS Code extension)
@@ -700,9 +636,9 @@ A: Yes. The framework works with any AI assistant or manual development.
 **Q: What about non-Python projects?**
 A: Fully supported. Detection works for Python, JavaScript/TypeScript, Java, Go, Rust, Ruby, PHP, C/C++, and more.
 
-### ATLAS Backend
+### AEGIS Backend
 
-**Q: Can I use ATLAS without the stage framework?**
+**Q: Can I use AEGIS without the stage framework?**
 A: Yes. They're independent. Use the API server standalone for code analysis.
 
 **Q: What languages does call tracing support?**
@@ -737,7 +673,7 @@ This project follows its own stage-aware methodology (currently Stage 3).
 - Stage rule improvements
 - Language-specific criteria
 
-**ATLAS Backend:**
+**AEGIS Backend:**
 - Additional language support (JS/TS call tracing)
 - New analyzers (CSS, SQL, etc.)
 - Performance optimizations
@@ -789,19 +725,19 @@ This project follows its own stage-aware methodology (currently Stage 3).
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/jesusramon/atlas/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/jesusramon/atlas/discussions)
+- **Issues:** [GitHub Issues](https://github.com/jesusramon/aegis/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/jesusramon/aegis/discussions)
 - **Documentation:** This README + USAGE.md + CLAUDE.md
 
 ---
 
-## 🎯 Why ATLAS?
+## 🎯 Why AEGIS?
 
-**ATLAS** stands for **Automated Tracing, Linting And Source-mapping** - a fitting name for a tool that helps you navigate and understand your codebase, just like the mythological Atlas held up the celestial spheres.
+**AEGIS** stands for **Agent Execution, Guidance & Inspection System** - a fitting name for a tool that helps you control AI agent execution, guide their development decisions, and inspect their interactions with your codebase.
 
 The framework combines:
-- **Tracing** - Follow function calls across your entire codebase
-- **Linting** - Automated code quality checks and recommendations
-- **Source-mapping** - Visualize dependencies, architectures, and relationships
+- **Execution** - Run and monitor AI agent sessions with full visibility
+- **Guidance** - Stage-aware rules that prevent over-engineering
+- **Inspection** - Deep code analysis, call tracing, and quality tooling
 
-Together with the Stage-Aware Framework, ATLAS ensures you build software that evolves deliberately, not accidentally.
+Together with the Stage-Aware Framework, AEGIS ensures you build software that evolves deliberately, not accidentally.

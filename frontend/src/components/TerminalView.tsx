@@ -81,7 +81,7 @@ export function TerminalView({ events, maxHeight = 600 }: TerminalViewProps) {
 
     // Welcome message
     terminal.writeln("\x1b[1;36m╔════════════════════════════════════════════════════════╗\x1b[0m");
-    terminal.writeln("\x1b[1;36m║\x1b[0m  \x1b[1;37mATLAS Agent Monitoring Terminal\x1b[0m                    \x1b[1;36m║\x1b[0m");
+    terminal.writeln("\x1b[1;36m║\x1b[0m  \x1b[1;37mAEGIS Agent Monitoring Terminal\x1b[0m                    \x1b[1;36m║\x1b[0m");
     terminal.writeln("\x1b[1;36m╚════════════════════════════════════════════════════════╝\x1b[0m");
     terminal.writeln("");
 

@@ -81,12 +81,12 @@ class MCPProxyRunner:
         """Crea config MCP temporal para el tool proxy server"""
         config = {
             "mcpServers": {
-                "atlas-tools": {
+                "aegis-tools": {
                     "command": "python",
                     "args": ["-m", "code_map.mcp.tool_proxy_server"],
                     "env": {
-                        "ATLAS_TOOL_SOCKET": "/tmp/atlas_tool_approval.sock",
-                        "ATLAS_CWD": self.config.cwd,
+                        "AEGIS_TOOL_SOCKET": "/tmp/aegis_tool_approval.sock",
+                        "AEGIS_CWD": self.config.cwd,
                     }
                 }
             }

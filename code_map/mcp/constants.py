@@ -11,12 +11,12 @@ to eliminate duplication and ensure consistency.
 # ============================================================================
 
 # Primary socket path for tool approval communication
-DEFAULT_SOCKET_PATH = "/tmp/atlas_tool_approval.sock"
+DEFAULT_SOCKET_PATH = "/tmp/aegis_tool_approval.sock"
 
 # Environment variable names for socket configuration
-ENV_TOOL_SOCKET = "ATLAS_TOOL_SOCKET"
-ENV_MCP_SOCKET = "ATLAS_MCP_SOCKET"
-ENV_CWD = "ATLAS_CWD"
+ENV_TOOL_SOCKET = "AEGIS_TOOL_SOCKET"
+ENV_MCP_SOCKET = "AEGIS_MCP_SOCKET"
+ENV_CWD = "AEGIS_CWD"
 
 # ============================================================================
 # Timeouts (seconds unless otherwise noted)

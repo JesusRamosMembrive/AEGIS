@@ -112,7 +112,7 @@ class PTYParser:
         r"^\s*$",  # Empty lines
         r"^\?\s+for\s+shortcuts",  # UI hints
         r"^\s*\d+\s*$",  # Lone numbers (token counts)
-        r"Opus 4\.5\s+ATLAS",  # Header info
+        r"Opus 4\.5\s+AEGIS",  # Header info
     ]
 
     def __init__(self):

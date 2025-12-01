@@ -19,7 +19,7 @@ export function HeaderBar({
   const location = useLocation();
   const currentPath = location.pathname;
 
-  const rootLabel = rootPath ?? "ATLAS_ROOT";
+  const rootLabel = rootPath ?? "AEGIS_ROOT";
   const description = lastFullScan
     ? `Last scan: ${new Date(lastFullScan).toLocaleString()} · ${filesIndexed ?? 0} files`
     : `${filesIndexed ?? 0} indexed files`;
@@ -44,7 +44,7 @@ export function HeaderBar({
       <div className="header-left">
         <div className="brand-logo">&lt;/&gt;</div>
         <div className="brand-copy">
-          <h1>{title ?? "ATLAS"}</h1>
+          <h1>{title ?? "AEGIS"}</h1>
           <p>{description}</p>
         </div>
       </div>

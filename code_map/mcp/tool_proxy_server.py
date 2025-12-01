@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-MCP Tool Proxy Server for ATLAS Tool Approval.
+MCP Tool Proxy Server for AEGIS Tool Approval.
 
 This server provides proxy tools (atlas_write, atlas_edit, atlas_bash) that
 require user approval before execution. When Claude uses these tools, the
-server communicates with the ATLAS backend to get user approval.
+server communicates with the AEGIS backend to get user approval.
 
 Architecture:
 1. Claude CLI runs with --disallowed-tools "Write,Edit,Bash"
 2. This MCP server provides atlas_write, atlas_edit, atlas_bash
 3. Claude uses proxy tools instead of native tools
-4. Proxy tools request approval via Unix socket to ATLAS backend
+4. Proxy tools request approval via Unix socket to AEGIS backend
 5. If approved, proxy executes the operation and returns result
 6. If denied, proxy returns error to Claude
 
@@ -52,13 +52,13 @@ try:
     )
 except ImportError:
     # Fallback for standalone execution
-    DEFAULT_SOCKET_PATH = "/tmp/atlas_tool_approval.sock"
+    DEFAULT_SOCKET_PATH = "/tmp/aegis_tool_approval.sock"
     APPROVAL_TIMEOUT = 300.0
     PREVIEW_LINE_LIMIT = 50
     PREVIEW_CHAR_LIMIT = 200
     COMMAND_TIMEOUT_MS = 120000
-    ENV_TOOL_SOCKET = "ATLAS_TOOL_SOCKET"
-    ENV_CWD = "ATLAS_CWD"
+    ENV_TOOL_SOCKET = "AEGIS_TOOL_SOCKET"
+    ENV_CWD = "AEGIS_CWD"
 
 
 class ToolProxyServer:
@@ -88,7 +88,7 @@ class ToolProxyServer:
         preview: str = "",
     ) -> tuple[bool, str]:
         """
-        Request approval from ATLAS backend.
+        Request approval from AEGIS backend.
 
         Returns (approved, feedback) tuple.
         """
@@ -136,10 +136,10 @@ class ToolProxyServer:
                 await writer.wait_closed()
 
         except FileNotFoundError:
-            # Socket not found - ATLAS backend not running
+            # Socket not found - AEGIS backend not running
             # In development, we could auto-approve, but for safety we deny
             logger.warning(f"Socket not found: {self.socket_path}")
-            return (False, "ATLAS backend not connected. Cannot approve tools.")
+            return (False, "AEGIS backend not connected. Cannot approve tools.")
 
         except Exception as e:
             logger.error(f"Error requesting approval: {e}")
@@ -392,7 +392,7 @@ def create_mcp_server():
         logger.error("MCP SDK not installed. Run: pip install 'mcp[cli]'")
         raise
 
-    mcp = FastMCP("atlas_tools")
+    mcp = FastMCP("aegis_tools")
 
     @mcp.tool()
     async def atlas_write(file_path: str, content: str) -> str:
@@ -483,7 +483,7 @@ def main():
     """Run the MCP Tool Proxy Server"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="ATLAS MCP Tool Proxy Server")
+    parser = argparse.ArgumentParser(description="AEGIS MCP Tool Proxy Server")
     parser.add_argument(
         "--socket",
         default=DEFAULT_SOCKET_PATH,
@@ -503,14 +503,14 @@ def main():
     args = parser.parse_args()
 
     # Configure environment
-    os.environ["ATLAS_TOOL_SOCKET"] = args.socket
+    os.environ["AEGIS_TOOL_SOCKET"] = args.socket
     if args.cwd:
-        os.environ["ATLAS_CWD"] = args.cwd
+        os.environ["AEGIS_CWD"] = args.cwd
 
     # Create and run server
     mcp = create_mcp_server()
 
-    print("Starting ATLAS MCP Tool Proxy Server", file=sys.stderr)
+    print("Starting AEGIS MCP Tool Proxy Server", file=sys.stderr)
     print(f"  Socket: {args.socket}", file=sys.stderr)
     print(f"  CWD: {args.cwd or os.getcwd()}", file=sys.stderr)
     print(f"  Transport: {args.transport}", file=sys.stderr)

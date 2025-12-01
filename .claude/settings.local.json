@@ -40,7 +40,17 @@
       "Bash(timeout 60 codex exec:*)",
       "Bash(gemini --help:*)",
       "Bash(gemini --version:*)",
-      "Bash(timeout 15 gemini:*)"
+      "Bash(timeout 15 gemini:*)",
+      "Bash(git log:*)",
+      "Bash(docker compose config:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(chmod:*)",
+      "Bash(/home/jesusramos/Workspace/ATLAS/start-app.sh:*)",
+      "Bash(/home/jesusramos/Workspace/ATLAS/start-local.sh:*)",
+      "Bash(fuser:*)"
     ],
     "deny": [],
     "ask": []

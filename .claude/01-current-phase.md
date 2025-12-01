@@ -2,7 +2,7 @@
 
 **Última actualización**: 2025-11-26
 **Etapa detectada**: Stage 3 (Production-Ready)
-**Proyecto**: ATLAS - Stage-Aware Development Framework + Code Map Backend
+**Proyecto**: AEGIS - Stage-Aware Development Framework + Code Map Backend
 
 ---
 

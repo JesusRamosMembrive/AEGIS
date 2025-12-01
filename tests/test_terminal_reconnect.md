@@ -14,13 +14,13 @@
 
 ### 1. Start Backend
 ```bash
-cd /home/jesusramos/Workspace/ATLAS
+cd /home/jesusramos/Workspace/AEGIS
 python3 -m code_map.cli run --root .
 ```
 
 ### 2. Open Frontend
 ```bash
-cd /home/jesusramos/Workspace/ATLAS/frontend
+cd /home/jesusramos/Workspace/AEGIS/frontend
 npm run dev
 ```
 

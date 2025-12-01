@@ -827,7 +827,7 @@ El servidor envía eventos JSON uno por uno. Cada mensaje es un objeto JSON inde
 
 ```bash
 # Terminal 1: Iniciar backend
-cd /home/jesusramos/Workspace/ATLAS
+cd /home/jesusramos/Workspace/AEGIS
 python -m code_map.cli run --root .
 
 # Terminal 2: Test con Python
@@ -902,11 +902,11 @@ Stream complete!
 
 ```bash
 # Terminal 1: Backend
-cd /home/jesusramos/Workspace/ATLAS
+cd /home/jesusramos/Workspace/AEGIS
 python -m code_map.cli run --root .
 
 # Terminal 2: Frontend
-cd /home/jesusramos/Workspace/ATLAS/frontend
+cd /home/jesusramos/Workspace/AEGIS/frontend
 npm run dev
 
 # Terminal 3 (opcional): Logs

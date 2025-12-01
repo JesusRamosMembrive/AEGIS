@@ -1076,7 +1076,7 @@
   {
     "path": "code_map/api/schemas.py",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.594315+00:00",
+    "modified_at": "2025-12-01T16:14:36.770239+00:00",
     "symbols": [
       {
         "name": "HealthResponse",
@@ -1223,7 +1223,7 @@
         "kind": "class",
         "lineno": 236,
         "parent": null,
-        "docstring": "Estado de instalaci\u00f3n para un agente (Claude o Codex)."
+        "docstring": "Estado de instalaci\u00f3n para un agente (Claude, Codex o Gemini)."
       },
       {
         "name": "DocsStatus",
@@ -1249,378 +1249,378 @@
       {
         "name": "OllamaModelSchema",
         "kind": "class",
-        "lineno": 277,
+        "lineno": 278,
         "parent": null,
         "docstring": "Modelo disponible en Ollama."
       },
       {
         "name": "OllamaStatusSchema",
         "kind": "class",
-        "lineno": 288,
+        "lineno": 289,
         "parent": null,
         "docstring": "Estado detectado para Ollama."
       },
       {
         "name": "OllamaStatusResponse",
         "kind": "class",
-        "lineno": 301,
+        "lineno": 302,
         "parent": null,
         "docstring": "Respuesta con el estado actual de Ollama."
       },
       {
         "name": "OllamaStartRequest",
         "kind": "class",
-        "lineno": 308,
+        "lineno": 309,
         "parent": null,
         "docstring": "Petici\u00f3n para iniciar el servidor Ollama."
       },
       {
         "name": "OllamaStartResponse",
         "kind": "class",
-        "lineno": 314,
+        "lineno": 315,
         "parent": null,
         "docstring": "Respuesta tras intentar iniciar Ollama."
       },
       {
         "name": "OllamaTestRequest",
         "kind": "class",
-        "lineno": 325,
+        "lineno": 326,
         "parent": null,
         "docstring": "Petici\u00f3n para realizar un chat de prueba con Ollama."
       },
       {
         "name": "OllamaTestResponse",
         "kind": "class",
-        "lineno": 335,
+        "lineno": 336,
         "parent": null,
         "docstring": "Respuesta tras ejecutar una prueba de chat contra Ollama."
       },
       {
         "name": "OllamaInsightsRequest",
         "kind": "class",
-        "lineno": 346,
+        "lineno": 347,
         "parent": null,
         "docstring": "Petici\u00f3n para generar insights manualmente."
       },
       {
         "name": "OllamaInsightsResponse",
         "kind": "class",
-        "lineno": 363,
+        "lineno": 364,
         "parent": null,
         "docstring": "Respuesta tras generar insights manualmente."
       },
       {
         "name": "OllamaInsightEntry",
         "kind": "class",
-        "lineno": 371,
+        "lineno": 372,
         "parent": null,
         "docstring": "Elemento individual dentro del historial de insights."
       },
       {
         "name": "OllamaInsightsClearResponse",
         "kind": "class",
-        "lineno": 380,
+        "lineno": 381,
         "parent": null,
         "docstring": "Respuesta tras limpiar el historial de insights."
       },
       {
         "name": "StageInitRequest",
         "kind": "class",
-        "lineno": 386,
+        "lineno": 387,
         "parent": null,
         "docstring": "Petici\u00f3n para inicializar los assets stage-aware."
       },
       {
         "name": "StageInitResponse",
         "kind": "class",
-        "lineno": 392,
+        "lineno": 397,
         "parent": null,
         "docstring": "Respuesta tras ejecutar init_project.py."
       },
       {
         "name": "SuperClaudeLogEntry",
         "kind": "class",
-        "lineno": 403,
+        "lineno": 408,
         "parent": null,
         "docstring": "Salida detallada de cada comando ejecutado por el instalador."
       },
       {
         "name": "SuperClaudeInstallResponse",
         "kind": "class",
-        "lineno": 412,
+        "lineno": 417,
         "parent": null,
         "docstring": "Resultado de sincronizar el framework SuperClaude."
       },
       {
         "name": "LinterToolSchema",
         "kind": "class",
-        "lineno": 425,
+        "lineno": 430,
         "parent": null,
         "docstring": "Estado de una herramienta est\u00e1ndar de linters."
       },
       {
         "name": "LinterCustomRuleSchema",
         "kind": "class",
-        "lineno": 438,
+        "lineno": 443,
         "parent": null,
         "docstring": "Descripci\u00f3n de una regla de calidad personalizada."
       },
       {
         "name": "NotificationChannelSchema",
         "kind": "class",
-        "lineno": 449,
+        "lineno": 454,
         "parent": null,
         "docstring": "Canal disponible para notificaciones de escritorio."
       },
       {
         "name": "LintersDiscoveryResponse",
         "kind": "class",
-        "lineno": 459,
+        "lineno": 464,
         "parent": null,
         "docstring": "Payload con el resultado del discovery de linters."
       },
       {
         "name": "LinterIssueDetailSchema",
         "kind": "class",
-        "lineno": 469,
+        "lineno": 474,
         "parent": null,
         "docstring": "Detalle de incidencias registradas por un linter."
       },
       {
         "name": "LinterToolRunSchema",
         "kind": "class",
-        "lineno": 483,
+        "lineno": 488,
         "parent": null,
         "docstring": "Resultado de ejecutar una herramienta est\u00e1ndar."
       },
       {
         "name": "LinterRunCustomRuleSchema",
         "kind": "class",
-        "lineno": 501,
+        "lineno": 506,
         "parent": null,
         "docstring": "Estado de una regla personalizada ejecutada."
       },
       {
         "name": "LinterCoverageSchema",
         "kind": "class",
-        "lineno": 514,
+        "lineno": 519,
         "parent": null,
         "docstring": "Instant\u00e1nea de cobertura de tests."
       },
       {
         "name": "LinterReportSummarySchema",
         "kind": "class",
-        "lineno": 522,
+        "lineno": 527,
         "parent": null,
         "docstring": "Resumen de un reporte de linters."
       },
       {
         "name": "LinterChartDataSchema",
         "kind": "class",
-        "lineno": 539,
+        "lineno": 544,
         "parent": null,
         "docstring": "Datos agregados para visualizaciones."
       },
       {
         "name": "LintersReportSchema",
         "kind": "class",
-        "lineno": 547,
+        "lineno": 552,
         "parent": null,
         "docstring": "Payload completo de un reporte de linters."
       },
       {
         "name": "LintersReportListItemSchema",
         "kind": "class",
-        "lineno": 563,
+        "lineno": 568,
         "parent": null,
         "docstring": "Elemento resumido para listados de reportes."
       },
       {
         "name": "LintersReportRecordSchema",
         "kind": "class",
-        "lineno": 576,
+        "lineno": 581,
         "parent": null,
         "docstring": "Registro completo con el payload detallado."
       },
       {
         "name": "NotificationEntrySchema",
         "kind": "class",
-        "lineno": 582,
+        "lineno": 587,
         "parent": null,
         "docstring": "Notificaci\u00f3n almacenada en la base de datos."
       },
       {
         "name": "BrowseDirectoryResponse",
         "kind": "class",
-        "lineno": 598,
+        "lineno": 603,
         "parent": null,
         "docstring": "Respuesta al seleccionar un directorio en el servidor."
       },
       {
         "name": "DirectoryItem",
         "kind": "class",
-        "lineno": 604,
+        "lineno": 609,
         "parent": null,
         "docstring": "Representa un directorio en el listado."
       },
       {
         "name": "ListDirectoriesResponse",
         "kind": "class",
-        "lineno": 614,
+        "lineno": 619,
         "parent": null,
         "docstring": "Respuesta al listar directorios disponibles."
       },
       {
         "name": "ClassGraphNode",
         "kind": "class",
-        "lineno": 623,
+        "lineno": 628,
         "parent": null,
         "docstring": "Nodo del grafo de clases."
       },
       {
         "name": "ClassGraphEdge",
         "kind": "class",
-        "lineno": 632,
+        "lineno": 637,
         "parent": null,
         "docstring": "Arista del grafo de clases."
       },
       {
         "name": "ClassGraphStats",
         "kind": "class",
-        "lineno": 642,
+        "lineno": 647,
         "parent": null,
         "docstring": "M\u00e9tricas del grafo generado."
       },
       {
         "name": "ClassGraphResponse",
         "kind": "class",
-        "lineno": 650,
+        "lineno": 655,
         "parent": null,
         "docstring": "Respuesta completa del grafo de clases."
       },
       {
         "name": "UMLAttribute",
         "kind": "class",
-        "lineno": 658,
+        "lineno": 663,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLMethod",
         "kind": "class",
-        "lineno": 664,
+        "lineno": 669,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLClass",
         "kind": "class",
-        "lineno": 670,
+        "lineno": 675,
         "parent": null,
         "docstring": null
       },
       {
         "name": "UMLDiagramResponse",
         "kind": "class",
-        "lineno": 681,
+        "lineno": 686,
         "parent": null,
         "docstring": null
       },
       {
         "name": "AuditRunSchema",
         "kind": "class",
-        "lineno": 686,
+        "lineno": 691,
         "parent": null,
         "docstring": "Metadata for an auditable agent session."
       },
       {
         "name": "AuditRunCreateRequest",
         "kind": "class",
-        "lineno": 699,
+        "lineno": 704,
         "parent": null,
         "docstring": "Payload to start a new audit run."
       },
       {
         "name": "AuditRunCloseRequest",
         "kind": "class",
-        "lineno": 715,
+        "lineno": 720,
         "parent": null,
         "docstring": "Payload to finalize a run."
       },
       {
         "name": "AuditRunListResponse",
         "kind": "class",
-        "lineno": 728,
+        "lineno": 733,
         "parent": null,
         "docstring": "List wrapper for runs."
       },
       {
         "name": "AuditEventSchema",
         "kind": "class",
-        "lineno": 734,
+        "lineno": 739,
         "parent": null,
         "docstring": "Single auditable event within a run."
       },
       {
         "name": "AuditEventCreateRequest",
         "kind": "class",
-        "lineno": 750,
+        "lineno": 755,
         "parent": null,
         "docstring": "Payload to append a new event to a run."
       },
       {
         "name": "AuditEventListResponse",
         "kind": "class",
-        "lineno": 780,
+        "lineno": 785,
         "parent": null,
         "docstring": "List wrapper for events."
       },
       {
         "name": "serialize_symbol",
         "kind": "function",
-        "lineno": 786,
+        "lineno": 791,
         "parent": null,
         "docstring": "Serializa un objeto SymbolInfo a un SymbolSchema."
       },
       {
         "name": "serialize_error",
         "kind": "function",
-        "lineno": 801,
+        "lineno": 806,
         "parent": null,
         "docstring": "Serializa un objeto AnalysisError a un AnalysisErrorSchema."
       },
       {
         "name": "serialize_summary",
         "kind": "function",
-        "lineno": 810,
+        "lineno": 815,
         "parent": null,
         "docstring": "Serializa un objeto FileSummary a un FileSummarySchema."
       },
       {
         "name": "serialize_tree",
         "kind": "function",
-        "lineno": 833,
+        "lineno": 838,
         "parent": null,
         "docstring": "Serializa un objeto ProjectTreeNode a un TreeNodeSchema."
       },
       {
         "name": "serialize_search_results",
         "kind": "function",
-        "lineno": 880,
+        "lineno": 885,
         "parent": null,
         "docstring": "Serializa una lista de SymbolInfo a un SearchResultsSchema."
       },
       {
         "name": "serialize_settings",
         "kind": "function",
-        "lineno": 889,
+        "lineno": 894,
         "parent": null,
         "docstring": "Serializa el estado de la configuraci\u00f3n a un SettingsResponse."
       },
       {
         "name": "serialize_status",
         "kind": "function",
-        "lineno": 895,
+        "lineno": 900,
         "parent": null,
         "docstring": "Serializa el estado de la aplicaci\u00f3n a un StatusResponse."
       }
@@ -1673,7 +1673,7 @@
   {
     "path": "code_map/api/stage.py",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.594315+00:00",
+    "modified_at": "2025-12-01T16:14:36.770239+00:00",
     "symbols": [
       {
         "name": "get_stage_status",
@@ -1687,12 +1687,12 @@
         "kind": "function",
         "lineno": 39,
         "parent": null,
-        "docstring": "Ejecuta init_project.py sobre el root actual para instalar instrucciones."
+        "docstring": "Ejecuta init_project.py sobre el root actual para instalar instrucciones.\n\nSoporta:\n- agents: \"claude\", \"codex\", \"gemini\", \"both\" (claude+codex), \"all\" (los tres)\n- force: Si True, fuerza reinstalaci\u00f3n limpia"
       },
       {
         "name": "install_superclaude",
         "kind": "function",
-        "lineno": 50,
+        "lineno": 57,
         "parent": null,
         "docstring": "Sincroniza los activos del framework SuperClaude en el workspace."
       }
@@ -5057,96 +5057,103 @@
   {
     "path": "code_map/settings.py",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329286+00:00",
+    "modified_at": "2025-12-01T16:14:36.770451+00:00",
     "symbols": [
       {
         "name": "_normalize_exclusions",
         "kind": "function",
-        "lineno": 28,
+        "lineno": 29,
         "parent": null,
         "docstring": "Combina las exclusiones por defecto con exclusiones adicionales."
       },
       {
         "name": "AppSettings",
         "kind": "class",
-        "lineno": 45,
+        "lineno": 46,
         "parent": null,
         "docstring": "Define la configuraci\u00f3n de la aplicaci\u00f3n."
       },
       {
         "name": "to_payload",
         "kind": "method",
-        "lineno": 57,
+        "lineno": 58,
         "parent": "AppSettings",
         "docstring": "Convierte la configuraci\u00f3n a un diccionario serializable."
       },
       {
         "name": "with_updates",
         "kind": "method",
-        "lineno": 71,
+        "lineno": 72,
         "parent": "AppSettings",
         "docstring": "Crea una nueva instancia de AppSettings con actualizaciones."
       },
       {
         "name": "_parse_env_flag",
         "kind": "function",
-        "lineno": 134,
+        "lineno": 135,
         "parent": null,
         "docstring": "Parsea una variable de entorno como un booleano."
       },
       {
+        "name": "should_skip_initial_scan",
+        "kind": "function",
+        "lineno": 147,
+        "parent": null,
+        "docstring": "Determina si se debe saltar el escaneo inicial."
+      },
+      {
         "name": "_coerce_path",
         "kind": "function",
-        "lineno": 146,
+        "lineno": 154,
         "parent": null,
         "docstring": "Convierte un valor a una ruta absoluta."
       },
       {
         "name": "database_path",
         "kind": "function",
-        "lineno": 153,
+        "lineno": 161,
         "parent": null,
         "docstring": "Obtiene la ruta del archivo SQLite para estado global."
       },
       {
         "name": "open_database",
         "kind": "function",
-        "lineno": 162,
+        "lineno": 170,
         "parent": null,
         "docstring": "Abre una conexi\u00f3n a la base de datos y asegura el esquema."
       },
       {
         "name": "_ensure_db_schema",
         "kind": "function",
-        "lineno": 172,
+        "lineno": 180,
         "parent": null,
         "docstring": "Crea la tabla de configuraci\u00f3n si no existe."
       },
       {
         "name": "_load_settings_from_db",
         "kind": "function",
-        "lineno": 278,
+        "lineno": 286,
         "parent": null,
         "docstring": "Carga la configuraci\u00f3n desde la base de datos SQLite si existe."
       },
       {
         "name": "_save_settings_to_db",
         "kind": "function",
-        "lineno": 392,
+        "lineno": 400,
         "parent": null,
         "docstring": "Persiste la configuraci\u00f3n actual en SQLite."
       },
       {
         "name": "load_settings",
         "kind": "function",
-        "lineno": 531,
+        "lineno": 539,
         "parent": null,
         "docstring": "Carga la configuraci\u00f3n de la aplicaci\u00f3n desde el disco y el entorno."
       },
       {
         "name": "save_settings",
         "kind": "function",
-        "lineno": 580,
+        "lineno": 588,
         "parent": null,
         "docstring": "Guarda la configuraci\u00f3n en el disco."
       }
@@ -5156,68 +5163,68 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.598315+00:00",
+    "modified_at": "2025-12-01T16:14:36.770451+00:00",
     "symbols": [
       {
         "name": "FileStatus",
         "kind": "class",
-        "lineno": 76,
+        "lineno": 85,
         "parent": null,
         "docstring": "Representa el estado de un conjunto de archivos esperados."
       },
       {
         "name": "complete",
         "kind": "method",
-        "lineno": 84,
+        "lineno": 93,
         "parent": "FileStatus",
         "docstring": null
       },
       {
         "name": "_collect_file_status",
         "kind": "function",
-        "lineno": 88,
+        "lineno": 97,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_build_agent_payload",
         "kind": "function",
-        "lineno": 100,
+        "lineno": 109,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_detect_stage",
         "kind": "function",
-        "lineno": 122,
+        "lineno": 131,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_compute_status",
         "kind": "function",
-        "lineno": 173,
+        "lineno": 182,
         "parent": null,
         "docstring": null
       },
       {
         "name": "stage_status",
         "kind": "function",
-        "lineno": 197,
+        "lineno": 208,
         "parent": null,
         "docstring": "Obtiene el estado actual de los archivos stage-aware para un root dado."
       },
       {
         "name": "run_initializer",
         "kind": "function",
-        "lineno": 207,
+        "lineno": 218,
         "parent": null,
-        "docstring": "Ejecuta init_project.py contra el root indicado para instalar instrucciones."
+        "docstring": "Ejecuta init_project.py contra el root indicado para instalar instrucciones.\n\nArgs:\n    root: Directorio ra\u00edz del proyecto\n    agents: Selecci\u00f3n de agentes a instalar\n    force: Si True, fuerza reinstalaci\u00f3n limpia (elimina archivos existentes)"
       },
       {
         "name": "install_superclaude_framework",
         "kind": "function",
-        "lineno": 248,
+        "lineno": 276,
         "parent": null,
         "docstring": "Clona o actualiza SuperClaude Framework y sincroniza sus assets principales."
       }
@@ -5227,7 +5234,7 @@
   {
     "path": "code_map/state.py",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.599315+00:00",
+    "modified_at": "2025-12-01T16:14:36.770451+00:00",
     "symbols": [
       {
         "name": "_parse_enabled_tools_env",
@@ -5274,154 +5281,154 @@
       {
         "name": "shutdown",
         "kind": "method",
-        "lineno": 119,
+        "lineno": 130,
         "parent": "AppState",
         "docstring": "Detiene el estado de la aplicaci\u00f3n."
       },
       {
         "name": "_scheduler_loop",
         "kind": "method",
-        "lineno": 129,
+        "lineno": 140,
         "parent": "AppState",
         "docstring": "Bucle principal del programador de cambios."
       },
       {
         "name": "_serialize_changes",
         "kind": "method",
-        "lineno": 151,
+        "lineno": 162,
         "parent": "AppState",
         "docstring": "Serializa los cambios para la notificaci\u00f3n de eventos."
       },
       {
         "name": "perform_full_scan",
         "kind": "method",
-        "lineno": 162,
+        "lineno": 173,
         "parent": "AppState",
         "docstring": "Realiza un escaneo completo del proyecto."
       },
       {
         "name": "_compute_insights_next_run",
         "kind": "method",
-        "lineno": 184,
+        "lineno": 195,
         "parent": "AppState",
         "docstring": null
       },
       {
         "name": "_build_insights_context",
         "kind": "method",
-        "lineno": 187,
+        "lineno": 198,
         "parent": "AppState",
         "docstring": null
       },
       {
         "name": "to_relative",
         "kind": "method",
-        "lineno": 246,
+        "lineno": 257,
         "parent": "AppState",
         "docstring": "Convierte una ruta absoluta en una ruta relativa al root del proyecto."
       },
       {
         "name": "resolve_path",
         "kind": "method",
-        "lineno": 254,
+        "lineno": 265,
         "parent": "AppState",
         "docstring": "Resuelve una ruta relativa en una ruta absoluta dentro del root del proyecto."
       },
       {
         "name": "_within_root",
         "kind": "method",
-        "lineno": 261,
+        "lineno": 272,
         "parent": "AppState",
         "docstring": "Comprueba si una ruta est\u00e1 dentro del root del proyecto."
       },
       {
         "name": "is_watcher_running",
         "kind": "method",
-        "lineno": 269,
+        "lineno": 280,
         "parent": "AppState",
         "docstring": "Comprueba si el observador de archivos est\u00e1 en ejecuci\u00f3n."
       },
       {
         "name": "get_settings_payload",
         "kind": "method",
-        "lineno": 273,
+        "lineno": 284,
         "parent": "AppState",
         "docstring": "Obtiene el payload de configuraci\u00f3n para la API."
       },
       {
         "name": "get_status_payload",
         "kind": "method",
-        "lineno": 277,
+        "lineno": 288,
         "parent": "AppState",
         "docstring": "Obtiene el payload de estado para la API."
       },
       {
         "name": "update_settings",
         "kind": "method",
-        "lineno": 295,
+        "lineno": 306,
         "parent": "AppState",
         "docstring": "Actualiza la configuraci\u00f3n de la aplicaci\u00f3n."
       },
       {
         "name": "_build_components",
         "kind": "method",
-        "lineno": 379,
+        "lineno": 390,
         "parent": "AppState",
         "docstring": "(Re)construye los componentes de la aplicaci\u00f3n a partir de la configuraci\u00f3n."
       },
       {
         "name": "_build_linters_config",
         "kind": "method",
-        "lineno": 411,
+        "lineno": 422,
         "parent": "AppState",
         "docstring": "Construye la configuraci\u00f3n para el servicio de linters."
       },
       {
         "name": "_build_insights_config",
         "kind": "method",
-        "lineno": 440,
+        "lineno": 451,
         "parent": "AppState",
         "docstring": "Construye la configuraci\u00f3n para el servicio de insights."
       },
       {
         "name": "_apply_settings",
         "kind": "method",
-        "lineno": 450,
+        "lineno": 461,
         "parent": "AppState",
         "docstring": "Aplica la nueva configuraci\u00f3n a la aplicaci\u00f3n."
       },
       {
         "name": "run_linters_now",
         "kind": "method",
-        "lineno": 498,
+        "lineno": 509,
         "parent": "AppState",
         "docstring": "Ejecuta el pipeline de linters inmediatamente y devuelve el ID del reporte."
       },
       {
         "name": "run_insights_now",
         "kind": "method",
-        "lineno": 502,
+        "lineno": 513,
         "parent": "AppState",
         "docstring": "Genera insights inmediatamente usando la configuraci\u00f3n actual."
       },
       {
         "name": "build_insights_context",
         "kind": "method",
-        "lineno": 512,
+        "lineno": 523,
         "parent": "AppState",
         "docstring": "Expone el contexto usado por el generador de insights."
       },
       {
         "name": "_cancel_background_tasks",
         "kind": "method",
-        "lineno": 516,
+        "lineno": 527,
         "parent": "AppState",
         "docstring": "Cancela y limpia timers/tareas de linters e insights."
       },
       {
         "name": "_cancel_insights_tasks",
         "kind": "method",
-        "lineno": 522,
+        "lineno": 533,
         "parent": "AppState",
         "docstring": null
       }
@@ -8040,7 +8047,7 @@
   {
     "path": "frontend/src/api/types.ts",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.610676+00:00",
+    "modified_at": "2025-12-01T16:14:36.770451+00:00",
     "symbols": [],
     "errors": []
   },
@@ -9311,54 +9318,54 @@
   {
     "path": "frontend/src/components/StageToolkitView.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.613999+00:00",
+    "modified_at": "2025-12-01T16:14:36.771451+00:00",
     "symbols": [
       {
         "name": "formatList",
         "kind": "function",
-        "lineno": 36,
+        "lineno": 38,
         "parent": null,
         "docstring": null
       },
       {
         "name": "AgentStatusCard",
         "kind": "function",
-        "lineno": 50,
+        "lineno": 52,
         "parent": null,
         "docstring": null
       },
       {
         "name": "DocsStatusCard",
         "kind": "function",
-        "lineno": 104,
+        "lineno": 106,
         "parent": null,
         "docstring": null
       },
       {
         "name": "StageDetectionCard",
         "kind": "function",
-        "lineno": 136,
+        "lineno": 138,
         "parent": null,
         "docstring": null
       },
       {
         "name": "StageToolkitView",
         "kind": "function",
-        "lineno": 186,
+        "lineno": 188,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleStageInit",
         "kind": "function",
-        "lineno": 219,
+        "lineno": 222,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleSuperClaudeInstall",
         "kind": "function",
-        "lineno": 223,
+        "lineno": 226,
         "parent": null,
         "docstring": null
       }
@@ -54098,7 +54105,7 @@
   {
     "path": "stage_init/cli.py",
     "relative": true,
-    "modified_at": "2025-12-01T06:58:19.496584+00:00",
+    "modified_at": "2025-12-01T16:14:36.772451+00:00",
     "symbols": [
       {
         "name": "build_parser",
@@ -54110,21 +54117,21 @@
       {
         "name": "main",
         "kind": "function",
-        "lineno": 60,
+        "lineno": 65,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_print_summary",
         "kind": "function",
-        "lineno": 95,
+        "lineno": 101,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_print_file_change",
         "kind": "function",
-        "lineno": 164,
+        "lineno": 176,
         "parent": null,
         "docstring": null
       }
@@ -54134,7 +54141,7 @@
   {
     "path": "stage_init/initializer.py",
     "relative": true,
-    "modified_at": "2025-12-01T06:56:23.677409+00:00",
+    "modified_at": "2025-12-01T16:14:36.772451+00:00",
     "symbols": [
       {
         "name": "InitializationConfig",
@@ -54146,98 +54153,98 @@
       {
         "name": "InitializationResult",
         "kind": "class",
-        "lineno": 37,
+        "lineno": 38,
         "parent": null,
         "docstring": "Outcome of running the project initializer."
       },
       {
         "name": "ProjectInitializer",
         "kind": "class",
-        "lineno": 47,
+        "lineno": 48,
         "parent": null,
         "docstring": "Coordinates template installation, stage detection, and reporting."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 50,
+        "lineno": 51,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "run",
         "kind": "method",
-        "lineno": 62,
+        "lineno": 63,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_resolve_destination",
         "kind": "method",
-        "lineno": 166,
+        "lineno": 168,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_ensure_directory",
         "kind": "method",
-        "lineno": 172,
+        "lineno": 174,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_build_placeholders",
         "kind": "method",
-        "lineno": 180,
+        "lineno": 182,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_prepare_template_mappings",
         "kind": "method",
-        "lineno": 188,
+        "lineno": 190,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_ensure_agents_directory",
         "kind": "method",
-        "lineno": 216,
+        "lineno": 218,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_should_prepare_claude",
         "kind": "method",
-        "lineno": 246,
+        "lineno": 248,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_should_prepare_codex",
         "kind": "method",
-        "lineno": 249,
+        "lineno": 251,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_should_prepare_gemini",
         "kind": "method",
-        "lineno": 252,
+        "lineno": 254,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_write_basic_claude_md",
         "kind": "method",
-        "lineno": 255,
+        "lineno": 257,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_write_basic_gemini_md",
         "kind": "method",
-        "lineno": 274,
+        "lineno": 276,
         "parent": "ProjectInitializer",
         "docstring": null
       }
@@ -54290,7 +54297,7 @@
   {
     "path": "stage_init/templates.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.708105+00:00",
+    "modified_at": "2025-12-01T16:14:36.772451+00:00",
     "symbols": [
       {
         "name": "TemplateSummary",
@@ -54332,33 +54339,33 @@
         "kind": "function",
         "lineno": 40,
         "parent": null,
-        "docstring": "Copy template files category by category.\n\nArgs:\n    sources: Mapping from category name to template directory.\n    destinations: Mapping from category name to destination directory.\n    placeholders: Placeholder substitutions to apply (only for newly copied files).\n    dry_run: If True, no filesystem changes will be made."
+        "docstring": "Copy template files category by category.\n\nArgs:\n    sources: Mapping from category name to template directory.\n    destinations: Mapping from category name to destination directory.\n    placeholders: Placeholder substitutions to apply (only for newly copied files).\n    dry_run: If True, no filesystem changes will be made.\n    force: If True, overwrite existing files."
       },
       {
         "name": "_copy_directory",
         "kind": "function",
-        "lineno": 98,
+        "lineno": 102,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_copy_file",
         "kind": "function",
-        "lineno": 137,
+        "lineno": 144,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_apply_placeholders",
         "kind": "function",
-        "lineno": 166,
+        "lineno": 184,
         "parent": null,
         "docstring": null
       },
       {
         "name": "_ensure_directory",
         "kind": "function",
-        "lineno": 187,
+        "lineno": 205,
         "parent": null,
         "docstring": null
       }
