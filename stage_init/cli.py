@@ -34,14 +34,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--agent",
-        choices=["claude", "codex", "both"],
+        choices=["claude", "codex", "gemini", "both", "all"],
         default="both",
-        help="Which agent integrations to prepare (default: both)",
+        help="Which agent integrations to prepare (default: both). 'all' includes Claude, Codex and Gemini.",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Simulate actions without modifying the filesystem",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing files (clean install)",
     )
     parser.add_argument(
         "--skip-claude-init",
@@ -83,6 +88,7 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         agent_selection=args.agent,
         dry_run=args.dry_run,
         run_claude_init=not args.skip_claude_init,
+        force=args.force,
     )
 
     initializer = ProjectInitializer(config, logger_override=log)
@@ -103,14 +109,20 @@ def _print_summary(result, config: InitializationConfig, log: logging.Logger) ->
     codex_dir = dest_dir / ".codex"
     docs_dir = dest_dir / "docs"
 
-    if config.agent_selection in {"claude", "both"}:
+    if config.agent_selection in {"claude", "both", "all"}:
         print(f"✓ Claude context files at: {claude_dir}")
     else:
         print(
             f"ℹ️ Claude integration skipped (--agent={config.agent_selection}); core stage files stored at: {claude_dir}"
         )
 
-    if config.agent_selection in {"codex", "both"}:
+    if config.agent_selection in {"gemini", "both", "all"}:
+        gemini_dir = dest_dir / ".gemini"
+        print(f"✓ Gemini context files at: {gemini_dir}")
+    else:
+        print(f"ℹ️ Gemini integration skipped (--agent={config.agent_selection})")
+
+    if config.agent_selection in {"codex", "both", "all"}:
         print(f"✓ Codex instructions at: {codex_dir}")
     else:
         print(f"ℹ️ Codex integration skipped (--agent={config.agent_selection})")
@@ -122,6 +134,10 @@ def _print_summary(result, config: InitializationConfig, log: logging.Logger) ->
             print(f"\nAdded {len(summary.copied)} {category} file(s):")
             for item in summary.copied:
                 _print_file_change(item, "+", dest_dir)
+        if summary.updated:
+            print(f"\nUpdated {len(summary.updated)} {category} file(s):")
+            for item in summary.updated:
+                _print_file_change(item, "~", dest_dir)
         if summary.skipped:
             print(f"\nSkipped {len(summary.skipped)} existing {category} file(s):")
             for item in summary.skipped:
@@ -145,10 +161,14 @@ def _print_summary(result, config: InitializationConfig, log: logging.Logger) ->
     if config.dry_run:
         print("  # Re-run without --dry-run to apply these changes")
     else:
-        if config.agent_selection == "both":
+        if config.agent_selection == "all":
+            print("  # Agents ready: Claude Code + Codex CLI + Gemini CLI")
+        elif config.agent_selection == "both":
             print("  # Agents ready: Claude Code + Codex CLI")
         elif config.agent_selection == "claude":
             print("  # Agent ready: Claude Code")
+        elif config.agent_selection == "gemini":
+            print("  # Agent ready: Gemini CLI")
         else:
             print("  # Agent ready: Codex CLI")
 
@@ -159,3 +179,9 @@ def _print_file_change(path: Path, marker: str, dest_dir: Path) -> None:
     except ValueError:
         relative = path
     print(f"  {marker} {relative}")
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())

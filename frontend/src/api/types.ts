@@ -131,7 +131,7 @@ export interface StatusPayload {
   capabilities: AnalyzerCapability[];
 }
 
-export type StageAgentSelection = "claude" | "codex" | "both";
+export type StageAgentSelection = "claude" | "codex" | "gemini" | "both" | "all";
 
 export interface OptionalFilesStatus {
   expected: string[];
@@ -168,6 +168,7 @@ export interface StageStatusPayload {
   root_path: string;
   claude: AgentInstallStatus;
   codex: AgentInstallStatus;
+  gemini: AgentInstallStatus;
   docs: DocsStatus;
   detection: StageDetectionStatus;
 }
@@ -257,6 +258,7 @@ export interface OllamaInsightsClearResponse {
 
 export interface StageInitPayload {
   agents: StageAgentSelection;
+  force?: boolean;
 }
 
 export interface StageInitResponse {

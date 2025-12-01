@@ -43,6 +43,7 @@ def copy_templates(
     *,
     placeholders: Optional[MutableMapping[str, str]] = None,
     dry_run: bool = False,
+    force: bool = False,
     logger_override: Optional[logging.Logger] = None,
 ) -> Dict[str, TemplateSummary]:
     """
@@ -53,6 +54,7 @@ def copy_templates(
         destinations: Mapping from category name to destination directory.
         placeholders: Placeholder substitutions to apply (only for newly copied files).
         dry_run: If True, no filesystem changes will be made.
+        force: If True, overwrite existing files.
     """
 
     log = logger_override or logger
@@ -79,6 +81,7 @@ def copy_templates(
                         dest_dir / template_file.name,
                         placeholders=placeholders,
                         dry_run=dry_run,
+                        force=force,
                         log=log,
                     )
                 )
@@ -89,6 +92,7 @@ def copy_templates(
                     summary,
                     placeholders=placeholders,
                     dry_run=dry_run,
+                    force=force,
                     log=log,
                 )
 
@@ -101,6 +105,7 @@ def _copy_directory(
     *,
     placeholders: Optional[MutableMapping[str, str]],
     dry_run: bool,
+    force: bool,
     log: logging.Logger,
 ) -> TemplateSummary:
     summary = TemplateSummary()
@@ -119,6 +124,7 @@ def _copy_directory(
                     destination,
                     placeholders=placeholders,
                     dry_run=dry_run,
+                    force=force,
                     log=log,
                 )
             )
@@ -129,6 +135,7 @@ def _copy_directory(
                 summary,
                 placeholders=placeholders,
                 dry_run=dry_run,
+                force=force,
                 log=log,
             )
     return summary
@@ -141,26 +148,37 @@ def _copy_file(
     *,
     placeholders: Optional[MutableMapping[str, str]],
     dry_run: bool,
+    force: bool,
     log: logging.Logger,
 ) -> None:
-    if destination.exists():
+    is_update = destination.exists()
+
+    if is_update and not force:
         log.debug("Skipping existing file: %s", destination)
         summary.record_skipped(destination)
         return
 
     if dry_run:
-        log.info("[dry-run] Would copy %s -> %s", source, destination)
-        summary.record_copied(destination)
+        action = "overwrite" if is_update else "copy"
+        log.info("[dry-run] Would %s %s -> %s", action, source, destination)
+        if is_update:
+            summary.record_updated(destination)
+        else:
+            summary.record_copied(destination)
         return
 
-    log.info("Copying %s -> %s", source, destination)
+    action = "Overwriting" if is_update else "Copying"
+    log.info("%s %s -> %s", action, source, destination)
     _ensure_directory(destination.parent, dry_run=False, log=log)
     shutil.copy2(source, destination)
 
     if placeholders:
         _apply_placeholders(destination, placeholders, log=log)
 
-    summary.record_copied(destination)
+    if is_update:
+        summary.record_updated(destination)
+    else:
+        summary.record_copied(destination)
 
 
 def _apply_placeholders(

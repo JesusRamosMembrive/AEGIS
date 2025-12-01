@@ -26,70 +26,64 @@ Do NOT skip this protocol to "be helpful faster" - reading context IS being help
 
 **Need deep context?** Read `.claude/01-session-history.md` for full session details.
 
-During WORK:
-- Follow stage-specific rules strictly
-- Propose plans before implementing
-- Get approval for architectural decisions
-
 At END of session:
-- Update .claude/01-current-phase.md with:
-  * Brief summary of what was implemented
-  * Key decisions (1-2 sentences each)
-  * Next immediate steps
-- Move detailed session notes to .claude/01-session-history.md
-- **CRITICAL**: Keep 01-current-phase.md under 150 lines (compact for context efficiency)
+- Update .claude/01-current-phase.md with progress
+- **CRITICAL**: Keep 01-current-phase.md under 150 lines
 
-## 🔄 3-PHASE DEVELOPMENT WORKFLOW
+## 🔄 FEATURE DEVELOPMENT WORKFLOW
 
-This project follows a structured 3-phase workflow where specialized agents handle planning, implementation, and validation separately.
+For ANY new feature, follow this workflow with explicit gates:
+
+```
+1. CHECK/CREATE → 2. PLAN → 3. APPROVE → 4. IMPLEMENT → 5. TEST → 6. VALIDATE → 7. APPROVE
+```
 
 ### Phase 1: PLANNING (Research & Design)
 **Agents**: @architect, @stage-keeper
-**Output**: `.claude/doc/{feature}/architecture.md`
+**Output**: `docs/{feature}/architecture.md`
 
-**Responsibilities**:
-- Analyze requirements and constraints
-- Design stage-appropriate architecture
-- Select technology stack with rationale
-- Create detailed implementation roadmap
-- **NO code writing** - planning only
+**Steps**:
+1. Check if `docs/{feature}/` exists
+   - If exists: **READ existing documentation first**
+   - If not: Create the directory
+2. @architect analyzes requirements and constraints
+3. @architect designs stage-appropriate architecture
+4. @architect defines testing strategy (unit + integration)
+5. @stage-keeper validates stage-appropriateness
+6. Document in `docs/{feature}/architecture.md`
 
-**Workflow**:
-1. User requests feature or architectural guidance
-2. @orchestrator detects planning phase needed
-3. @architect creates architectural plan
-4. @stage-keeper validates stage-appropriateness
-5. Architecture documented in `.claude/doc/{feature}/architecture.md`
-6. User approves plan before Phase 2 starts
+**Architecture must include**:
+- Context & Requirements
+- Stage Assessment
+- Component Structure
+- Technology Stack with trade-offs
+- Build Order with dependencies
+- **Testing Strategy** (what to test, how)
+- Evolution Triggers
 
-**Output must include**:
-- Context & requirements
-- Stage assessment
-- Component structure diagram
-- Technology stack with trade-offs
-- Implementation guidance for Phase 2
-- Build order with dependencies
-- Evolution triggers
+**🚦 GATE**: Present plan to user. **WAIT FOR APPROVAL** before Phase 2.
 
-### Phase 2: IMPLEMENTATION (Building)
+### Phase 2: IMPLEMENTATION (Building & Testing)
 **Agent**: @implementer
-**Output**: Code files + `.claude/doc/{feature}/implementation.md`
+**Output**: Code files + `docs/{feature}/implementation.md`
 
-**Responsibilities**:
-- Read architecture plan FIRST (mandatory)
-- Execute plan component by component
-- Follow build order from plan
-- Track progress in implementation.md
-- Document blockers and deviations
-- **NO architectural decisions** - follow the plan
+**Steps**:
+1. **READ `architecture.md` FIRST** (mandatory)
+2. Implement components in specified build order
+3. Write unit tests for each component
+4. **Run unit tests - MUST PASS**
+5. Write integration tests (if Stage 2+)
+6. **Run integration tests - MUST PASS**
+7. Track progress in `docs/{feature}/implementation.md`
+8. Document any deviations or blockers
 
-**Workflow**:
-1. @implementer reads `.claude/doc/{feature}/architecture.md` (MANDATORY)
-2. Validates plan is complete and clear
-3. Implements components in specified order
-4. Updates `.claude/doc/{feature}/implementation.md` with progress
-5. Escalates blockers to @architect via @orchestrator
-6. Completes implementation and notifies @orchestrator
+**Testing Requirements by Stage**:
+| Stage | Unit Tests | Integration Tests |
+|-------|------------|-------------------|
+| 1 (PoC) | Optional | Not required |
+| 2 (Prototype) | Basic coverage | Optional |
+| 3 (Production) | Full coverage | Required |
+| 4 (Scale) | Full + edge cases | Full + performance |
 
 **Blockers trigger**:
 - Plan is unclear or incomplete
@@ -97,107 +91,62 @@ This project follows a structured 3-phase workflow where specialized agents hand
 - Need to deviate significantly from plan
 → **STOP**, document in `blockers.md`, request architect clarification
 
+**🚦 GATE**: All tests must **PASS** before Phase 3.
+
 ### Phase 3: VALIDATION (Quality Assurance)
 **Agents**: @code-reviewer, @stage-keeper
-**Output**: `.claude/doc/{feature}/qa-report.md`
+**Output**: `docs/{feature}/qa-report.md`
 
-**Responsibilities**:
-- Read plan and implementation docs
-- Validate implementation matches plan
-- Check security, correctness, performance
-- Verify stage-appropriate complexity
-- **NO redesign** - validate against plan
+**Steps**:
+1. @code-reviewer reads `architecture.md` and `implementation.md`
+2. Validate implementation matches plan
+3. Verify all tests pass (unit + integration)
+4. Check security, correctness, performance
+5. @stage-keeper verifies stage-appropriate complexity
+6. Document findings in `docs/{feature}/qa-report.md`
 
-**Workflow**:
-1. @code-reviewer reads architecture.md and implementation.md
-2. Validates plan adherence
-3. Performs security, correctness, stage compliance checks
-4. Documents findings in `.claude/doc/{feature}/qa-report.md`
-5. @stage-keeper performs final stage compliance check
-6. Recommendation: Approve / Minor Fixes / Request Changes
+**Recommendation options**:
+- ✅ **APPROVED**: Feature complete
+- ⚠️ **MINOR FIXES**: Small changes needed
+- ❌ **REQUEST CHANGES**: Return to Phase 2
 
-**Outcomes**:
-- ✅ **Approved**: Feature ready for merge
-- ⚠️ **Minor Fixes**: Small improvements needed, can proceed
-- ❌ **Request Changes**: Return to Phase 2, critical issues found
+**🚦 GATE**: Present QA report to user. **WAIT FOR FINAL APPROVAL**.
 
-### Agent Roles Summary
+## 📁 DOCUMENTATION STRUCTURE
+
+For each feature, maintain:
+```
+docs/{feature-name}/
+├── architecture.md      # Phase 1: Plan
+├── implementation.md    # Phase 2: Progress
+├── qa-report.md        # Phase 3: Validation
+└── blockers.md         # Issues (optional)
+```
+
+## 👥 AGENT ROLES
 
 | Agent | Phase | Role | Can Write Code? |
 |-------|-------|------|-----------------|
 | @architect | 1 | Design architecture, create plan | ❌ No |
 | @stage-keeper | 1, 2, 3 | Validate stage-appropriateness | ❌ No |
-| @implementer | 2 | Execute plan, write code | ✅ Yes |
+| @implementer | 2 | Execute plan, write code & tests | ✅ Yes |
 | @code-reviewer | 3 | Validate quality, plan adherence | ❌ No |
-| @orchestrator | All | Coordinate phases, manage transitions | ✅ Limited (docs only) |
-
-### Document Structure
-
-```
-.claude/doc/{feature-name}/
-├── architecture.md      # Phase 1: Architectural plan
-├── implementation.md    # Phase 2: Progress tracking
-├── qa-report.md        # Phase 3: QA validation
-└── blockers.md         # Issues preventing progress (optional)
-```
-
-### Session Context (Optional)
-
-For complex features requiring shared context across multiple agents:
-
-```
-.claude/sessions/
-└── context_session_{feature-name}.md  # Shared agent context
-```
-
-### Phase Transitions
-
-**Phase 1 → 2 (Planning → Implementation)**:
-- [ ] Architecture plan complete
-- [ ] Stage-keeper validated
-- [ ] User approved plan
-- [ ] Implementation roadmap clear
-
-**Phase 2 → 3 (Implementation → Validation)**:
-- [ ] All planned components implemented
-- [ ] Progress documented in implementation.md
-- [ ] No critical blockers
-- [ ] Basic manual testing passed
-
-**Phase 3 → Complete (Validation → Done)**:
-- [ ] QA report shows approval
-- [ ] All critical issues resolved
-- [ ] Stage compliance confirmed
-- [ ] Documentation updated
-
-### Workflow Examples
-
-**Example 1: New Feature Request**
-```
-User: "Add user authentication"
-→ @orchestrator: Detects Phase 1 needed
-→ @architect: Creates auth architecture plan
-→ @stage-keeper: Validates (Stage 2, keep simple)
-→ User approves plan
-→ @implementer: Executes plan, writes code
-→ @code-reviewer: Validates, finds minor issues
-→ @implementer: Fixes issues
-→ @code-reviewer: Approves
-→ Feature complete ✅
-```
-
-**Example 2: Implementation with Blocker**
-```
-User: "Implement OAuth2 login"
-→ @implementer: Reads plan, finds DB schema missing
-→ **BLOCKER**: Documents in blockers.md
-→ @orchestrator: Escalates to @architect
-→ @architect: Updates plan with DB schema
-→ @implementer: Resumes implementation
-→ Continues to Phase 3...
-```
+| @orchestrator | All | Coordinate phases, manage transitions | ✅ Limited |
 
 ## ⚠️ CRITICAL RULES
+
+### Workflow Compliance
+- **NEVER skip phases** (must go 1 → 2 → 3)
+- **NEVER implement without approved plan**
+- **NEVER skip tests** (except Stage 1 PoC)
+- **NEVER proceed without user approval at gates**
+- **ALWAYS read existing docs before changes**
+
+### Agent-Specific Rules
+- **@architect, @stage-keeper**: NEVER write implementation code
+- **@implementer**: ALWAYS read architecture.md FIRST
+- **@code-reviewer**: NEVER redesign architecture
+- **All agents**: Output to correct `docs/{feature}/` locations
 
 ### Session Management
 - Never implement without reading current context
@@ -205,38 +154,28 @@ User: "Implement OAuth2 login"
 - Never assume you remember from previous sessions
 - Always check current stage rules before proposing solutions
 
-### 3-Phase Workflow Compliance
-- **Planning agents (@architect, @stage-keeper)**: NEVER write implementation code
-- **Implementation agent (@implementer)**: ALWAYS read architecture plan FIRST
-- **Validation agents (@code-reviewer)**: NEVER redesign architecture
-- **All agents**: Output documentation to correct `.claude/doc/{feature}/` locations
-
-### Phase Transitions
-- Never skip phases (must go 1 → 2 → 3)
-- Never implement without approved architecture plan
-- Never approve without validating against plan
-- Always document blockers immediately when discovered
+### Stage Awareness
+- **Stage 1 (PoC)**: Speed and simplicity, minimal tests
+- **Stage 2 (Prototype)**: Basic structure, basic tests
+- **Stage 3 (Production)**: Full tests, error handling
+- **Stage 4 (Scale)**: Performance tests, edge cases
 
 ## 🚫 NEVER
 
-### General
-- Over-engineer beyond current stage
-- Implement features not in project brief
-- Forget to update tracking
-
-### Phase 1 (Planning) - NEVER:
+### Phase 1 (Planning)
 - Write implementation code
 - Skip stage-keeper validation
 - Create incomplete architecture plans
 - Proceed to Phase 2 without user approval
 
-### Phase 2 (Implementation) - NEVER:
+### Phase 2 (Implementation)
 - Start coding without reading architecture.md
 - Make architectural decisions not in the plan
+- Skip writing tests (Stage 2+)
+- Proceed to Phase 3 with failing tests
 - Ignore blockers (document and escalate)
-- Skip updating implementation.md progress
 
-### Phase 3 (Validation) - NEVER:
+### Phase 3 (Validation)
 - Redesign the architecture
 - Approve code that deviates from plan without documented reason
 - Skip reading architecture.md before review
@@ -245,21 +184,20 @@ User: "Implement OAuth2 login"
 ## 📚 PROJECT RESOURCES
 
 Available in `docs/` folder:
-- **PROMPT_LIBRARY.md** - Templates for common situations (debugging, refactoring, etc.)
+- **README.md** - Workflow documentation and templates
+- **PROMPT_LIBRARY.md** - Templates for common situations
 - **QUICK_START.md** - Workflow guide
 - **STAGES_COMPARISON.md** - Quick reference table
 - **CLAUDE_CODE_REFERENCE.md** - Claude Code tips, slash commands, MCP, subagents
 
-Use these resources when stuck or making decisions.
-
 ## 💡 REMEMBER
 
+- **Check → Plan → Approve → Implement → Test → Validate → Approve**
+- Tests are mandatory (Stage 2+)
+- User approval required at gates
 - Simplicity > Completeness
-- Solve today's problems, not tomorrow's
-- The methodology matters more than the code
 - When in doubt, check the stage rules
 
 ---
 
-*Generated by [Claude Prompt Library](https://github.com/your-repo/claude-prompt-library)*
 *To update these instructions, modify templates/basic/.claude/CUSTOM_INSTRUCTIONS.md*

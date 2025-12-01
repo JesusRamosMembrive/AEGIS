@@ -250,7 +250,7 @@
   {
     "path": "code_map/api/analysis.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.907859+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [
       {
         "name": "_get_git_history",
@@ -370,7 +370,7 @@
   {
     "path": "code_map/api/audit.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.907921+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [
       {
         "name": "_serialize_run",
@@ -448,7 +448,7 @@
   {
     "path": "code_map/api/claude_permissions.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.907921+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [
       {
         "name": "ClaudePermissions",
@@ -591,14 +591,14 @@
   {
     "path": "code_map/api/handlers/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:31:02.062903+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/api/handlers/approval.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.907921+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [
       {
         "name": "ApprovalRequestProtocol",
@@ -627,7 +627,7 @@
   {
     "path": "code_map/api/handlers/base.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:54:23.211832+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [
       {
         "name": "HandlerCallbacks",
@@ -698,7 +698,7 @@
   {
     "path": "code_map/api/handlers/cli_handler.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:54:47.255953+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [
       {
         "name": "CLIModeHandler",
@@ -769,7 +769,7 @@
   {
     "path": "code_map/api/handlers/factory.py",
     "relative": true,
-    "modified_at": "2025-11-28T18:33:19.663949+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [
       {
         "name": "create_handler",
@@ -805,7 +805,7 @@
   {
     "path": "code_map/api/handlers/mcp_proxy_handler.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:55:40.412457+00:00",
+    "modified_at": "2025-11-30T21:26:14.592315+00:00",
     "symbols": [
       {
         "name": "MCPProxyModeHandler",
@@ -855,7 +855,7 @@
   {
     "path": "code_map/api/handlers/sdk_handler.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:55:06.586137+00:00",
+    "modified_at": "2025-11-30T21:26:14.593315+00:00",
     "symbols": [
       {
         "name": "SDKModeHandler",
@@ -905,7 +905,7 @@
   {
     "path": "code_map/api/integrations.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.062237+00:00",
+    "modified_at": "2025-11-30T21:26:14.593315+00:00",
     "symbols": [
       {
         "name": "get_ollama_status",
@@ -955,7 +955,7 @@
   {
     "path": "code_map/api/linters.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.062541+00:00",
+    "modified_at": "2025-11-30T21:26:14.593315+00:00",
     "symbols": [
       {
         "name": "get_linters_discovery",
@@ -1033,7 +1033,7 @@
   {
     "path": "code_map/api/preview.py",
     "relative": true,
-    "modified_at": "2025-11-14T12:01:30.277316+00:00",
+    "modified_at": "2025-11-30T21:26:14.593315+00:00",
     "symbols": [
       {
         "name": "preview_file",
@@ -1069,14 +1069,14 @@
   {
     "path": "code_map/api/routes.py",
     "relative": true,
-    "modified_at": "2025-11-26T18:15:30.991861+00:00",
+    "modified_at": "2025-11-30T21:26:14.593315+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/api/schemas.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.063098+00:00",
+    "modified_at": "2025-11-30T21:26:14.594315+00:00",
     "symbols": [
       {
         "name": "HealthResponse",
@@ -1673,7 +1673,7 @@
   {
     "path": "code_map/api/stage.py",
     "relative": true,
-    "modified_at": "2025-11-12T09:08:01.882932+00:00",
+    "modified_at": "2025-11-30T21:26:14.594315+00:00",
     "symbols": [
       {
         "name": "get_stage_status",
@@ -1702,7 +1702,7 @@
   {
     "path": "code_map/api/terminal.py",
     "relative": true,
-    "modified_at": "2025-11-30T18:35:35.282768+00:00",
+    "modified_at": "2025-11-30T21:26:14.594315+00:00",
     "symbols": [
       {
         "name": "get_or_create_mcp_socket_server",
@@ -1865,7 +1865,7 @@
   {
     "path": "code_map/api/tracer.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.908540+00:00",
+    "modified_at": "2025-11-30T21:26:14.594315+00:00",
     "symbols": [
       {
         "name": "_require_tree_sitter",
@@ -2014,14 +2014,14 @@
   {
     "path": "code_map/audit/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-23T10:21:07.981278+00:00",
+    "modified_at": "2025-11-30T21:26:14.594315+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/audit/file_watcher_hook.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.908619+00:00",
+    "modified_at": "2025-11-30T21:26:14.595315+00:00",
     "symbols": [
       {
         "name": "AuditFileWatcher",
@@ -2113,7 +2113,7 @@
   {
     "path": "code_map/audit/hooks.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.908688+00:00",
+    "modified_at": "2025-11-30T21:26:14.595315+00:00",
     "symbols": [
       {
         "name": "AuditContext",
@@ -2170,7 +2170,7 @@
   {
     "path": "code_map/audit/storage.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.908688+00:00",
+    "modified_at": "2025-11-30T21:26:14.595315+00:00",
     "symbols": [
       {
         "name": "AuditRun",
@@ -2361,7 +2361,7 @@
   {
     "path": "code_map/call_tracer_v2.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.908834+00:00",
+    "modified_at": "2025-11-30T21:26:14.595315+00:00",
     "symbols": [
       {
         "name": "CrossFileCallGraphExtractor",
@@ -2706,7 +2706,7 @@
   {
     "path": "code_map/cli.py",
     "relative": true,
-    "modified_at": "2025-11-14T11:22:00.222632+00:00",
+    "modified_at": "2025-11-30T21:26:14.595315+00:00",
     "symbols": [
       {
         "name": "_validate_root",
@@ -2763,7 +2763,7 @@
   {
     "path": "code_map/constants.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.063541+00:00",
+    "modified_at": "2025-11-30T21:26:14.595315+00:00",
     "symbols": [],
     "errors": []
   },
@@ -2891,7 +2891,7 @@
   {
     "path": "code_map/git_history.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.908922+00:00",
+    "modified_at": "2025-11-30T21:26:14.595315+00:00",
     "symbols": [
       {
         "name": "GitHistoryError",
@@ -3352,7 +3352,7 @@
   {
     "path": "code_map/integrations/ollama_service.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909021+00:00",
+    "modified_at": "2025-11-30T21:26:14.596315+00:00",
     "symbols": [
       {
         "name": "_normalize_endpoint",
@@ -3542,7 +3542,7 @@
   {
     "path": "code_map/js_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.063541+00:00",
+    "modified_at": "2025-11-30T21:26:14.596315+00:00",
     "symbols": [
       {
         "name": "_node_get",
@@ -3720,7 +3720,7 @@
   {
     "path": "code_map/linters/pipeline.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909132+00:00",
+    "modified_at": "2025-11-30T21:26:14.597315+00:00",
     "symbols": [
       {
         "name": "LinterConfig",
@@ -4150,14 +4150,14 @@
   {
     "path": "code_map/mcp/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-27T21:47:10.338678+00:00",
+    "modified_at": "2025-11-30T21:26:14.597315+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/mcp/approval_bridge.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909261+00:00",
+    "modified_at": "2025-11-30T21:26:14.597315+00:00",
     "symbols": [
       {
         "name": "ApprovalRequest",
@@ -4305,14 +4305,14 @@
   {
     "path": "code_map/mcp/constants.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909261+00:00",
+    "modified_at": "2025-11-30T21:26:14.597315+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/mcp/permission_server.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909261+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "PermissionServer",
@@ -4390,7 +4390,7 @@
   {
     "path": "code_map/mcp/socket_server.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909261+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "MCPSocketServer",
@@ -4475,7 +4475,7 @@
   {
     "path": "code_map/mcp/tool_proxy_server.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909528+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "ToolProxyServer",
@@ -4631,7 +4631,7 @@
   {
     "path": "code_map/scanner.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.064541+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "ProjectScanner",
@@ -4787,7 +4787,7 @@
   {
     "path": "code_map/server.py",
     "relative": true,
-    "modified_at": "2025-11-14T11:44:12.343881+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "_parse_allowed_origins",
@@ -4809,7 +4809,7 @@
   {
     "path": "code_map/services/insights_service.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909528+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "InsightsConfig",
@@ -4915,7 +4915,7 @@
   {
     "path": "code_map/services/linters_service.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909528+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "LintersConfig",
@@ -4993,7 +4993,7 @@
   {
     "path": "code_map/services/watcher_manager.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909528+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "WatcherConfig",
@@ -5156,7 +5156,7 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909528+00:00",
+    "modified_at": "2025-11-30T21:26:14.598315+00:00",
     "symbols": [
       {
         "name": "FileStatus",
@@ -5227,7 +5227,7 @@
   {
     "path": "code_map/state.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909886+00:00",
+    "modified_at": "2025-11-30T21:26:14.599315+00:00",
     "symbols": [
       {
         "name": "_parse_enabled_tools_env",
@@ -5431,7 +5431,7 @@
   {
     "path": "code_map/state_reporter.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.066541+00:00",
+    "modified_at": "2025-11-30T21:26:14.599315+00:00",
     "symbols": [
       {
         "name": "_serialize_capability",
@@ -5467,14 +5467,14 @@
   {
     "path": "code_map/terminal/__init__.py",
     "relative": true,
-    "modified_at": "2025-11-30T09:38:08.108220+00:00",
+    "modified_at": "2025-11-30T21:26:14.599315+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/terminal/agent_events.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.909967+00:00",
+    "modified_at": "2025-11-30T21:26:14.599315+00:00",
     "symbols": [
       {
         "name": "CommandExecution",
@@ -5629,7 +5629,7 @@
   {
     "path": "code_map/terminal/agent_parser.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910050+00:00",
+    "modified_at": "2025-11-30T21:26:14.599315+00:00",
     "symbols": [
       {
         "name": "AgentEventType",
@@ -5819,7 +5819,7 @@
   {
     "path": "code_map/terminal/claude_runner.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:53:42.671340+00:00",
+    "modified_at": "2025-11-30T21:26:14.599315+00:00",
     "symbols": [
       {
         "name": "find_claude_cli",
@@ -6002,7 +6002,7 @@
   {
     "path": "code_map/terminal/codex_runner.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:58:53.610283+00:00",
+    "modified_at": "2025-11-30T21:26:14.600315+00:00",
     "symbols": [
       {
         "name": "find_codex_cli",
@@ -6157,7 +6157,7 @@
   {
     "path": "code_map/terminal/gemini_runner.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:52:40.001744+00:00",
+    "modified_at": "2025-11-30T21:26:14.600315+00:00",
     "symbols": [
       {
         "name": "find_gemini_cli",
@@ -6256,7 +6256,7 @@
   {
     "path": "code_map/terminal/json_parser.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910200+00:00",
+    "modified_at": "2025-11-30T21:26:14.600315+00:00",
     "symbols": [
       {
         "name": "EventType",
@@ -6369,7 +6369,7 @@
   {
     "path": "code_map/terminal/mcp_proxy_runner.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:55:33.864395+00:00",
+    "modified_at": "2025-11-30T21:26:14.600315+00:00",
     "symbols": [
       {
         "name": "MCPProxyRunnerConfig",
@@ -6482,7 +6482,7 @@
   {
     "path": "code_map/terminal/pty_parser.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910486+00:00",
+    "modified_at": "2025-11-30T21:26:14.600315+00:00",
     "symbols": [
       {
         "name": "EventType",
@@ -6609,7 +6609,7 @@
   {
     "path": "code_map/terminal/pty_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910486+00:00",
+    "modified_at": "2025-11-30T21:26:14.600315+00:00",
     "symbols": [
       {
         "name": "RunnerState",
@@ -6729,7 +6729,7 @@
   {
     "path": "code_map/terminal/pty_shell.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910486+00:00",
+    "modified_at": "2025-11-30T21:26:14.601315+00:00",
     "symbols": [
       {
         "name": "PTYShell",
@@ -6821,7 +6821,7 @@
   {
     "path": "code_map/terminal/sdk_runner.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910714+00:00",
+    "modified_at": "2025-11-30T21:26:14.601315+00:00",
     "symbols": [
       {
         "name": "SDKRunnerConfig",
@@ -6983,7 +6983,7 @@
   {
     "path": "code_map/terminal/tool_approval.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910714+00:00",
+    "modified_at": "2025-11-30T21:26:14.601315+00:00",
     "symbols": [
       {
         "name": "ApprovalStatus",
@@ -7103,7 +7103,7 @@
   {
     "path": "code_map/ts_analyzer.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.066946+00:00",
+    "modified_at": "2025-11-30T21:26:14.601315+00:00",
     "symbols": [
       {
         "name": "_TsParser",
@@ -7490,7 +7490,7 @@
   {
     "path": "code_map/watcher.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.068541+00:00",
+    "modified_at": "2025-11-30T21:26:14.601315+00:00",
     "symbols": [
       {
         "name": "_EventHandler",
@@ -7636,19 +7636,6 @@
     "errors": []
   },
   {
-    "path": "frontend/dist/assets/index-CxaveY4g.js",
-    "relative": true,
-    "modified_at": "2025-11-30T21:24:32.712740+00:00",
-    "symbols": [],
-    "errors": [
-      {
-        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
-        "lineno": null,
-        "col_offset": null
-      }
-    ]
-  },
-  {
     "path": "frontend/dist/assets/index-D8fI9KxZ.js",
     "relative": true,
     "modified_at": "2025-11-04T17:33:31.756170+00:00",
@@ -7663,9 +7650,22 @@
     "errors": []
   },
   {
+    "path": "frontend/dist/assets/index-DZPQ17YG.js",
+    "relative": true,
+    "modified_at": "2025-12-01T10:48:33.705028+00:00",
+    "symbols": [],
+    "errors": [
+      {
+        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
+        "lineno": null,
+        "col_offset": null
+      }
+    ]
+  },
+  {
     "path": "frontend/dist/index.html",
     "relative": true,
-    "modified_at": "2025-11-30T21:24:32.712740+00:00",
+    "modified_at": "2025-12-01T10:48:33.704535+00:00",
     "symbols": [
       {
         "name": "root",
@@ -7695,7 +7695,7 @@
   {
     "path": "frontend/src/App.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T21:24:46.946819+00:00",
+    "modified_at": "2025-11-30T21:26:14.610676+00:00",
     "symbols": [
       {
         "name": "App",
@@ -7717,7 +7717,7 @@
   {
     "path": "frontend/src/api/client.ts",
     "relative": true,
-    "modified_at": "2025-11-24T16:17:52.395314+00:00",
+    "modified_at": "2025-11-30T21:26:14.610676+00:00",
     "symbols": [
       {
         "name": "sanitizeBaseUrl",
@@ -8033,14 +8033,14 @@
   {
     "path": "frontend/src/api/queryKeys.ts",
     "relative": true,
-    "modified_at": "2025-11-23T20:01:58.196718+00:00",
+    "modified_at": "2025-11-30T21:26:14.610676+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "frontend/src/api/types.ts",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.068541+00:00",
+    "modified_at": "2025-11-30T21:26:14.610676+00:00",
     "symbols": [],
     "errors": []
   },
@@ -8069,7 +8069,7 @@
   {
     "path": "frontend/src/components/AgentSidebar.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T20:06:37.103122+00:00",
+    "modified_at": "2025-11-30T21:26:14.610676+00:00",
     "symbols": [
       {
         "name": "AgentSidebar",
@@ -8134,7 +8134,7 @@
   {
     "path": "frontend/src/components/AuditSessionsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-23T20:03:04.492429+00:00",
+    "modified_at": "2025-11-30T21:26:14.610676+00:00",
     "symbols": [
       {
         "name": "formatRelative",
@@ -8205,7 +8205,7 @@
   {
     "path": "frontend/src/components/ChangeListPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-11T15:29:16.142863+00:00",
+    "modified_at": "2025-11-30T21:26:14.610676+00:00",
     "symbols": [
       {
         "name": "ChangeListPanel",
@@ -8341,7 +8341,7 @@
   {
     "path": "frontend/src/components/ClaudeAgentView.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T20:07:01.930435+00:00",
+    "modified_at": "2025-11-30T21:26:14.611315+00:00",
     "symbols": [
       {
         "name": "extractResultContent",
@@ -8419,7 +8419,7 @@
   {
     "path": "frontend/src/components/CodeMapDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-11-11T14:14:05.418559+00:00",
+    "modified_at": "2025-11-30T21:26:14.611315+00:00",
     "symbols": [
       {
         "name": "CodeMapDashboard",
@@ -8533,7 +8533,7 @@
   {
     "path": "frontend/src/components/DetailPanel.tsx",
     "relative": true,
-    "modified_at": "2025-11-14T12:10:27.989463+00:00",
+    "modified_at": "2025-11-30T21:26:14.611315+00:00",
     "symbols": [
       {
         "name": "DetailPanel",
@@ -8569,7 +8569,7 @@
   {
     "path": "frontend/src/components/DiffViewer.tsx",
     "relative": true,
-    "modified_at": "2025-11-23T21:25:21.090579+00:00",
+    "modified_at": "2025-11-30T21:26:14.611315+00:00",
     "symbols": [
       {
         "name": "DiffViewer",
@@ -8598,7 +8598,7 @@
   {
     "path": "frontend/src/components/DocsLibraryView.tsx",
     "relative": true,
-    "modified_at": "2025-11-11T17:13:38.276686+00:00",
+    "modified_at": "2025-11-30T21:26:14.611315+00:00",
     "symbols": [
       {
         "name": "DocsLibraryView",
@@ -8627,7 +8627,7 @@
   {
     "path": "frontend/src/components/FileDiffModal.tsx",
     "relative": true,
-    "modified_at": "2025-11-26T21:27:03.762056+00:00",
+    "modified_at": "2025-11-30T21:26:14.611315+00:00",
     "symbols": [
       {
         "name": "parseDiffToSideBySide",
@@ -8670,7 +8670,7 @@
   {
     "path": "frontend/src/components/FileStatusSidebar.tsx",
     "relative": true,
-    "modified_at": "2025-11-26T18:42:14.936510+00:00",
+    "modified_at": "2025-11-30T21:26:14.611315+00:00",
     "symbols": [
       {
         "name": "FileStatusSidebar",
@@ -8692,7 +8692,7 @@
   {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.068541+00:00",
+    "modified_at": "2025-11-30T21:26:14.611315+00:00",
     "symbols": [
       {
         "name": "HeaderBar",
@@ -8707,7 +8707,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T19:01:02.451006+00:00",
+    "modified_at": "2025-11-30T21:26:14.612315+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -8793,7 +8793,7 @@
   {
     "path": "frontend/src/components/MarkdownRenderer.tsx",
     "relative": true,
-    "modified_at": "2025-11-26T17:40:36.220414+00:00",
+    "modified_at": "2025-11-30T21:26:14.612315+00:00",
     "symbols": [
       {
         "name": "MarkdownRenderer",
@@ -8829,7 +8829,7 @@
   {
     "path": "frontend/src/components/OllamaInsightsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.070541+00:00",
+    "modified_at": "2025-11-30T21:26:14.612315+00:00",
     "symbols": [
       {
         "name": "normalizeFocus",
@@ -8900,7 +8900,7 @@
   {
     "path": "frontend/src/components/OpenShellModal.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T18:34:54.198656+00:00",
+    "modified_at": "2025-11-30T21:26:14.612315+00:00",
     "symbols": [
       {
         "name": "OpenShellModal",
@@ -8915,7 +8915,7 @@
   {
     "path": "frontend/src/components/OverviewDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.073540+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "formatDateTime",
@@ -8965,7 +8965,7 @@
   {
     "path": "frontend/src/components/PermissionsModal.tsx",
     "relative": true,
-    "modified_at": "2025-11-26T18:16:32.488369+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "PermissionsModal",
@@ -8980,7 +8980,7 @@
   {
     "path": "frontend/src/components/PreviewPane.tsx",
     "relative": true,
-    "modified_at": "2025-11-14T12:01:35.357127+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "getFileExtension",
@@ -9080,7 +9080,7 @@
   {
     "path": "frontend/src/components/RemoteTerminalView.tsx",
     "relative": true,
-    "modified_at": "2025-11-28T14:25:32.252114+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "RemoteTerminalView",
@@ -9153,7 +9153,7 @@
   {
     "path": "frontend/src/components/SessionHistorySidebar.tsx",
     "relative": true,
-    "modified_at": "2025-11-26T17:56:30.347055+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "SessionHistorySidebar",
@@ -9232,7 +9232,7 @@
   {
     "path": "frontend/src/components/Sidebar.tsx",
     "relative": true,
-    "modified_at": "2025-11-11T14:14:24.159669+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "Sidebar",
@@ -9289,7 +9289,7 @@
   {
     "path": "frontend/src/components/SlashCommandMenu.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T11:24:51.519294+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "SlashCommandMenu",
@@ -9311,7 +9311,7 @@
   {
     "path": "frontend/src/components/StageToolkitView.tsx",
     "relative": true,
-    "modified_at": "2025-11-12T09:09:54.213229+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "formatList",
@@ -9397,7 +9397,7 @@
   {
     "path": "frontend/src/components/TerminalView.tsx",
     "relative": true,
-    "modified_at": "2025-11-24T10:08:32.224789+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "TerminalView",
@@ -9503,7 +9503,7 @@
   {
     "path": "frontend/src/components/TiltCard.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T19:00:24.175776+00:00",
+    "modified_at": "2025-11-30T21:26:14.613999+00:00",
     "symbols": [
       {
         "name": "TiltCard",
@@ -9532,7 +9532,7 @@
   {
     "path": "frontend/src/components/TimelineView.tsx",
     "relative": true,
-    "modified_at": "2025-11-23T21:15:51.200802+00:00",
+    "modified_at": "2025-11-30T21:26:14.614315+00:00",
     "symbols": [
       {
         "name": "TimelineView",
@@ -9568,7 +9568,7 @@
   {
     "path": "frontend/src/components/ToolApprovalModal.tsx",
     "relative": true,
-    "modified_at": "2025-11-28T18:48:54.348202+00:00",
+    "modified_at": "2025-11-30T21:26:14.614315+00:00",
     "symbols": [
       {
         "name": "DiffLine",
@@ -9646,7 +9646,7 @@
   {
     "path": "frontend/src/components/ToolPermissionModal.tsx",
     "relative": true,
-    "modified_at": "2025-11-28T09:30:34.339874+00:00",
+    "modified_at": "2025-11-30T21:26:14.614315+00:00",
     "symbols": [
       {
         "name": "ToolPermissionModal",
@@ -9705,7 +9705,7 @@
   {
     "path": "frontend/src/components/icons/AgentIcons.tsx",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.910991+00:00",
+    "modified_at": "2025-11-30T21:26:14.614315+00:00",
     "symbols": [
       {
         "name": "MessageCircleIcon",
@@ -9909,7 +9909,7 @@
   {
     "path": "frontend/src/components/settings/BackendUrlSection.tsx",
     "relative": true,
-    "modified_at": "2025-11-14T11:23:03.603312+00:00",
+    "modified_at": "2025-11-30T21:26:14.615315+00:00",
     "symbols": [
       {
         "name": "BackendUrlSection",
@@ -10012,7 +10012,7 @@
   {
     "path": "frontend/src/components/terminal/AgentOverlay.tsx",
     "relative": true,
-    "modified_at": "2025-11-25T08:23:26.717052+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [
       {
         "name": "AgentOverlay",
@@ -10027,7 +10027,7 @@
   {
     "path": "frontend/src/components/terminal/AgentStatusBar.tsx",
     "relative": true,
-    "modified_at": "2025-11-25T08:22:15.528567+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [
       {
         "name": "AgentStatusBar",
@@ -10056,7 +10056,7 @@
   {
     "path": "frontend/src/components/terminal/AgentTimeline.tsx",
     "relative": true,
-    "modified_at": "2025-11-25T08:22:24.028622+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [
       {
         "name": "AgentTimeline",
@@ -10099,7 +10099,7 @@
   {
     "path": "frontend/src/components/terminal/CommandWidget.tsx",
     "relative": true,
-    "modified_at": "2025-11-25T08:23:33.670102+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [
       {
         "name": "CommandWidget",
@@ -10177,7 +10177,7 @@
   {
     "path": "frontend/src/hooks/useAuditEventStream.ts",
     "relative": true,
-    "modified_at": "2025-11-23T21:10:40.934939+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [
       {
         "name": "useAuditEventStream",
@@ -10452,7 +10452,7 @@
   {
     "path": "frontend/src/hooks/useSuperClaudeInstallMutation.ts",
     "relative": true,
-    "modified_at": "2025-11-12T09:08:20.898095+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [
       {
         "name": "useSuperClaudeInstallMutation",
@@ -10482,7 +10482,7 @@
   {
     "path": "frontend/src/main.tsx",
     "relative": true,
-    "modified_at": "2025-11-24T18:15:17.114174+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [],
     "errors": []
   },
@@ -10518,7 +10518,7 @@
   {
     "path": "frontend/src/state/useBackendStore.ts",
     "relative": true,
-    "modified_at": "2025-11-14T11:23:06.569344+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [
       {
         "name": "setBackendUrl",
@@ -10604,7 +10604,7 @@
   {
     "path": "frontend/src/stores/agentStore.ts",
     "relative": true,
-    "modified_at": "2025-11-25T08:23:53.565245+00:00",
+    "modified_at": "2025-11-30T21:26:14.616410+00:00",
     "symbols": [
       {
         "name": "getEventDescription",
@@ -10619,7 +10619,7 @@
   {
     "path": "frontend/src/stores/claudeSessionStore.ts",
     "relative": true,
-    "modified_at": "2025-11-30T11:37:18.506333+00:00",
+    "modified_at": "2025-11-30T21:26:14.617079+00:00",
     "symbols": [
       {
         "name": "selectConnected",
@@ -10746,7 +10746,7 @@
   {
     "path": "frontend/src/stores/sessionHistoryStore.ts",
     "relative": true,
-    "modified_at": "2025-11-30T20:05:52.088542+00:00",
+    "modified_at": "2025-11-30T21:26:14.617309+00:00",
     "symbols": [
       {
         "name": "generateSessionId",
@@ -10789,7 +10789,7 @@
   {
     "path": "frontend/src/stores/themeStore.ts",
     "relative": true,
-    "modified_at": "2025-11-26T17:50:34.279387+00:00",
+    "modified_at": "2025-11-30T21:26:14.620315+00:00",
     "symbols": [
       {
         "name": "getSystemTheme",
@@ -10818,7 +10818,7 @@
   {
     "path": "frontend/src/types/agent.ts",
     "relative": true,
-    "modified_at": "2025-11-25T08:24:59.601716+00:00",
+    "modified_at": "2025-11-30T21:26:14.623985+00:00",
     "symbols": [
       {
         "name": "parseAgentMessage",
@@ -10868,7 +10868,7 @@
   {
     "path": "frontend/src/types/approval.ts",
     "relative": true,
-    "modified_at": "2025-11-28T18:48:19.450714+00:00",
+    "modified_at": "2025-11-30T21:26:14.624125+00:00",
     "symbols": [
       {
         "name": "isCommandPreviewData",
@@ -10939,7 +10939,7 @@
   {
     "path": "frontend/src/types/claude-events.ts",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.911235+00:00",
+    "modified_at": "2025-11-30T21:26:14.624125+00:00",
     "symbols": [
       {
         "name": "isPTYPermissionRequestEvent",
@@ -11052,7 +11052,7 @@
   {
     "path": "frontend/src/utils/changeStatus.ts",
     "relative": true,
-    "modified_at": "2025-11-11T15:29:09.181844+00:00",
+    "modified_at": "2025-11-30T21:26:14.624479+00:00",
     "symbols": [
       {
         "name": "getChangeLabel",
@@ -11081,7 +11081,7 @@
   {
     "path": "frontend/src/utils/logger.ts",
     "relative": true,
-    "modified_at": "2025-11-28T17:22:17.597418+00:00",
+    "modified_at": "2025-11-30T21:26:14.624535+00:00",
     "symbols": [
       {
         "name": "debug",
@@ -11131,7 +11131,7 @@
   {
     "path": "frontend/vite.config.ts",
     "relative": true,
-    "modified_at": "2025-11-24T16:17:58.650401+00:00",
+    "modified_at": "2025-11-30T21:26:14.624535+00:00",
     "symbols": [],
     "errors": []
   },
@@ -53964,7 +53964,7 @@
   {
     "path": "stage_config.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.911425+00:00",
+    "modified_at": "2025-11-30T21:26:14.624535+00:00",
     "symbols": [
       {
         "name": "StageThresholds",
@@ -54098,7 +54098,7 @@
   {
     "path": "stage_init/cli.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.708105+00:00",
+    "modified_at": "2025-12-01T06:58:19.496584+00:00",
     "symbols": [
       {
         "name": "build_parser",
@@ -54124,7 +54124,7 @@
       {
         "name": "_print_file_change",
         "kind": "function",
-        "lineno": 156,
+        "lineno": 164,
         "parent": null,
         "docstring": null
       }
@@ -54134,7 +54134,7 @@
   {
     "path": "stage_init/initializer.py",
     "relative": true,
-    "modified_at": "2025-11-18T15:21:25.171654+00:00",
+    "modified_at": "2025-12-01T06:56:23.677409+00:00",
     "symbols": [
       {
         "name": "InitializationConfig",
@@ -54153,77 +54153,91 @@
       {
         "name": "ProjectInitializer",
         "kind": "class",
-        "lineno": 46,
+        "lineno": 47,
         "parent": null,
         "docstring": "Coordinates template installation, stage detection, and reporting."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 49,
+        "lineno": 50,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "run",
         "kind": "method",
-        "lineno": 61,
+        "lineno": 62,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_resolve_destination",
         "kind": "method",
-        "lineno": 144,
+        "lineno": 166,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_ensure_directory",
         "kind": "method",
-        "lineno": 150,
+        "lineno": 172,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_build_placeholders",
         "kind": "method",
-        "lineno": 158,
+        "lineno": 180,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_prepare_template_mappings",
         "kind": "method",
-        "lineno": 166,
+        "lineno": 188,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_ensure_agents_directory",
         "kind": "method",
-        "lineno": 190,
+        "lineno": 216,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_should_prepare_claude",
         "kind": "method",
-        "lineno": 220,
+        "lineno": 246,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_should_prepare_codex",
         "kind": "method",
-        "lineno": 223,
+        "lineno": 249,
+        "parent": "ProjectInitializer",
+        "docstring": null
+      },
+      {
+        "name": "_should_prepare_gemini",
+        "kind": "method",
+        "lineno": 252,
         "parent": "ProjectInitializer",
         "docstring": null
       },
       {
         "name": "_write_basic_claude_md",
         "kind": "method",
-        "lineno": 226,
+        "lineno": 255,
+        "parent": "ProjectInitializer",
+        "docstring": null
+      },
+      {
+        "name": "_write_basic_gemini_md",
+        "kind": "method",
+        "lineno": 274,
         "parent": "ProjectInitializer",
         "docstring": null
       }
@@ -54233,7 +54247,7 @@
   {
     "path": "stage_init/stage_update.py",
     "relative": true,
-    "modified_at": "2025-11-18T15:21:25.189745+00:00",
+    "modified_at": "2025-11-30T21:26:14.624535+00:00",
     "symbols": [
       {
         "name": "StageUpdateResult",
@@ -54383,7 +54397,7 @@
   {
     "path": "test_dedup.py",
     "relative": true,
-    "modified_at": "2025-11-26T09:23:37.728783+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "TestPTYShellDeduplication",
@@ -54426,7 +54440,7 @@
   {
     "path": "test_structured.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.911425+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "TestStructuredOutput",
@@ -54476,7 +54490,7 @@
   {
     "path": "tests/test_agent_bridge.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.911581+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "temp_root",
@@ -54652,7 +54666,7 @@
   {
     "path": "tests/test_agent_controller.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.911581+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "TestAgentTask",
@@ -54772,7 +54786,7 @@
   {
     "path": "tests/test_agent_parser.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.911581+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "TestAgentOutputParser",
@@ -55026,7 +55040,7 @@
   {
     "path": "tests/test_api.py",
     "relative": true,
-    "modified_at": "2025-11-23T10:28:38.143645+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "write_file",
@@ -55293,7 +55307,7 @@
   {
     "path": "tests/test_audit_hooks.py",
     "relative": true,
-    "modified_at": "2025-11-29T21:29:15.911768+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "temp_root",
@@ -55490,7 +55504,7 @@
   {
     "path": "tests/test_codex_runner.py",
     "relative": true,
-    "modified_at": "2025-11-30T10:59:15.714491+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "TestCodexRunnerConfig",
@@ -55799,7 +55813,7 @@
   {
     "path": "tests/test_file_watcher_hook.py",
     "relative": true,
-    "modified_at": "2025-11-23T21:21:56.914385+00:00",
+    "modified_at": "2025-11-30T21:26:14.626631+00:00",
     "symbols": [
       {
         "name": "temp_root",
@@ -56048,7 +56062,7 @@
   {
     "path": "tests/test_services.py",
     "relative": true,
-    "modified_at": "2025-11-29T06:40:37.074541+00:00",
+    "modified_at": "2025-11-30T21:26:14.627315+00:00",
     "symbols": [
       {
         "name": "_DummyReport",
@@ -56241,7 +56255,7 @@
   {
     "path": "tools/test_backend_ollama.py",
     "relative": true,
-    "modified_at": "2025-11-14T11:22:24.504893+00:00",
+    "modified_at": "2025-11-30T21:26:14.627315+00:00",
     "symbols": [
       {
         "name": "parse_args",

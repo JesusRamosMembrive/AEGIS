@@ -12,9 +12,11 @@ import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 import { useSuperClaudeInstallMutation } from "../hooks/useSuperClaudeInstallMutation";
 
 const AGENT_OPTIONS: { value: StageAgentSelection; label: string }[] = [
+  { value: "all", label: "All (Claude + Codex + Gemini)" },
   { value: "both", label: "Claude + Codex" },
   { value: "claude", label: "Claude only" },
   { value: "codex", label: "Codex only" },
+  { value: "gemini", label: "Gemini only" },
 ];
 
 const SUPERCLAUDE_REFERENCE_COUNTS = {
@@ -188,7 +190,8 @@ export function StageToolkitView(): JSX.Element {
   const initMutation = useStageInitMutation();
   const superClaudeMutation = useSuperClaudeInstallMutation();
 
-  const [selection, setSelection] = useState<StageAgentSelection>("both");
+  const [selection, setSelection] = useState<StageAgentSelection>("all");
+  const [forceReset, setForceReset] = useState(false);
 
   const stageStatus = statusQuery.data;
   const initResult = initMutation.data;
@@ -203,7 +206,7 @@ export function StageToolkitView(): JSX.Element {
     : null;
 
   const currentAgentLabel = useMemo(
-    () => AGENT_OPTIONS.find((option) => option.value === selection)?.label ?? "Claude + Codex",
+    () => AGENT_OPTIONS.find((option) => option.value === selection)?.label ?? "All agents",
     [selection],
   );
 
@@ -217,7 +220,7 @@ export function StageToolkitView(): JSX.Element {
   }, [superClaudeResult?.component_counts]);
 
   const handleStageInit = () => {
-    initMutation.mutate({ agents: selection });
+    initMutation.mutate({ agents: selection, force: forceReset });
   };
 
   const handleSuperClaudeInstall = () => {
@@ -255,6 +258,7 @@ export function StageToolkitView(): JSX.Element {
           <div className="stage-status-grid">
             <AgentStatusCard title="Claude Code" status={stageStatus?.claude} />
             <AgentStatusCard title="Codex CLI" status={stageStatus?.codex} />
+            <AgentStatusCard title="Gemini CLI" status={stageStatus?.gemini} />
             <DocsStatusCard status={stageStatus?.docs} />
           </div>
         )}
@@ -312,14 +316,32 @@ export function StageToolkitView(): JSX.Element {
               </label>
             ))}
           </div>
-          <button
-            className="primary-btn"
-            type="button"
-            onClick={handleStageInit}
-            disabled={initMutation.isPending}
-          >
-            {initMutation.isPending ? "Running…" : `Initialize (${currentAgentLabel})`}
-          </button>
+
+          <label className="stage-checkbox">
+            <input
+              type="checkbox"
+              checked={forceReset}
+              onChange={(e) => setForceReset(e.target.checked)}
+              disabled={initMutation.isPending}
+            />
+            <span>Force reset (clean install, overwrite existing files)</span>
+          </label>
+
+          <div className="stage-button-group">
+            <button
+              className="primary-btn"
+              type="button"
+              onClick={handleStageInit}
+              disabled={initMutation.isPending}
+            >
+              {initMutation.isPending ? "Running…" : `Initialize (${currentAgentLabel})`}
+            </button>
+            {forceReset && (
+              <span className="stage-warning-text">
+                ⚠️ This will overwrite existing configuration files
+              </span>
+            )}
+          </div>
         </div>
 
         {mutationError ? <p className="stage-error">{mutationError}</p> : null}

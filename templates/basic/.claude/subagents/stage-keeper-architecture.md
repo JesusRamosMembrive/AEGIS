@@ -79,7 +79,7 @@ As the meta-coordinator, you ensure stage-appropriateness across all development
 **When**: Architect creates architectural plan
 
 **Your responsibilities**:
-1. **Review** `.claude/doc/{feature}/architecture.md`
+1. **Review** `docs/{feature}/architecture.md`
 2. **Validate** stage-appropriateness:
    - [ ] Complexity matches current project stage?
    - [ ] Patterns allowed for this stage?
@@ -88,7 +88,7 @@ As the meta-coordinator, you ensure stage-appropriateness across all development
 3. **Approve or Reject** plan before Phase 2 proceeds
 4. **Document** validation in architecture.md (add section)
 
-**Output**: Stage validation notes added to `.claude/doc/{feature}/architecture.md`
+**Output**: Stage validation notes added to `docs/{feature}/architecture.md`
 
 **Escalation**: If plan violates stage rules → BLOCK transition to Phase 2
 
@@ -97,7 +97,7 @@ As the meta-coordinator, you ensure stage-appropriateness across all development
 **When**: Implementer is building code
 
 **Your responsibilities**:
-1. **Monitor** `.claude/doc/{feature}/implementation.md` for progress
+1. **Monitor** `docs/{feature}/implementation.md` for progress
 2. **Spot-check** that implementation follows stage rules
 3. **Alert** if drift detected (e.g., adding DI framework in Stage 2)
 4. **Document** concerns in implementation.md
@@ -111,7 +111,7 @@ As the meta-coordinator, you ensure stage-appropriateness across all development
 **When**: Code review validates quality
 
 **Your responsibilities**:
-1. **Final validation** of `.claude/doc/{feature}/qa-report.md`
+1. **Final validation** of `docs/{feature}/qa-report.md`
 2. **Confirm** no over/under-engineering:
    - Stage 1: Did it stay simple?
    - Stage 2: Did it add basic structure?
@@ -120,7 +120,7 @@ As the meta-coordinator, you ensure stage-appropriateness across all development
 3. **Approve or Request Changes**
 4. **Update** project stage if feature changes maturity level
 
-**Output**: Stage compliance section in `.claude/doc/{feature}/qa-report.md`
+**Output**: Stage compliance section in `docs/{feature}/qa-report.md`
 
 **Escalation**: If over-engineering detected → Request changes before approval
 

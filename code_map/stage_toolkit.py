@@ -19,7 +19,7 @@ from stage_config import StageMetrics, collect_metrics
 if TYPE_CHECKING:  # pragma: no cover
     from .index import SymbolIndex
 
-AgentSelection = Literal["claude", "codex", "both"]
+AgentSelection = Literal["claude", "codex", "gemini", "both", "all"]
 
 CLAUDE_REQUIRED: Tuple[str, ...] = (
     ".claude/00-project-brief.md",
@@ -43,6 +43,15 @@ CODEX_REQUIRED: Tuple[str, ...] = (
     ".codex/stage1-rules.md",
     ".codex/stage2-rules.md",
     ".codex/stage3-rules.md",
+)
+
+GEMINI_REQUIRED: Tuple[str, ...] = (
+    ".gemini/CUSTOM_INSTRUCTIONS.md",
+    ".gemini/00-project-brief.md",
+    ".gemini/01-current-phase.md",
+    ".gemini/02-stage1-rules.md",
+    ".gemini/02-stage2-rules.md",
+    ".gemini/02-stage3-rules.md",
 )
 
 DOCS_REQUIRED: Tuple[str, ...] = (
@@ -178,12 +187,14 @@ def _compute_status(
         resolved_root, CLAUDE_REQUIRED, CLAUDE_OPTIONAL
     )
     codex_payload = _build_agent_payload(resolved_root, CODEX_REQUIRED)
+    gemini_payload = _build_agent_payload(resolved_root, GEMINI_REQUIRED)
     docs_status = _collect_file_status(resolved_root, DOCS_REQUIRED)
 
     return {
         "root_path": str(resolved_root),
         "claude": claude_payload,
         "codex": codex_payload,
+        "gemini": gemini_payload,
         "docs": {
             "expected": list(docs_status.expected),
             "present": docs_status.present,
@@ -204,9 +215,16 @@ async def stage_status(
     return await asyncio.to_thread(_compute_status, root, metrics)
 
 
-async def run_initializer(root: Path, agents: AgentSelection) -> Dict[str, object]:
+async def run_initializer(
+    root: Path, agents: AgentSelection, *, force: bool = False
+) -> Dict[str, object]:
     """
     Ejecuta init_project.py contra el root indicado para instalar instrucciones.
+
+    Args:
+        root: Directorio raíz del proyecto
+        agents: Selección de agentes a instalar
+        force: Si True, fuerza reinstalación limpia (elimina archivos existentes)
     """
     from asyncio.subprocess import PIPE  # noqa: WPS433
 
@@ -215,11 +233,21 @@ async def run_initializer(root: Path, agents: AgentSelection) -> Dict[str, objec
     target = root.expanduser().resolve()
 
     command = [sys.executable, str(script_path), str(target), "--existing"]
-    if agents in {"claude", "codex"}:
+
+    # Mapear selección de agente al argumento CLI
+    if agents == "all":
+        # "all" significa Claude + Codex + Gemini, pero el CLI usa "both" para Claude+Codex
+        # y necesitamos ejecutar separadamente para Gemini
+        command.extend(["--agent", "both"])
+    elif agents in {"claude", "codex", "gemini"}:
         command.extend(["--agent", agents])
     else:
-        # explicitar para mantener coherencia aunque el default sea ambos
+        # "both" = Claude + Codex (comportamiento original)
         command.extend(["--agent", "both"])
+
+    if force:
+        command.append("--force")
+
     command.append("--skip-claude-init")
 
     process = await asyncio.create_subprocess_exec(
