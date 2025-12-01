@@ -1,8 +1,11 @@
 #!/bin/bash
 # =============================================================================
-# ATLAS Code Map - Desktop App Launcher
+# ATLAS Code Map - Desktop App Launcher (Docker Mode)
 # =============================================================================
 # Starts the Docker container and opens the app in kiosk mode (fullscreen)
+#
+# NOTE: Agent features (Claude/Codex/Gemini) do NOT work in Docker mode.
+#       Use ./start-local.sh instead if you need agent functionality.
 #
 # Usage:
 #   ./start-app.sh          # Start app in kiosk mode
