@@ -3,7 +3,8 @@ import type { UseQueryResult } from "@tanstack/react-query";
 
 import type { StageDetectionStatus, StatusPayload } from "../api/types";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
-import { TiltCard } from "./TiltCard";
+import { TiltCard, CardIcons } from "./TiltCard";
+import { SparklesCore } from "./SparklesCore";
 
 function detectionBadgeLabel(detection?: StageDetectionStatus): string {
   if (!detection) {
@@ -54,6 +55,15 @@ export function HomeView({
         </div>
       )}
       <section className="home-hero">
+        <SparklesCore
+          className="home-hero__sparkles"
+          background="transparent"
+          particleColor="#60a5fa"
+          particleDensity={80}
+          minSize={0.6}
+          maxSize={1.8}
+          speed={0.8}
+        />
         <div className="home-hero__glow" aria-hidden />
         <div className="home-hero__content">
           <div className="home-hero__badges">
@@ -157,7 +167,7 @@ export function HomeView({
       </section>
 
       <section className="home-card-grid">
-        <TiltCard to="/stage-toolkit">
+        <TiltCard to="/stage-toolkit" icon={<CardIcons.StageToolkit />}>
           <div className="home-card-body">
             <h3>Project Stage Toolkit</h3>
             <p>
@@ -168,7 +178,7 @@ export function HomeView({
           <span className="home-card-cta">Open toolkit →</span>
         </TiltCard>
 
-        <TiltCard to="/overview">
+        <TiltCard to="/overview" icon={<CardIcons.Overview />}>
           <div className="home-card-body">
             <h3>Overview</h3>
             <p>
@@ -179,7 +189,7 @@ export function HomeView({
           <span className="home-card-cta">Open overview →</span>
         </TiltCard>
 
-        <TiltCard to="/code-map">
+        <TiltCard to="/code-map" icon={<CardIcons.CodeAnalysis />}>
           <div className="home-card-body">
             <h3>Code Analysis</h3>
             <p>
@@ -190,7 +200,7 @@ export function HomeView({
           <span className="home-card-cta">Open Analysis →</span>
         </TiltCard>
 
-        <TiltCard to="/docs">
+        <TiltCard to="/docs" icon={<CardIcons.Docs />}>
           <div className="home-card-body">
             <h3>Docs</h3>
             <p>
@@ -201,7 +211,7 @@ export function HomeView({
           <span className="home-card-cta">Open Docs →</span>
         </TiltCard>
 
-        <TiltCard to="/class-uml">
+        <TiltCard to="/class-uml" icon={<CardIcons.ClassUML />}>
           <div className="home-card-body">
             <h3>Class UML</h3>
             <p>
@@ -212,7 +222,7 @@ export function HomeView({
           <span className="home-card-cta">View UML →</span>
         </TiltCard>
 
-        <TiltCard to="/timeline">
+        <TiltCard to="/timeline" icon={<CardIcons.Timeline />}>
           <div className="home-card-body">
             <h3>Code Timeline</h3>
             <p>
@@ -222,7 +232,7 @@ export function HomeView({
           <span className="home-card-cta">Open Timeline →</span>
         </TiltCard>
 
-        <TiltCard to="/terminal">
+        <TiltCard to="/terminal" icon={<CardIcons.Terminal />}>
           <div className="home-card-body">
             <h3>Remote Terminal</h3>
             <p>
@@ -232,7 +242,7 @@ export function HomeView({
           <span className="home-card-cta">Open Terminal →</span>
         </TiltCard>
 
-        <TiltCard to="/agent">
+        <TiltCard to="/agent" icon={<CardIcons.Agent />}>
           <div className="home-card-body">
             <h3>Claude Agent</h3>
             <p>
@@ -242,7 +252,7 @@ export function HomeView({
           <span className="home-card-cta">Open Agent →</span>
         </TiltCard>
 
-        <TiltCard to="/linters">
+        <TiltCard to="/linters" icon={<CardIcons.Linters />}>
           <div className="home-card-body">
             <h3>Linters</h3>
             <p>
@@ -252,7 +262,7 @@ export function HomeView({
           <span className="home-card-cta">View linters →</span>
         </TiltCard>
 
-        <TiltCard to="/ollama">
+        <TiltCard to="/ollama" icon={<CardIcons.Ollama />}>
           <div className="home-card-body">
             <h3>Ollama Insights</h3>
             <p>
@@ -262,7 +272,7 @@ export function HomeView({
           <span className="home-card-cta">Open Ollama →</span>
         </TiltCard>
 
-        <TiltCard to="/prompts">
+        <TiltCard to="/prompts" icon={<CardIcons.Prompts />}>
           <div className="home-card-body">
             <h3>Prompts</h3>
             <p>
@@ -272,7 +282,7 @@ export function HomeView({
           <span className="home-card-cta">Open Prompts →</span>
         </TiltCard>
 
-        <TiltCard to="/settings">
+        <TiltCard to="/settings" icon={<CardIcons.Settings />}>
           <div className="home-card-body">
             <h3>Settings</h3>
             <p>
