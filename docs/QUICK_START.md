@@ -1,10 +1,31 @@
-# GUÍA DE INICIO - Claude Prompt Library
+# GUÍA DE INICIO - Stage-Aware Development Framework
+
+## 0. Inicializa el proyecto
+
+```bash
+# Proyectos nuevos (agente por defecto: ambos)
+python init_project.py mi-proyecto
+
+# Fuerza agente específico
+python init_project.py mi-proyecto --agent=claude   # Solo Claude Code
+python init_project.py mi-proyecto --agent=codex    # Solo Codex CLI
+
+# Añadir framework a un repo existente
+python init_project.py --existing /ruta/al/proyecto --agent=both
+```
+
+- `.claude/` contiene la documentación de etapas y seguimiento compartido.
+- `.codex/` se crea si eliges `--agent=codex` o `--agent=both`.
+- Revisa `docs/CLAUDE_CODE_REFERENCE.md` y `docs/CODEX_CLI_REFERENCE.md` según el agente que vayas a usar.
 
 ## Para empezar a desarrollar ESTE proyecto
 
-### 1. Abre Claude Code en esta carpeta
+### 1. Prepara la sesión con tu agente
 
-### 2. Primer prompt (copia y pega):
+- **Claude Code**: abre el repo en el IDE y lanza Claude.
+- **Codex CLI**: ejecuta `codex --cd .` (o `codex exec` con un prompt inicial).
+
+### 2. Primer prompt (copia y pega)
 
 ```
 Hola. Voy a trabajar en el proyecto Claude Prompt Library.
@@ -24,7 +45,9 @@ Después de leerlos, responde:
 NO escribas código todavía. Espera mi confirmación.
 ```
 
-### 3. Después de que Claude confirme, pide el plan:
+*(Para Codex CLI, usa el mismo prompt inicial dentro de la sesión interactiva.)*
+
+### 3. Después de que el agente confirme, pide el plan:
 
 ```
 Perfecto. Ahora necesito que me propongas la estructura MÍNIMA para Phase 1.
@@ -50,7 +73,7 @@ NO implementes aún. Espera mi aprobación.
 Aprobado. Procede con la implementación.
 
 PERO: implementa UN archivo a la vez.
-Empieza por init_project.py (puedes ensayar con `--dry-run` para ver qué copiará).
+Empieza por init_project.py.
 Espera mi OK antes de cualquier otro archivo.
 ```
 
@@ -74,7 +97,7 @@ Ahora crea tests/test_full_flow.sh
 
 Debe:
 1. Sección "PHASE 1: Template Copier"
-2. Ejecutar init_project.py con proyecto de prueba (`--dry-run` primero si quieres revisar)
+2. Ejecutar init_project.py con proyecto de prueba
 3. Verificar que archivos existen
 4. Verificar que placeholders están reemplazados
 5. Usar `set -e` (falla al primer error)
@@ -97,7 +120,7 @@ En "Próxima sesión":
 
 ## Prompts de emergencia
 
-### Si Claude se pasa de simple:
+### Si el agente se pasa de simple:
 ```
 STOP. Veo estos problemas concretos:
 - [lista problemas: duplicación, funciones largas, etc.]
@@ -131,7 +154,12 @@ NO hagas cambios, solo análisis.
 
 ## Recordatorios
 
-- Claude Code nunca implementa sin que apruebes el plan primero
+- Ningún agente debe implementar sin que apruebes el plan primero
 - Un archivo a la vez
 - Checkpoints frecuentes
 - Actualiza current-phase.md al final de cada sesión
+
+### Específicos por agente
+
+- **Claude Code**: usa `.claude/settings.local.json` y subagentes para tareas especializadas.
+- **Codex CLI**: revisa `.codex/AGENTS.md` y carga prompts personalizados desde `~/.codex/prompts/` si los necesitas. Ejecuta `codex exec --help` para automatizaciones.

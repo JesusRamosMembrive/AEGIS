@@ -66,7 +66,7 @@
 
 ## 📚 RECURSOS
 
-- **Historial completo**: Ver `.claude/01-session-history.md` para contexto profundo
+- **Historial completo**: Ver `.gemini/01-session-history.md` para contexto profundo
 - **Arquitectura**: Ver `docs/{feature}/architecture.md` para planes detallados
 - **Documentación**: Ver `docs/` para guías técnicas
 
@@ -96,21 +96,3 @@
 ---
 
 **💡 TIP**: Mantén este archivo <150 líneas. Mueve detalles antiguos a `01-session-history.md` regularmente.
-
-## 🎯 Detected Stage: Stage 3 (High Confidence)
-
-**Auto-detected on:** 2025-12-03 17:47
-
-**Detection reasoning:**
-- Large or complex codebase (221 files, ~57384 LOC)
-- Multiple patterns detected: Factory Pattern, Repository, Service Layer
-
-**Metrics:**
-- Files: 221
-- LOC: ~57384
-- Patterns: Factory Pattern, Repository, Service Layer
-
-**Recommended actions:**
-- Follow rules in `.claude/02-stage3-rules.md`
-- Use stage-aware agents for guidance
-- Re-assess stage after significant changes

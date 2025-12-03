@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import type {
@@ -10,6 +10,62 @@ import type {
 import { useStageInitMutation } from "../hooks/useStageInitMutation";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 import { useSuperClaudeInstallMutation } from "../hooks/useSuperClaudeInstallMutation";
+
+type LoadingStep = "preparing" | "running" | "verifying";
+
+const LOADING_STEPS: { key: LoadingStep; label: string }[] = [
+  { key: "preparing", label: "Preparing" },
+  { key: "running", label: "Running" },
+  { key: "verifying", label: "Verifying" },
+];
+
+function LoadingOverlay({
+  title,
+  subtitle,
+  currentStep,
+}: {
+  title: string;
+  subtitle?: string;
+  currentStep?: LoadingStep;
+}): JSX.Element {
+  return (
+    <div className="stage-loading-overlay">
+      <div className="stage-spinner" />
+      <div className="stage-loading-text">
+        {title}
+        {subtitle && <div className="stage-loading-subtext">{subtitle}</div>}
+      </div>
+      {currentStep && (
+        <div className="stage-loading-steps">
+          {LOADING_STEPS.map((step) => {
+            const stepIndex = LOADING_STEPS.findIndex((s) => s.key === step.key);
+            const currentIndex = LOADING_STEPS.findIndex((s) => s.key === currentStep);
+            const isCompleted = stepIndex < currentIndex;
+            const isActive = step.key === currentStep;
+
+            return (
+              <div
+                key={step.key}
+                className={`stage-loading-step ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
+              >
+                {isCompleted && (
+                  <svg className="stage-loading-step-icon" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+                {step.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const AGENT_OPTIONS: { value: StageAgentSelection; label: string }[] = [
   { value: "all", label: "All (Claude + Codex + Gemini)" },
@@ -192,6 +248,8 @@ export function StageToolkitView(): JSX.Element {
 
   const [selection, setSelection] = useState<StageAgentSelection>("all");
   const [forceReset, setForceReset] = useState(false);
+  const [initStep, setInitStep] = useState<LoadingStep>("preparing");
+  const [superClaudeStep, setSuperClaudeStep] = useState<LoadingStep>("preparing");
 
   const stageStatus = statusQuery.data;
   const initResult = initMutation.data;
@@ -204,6 +262,32 @@ export function StageToolkitView(): JSX.Element {
   const superClaudeError = superClaudeMutation.error
     ? String(superClaudeMutation.error.message || superClaudeMutation.error)
     : null;
+
+  // Simulate step progression for init mutation
+  useEffect(() => {
+    if (initMutation.isPending) {
+      setInitStep("preparing");
+      const runningTimer = setTimeout(() => setInitStep("running"), 500);
+      const verifyingTimer = setTimeout(() => setInitStep("verifying"), 3000);
+      return () => {
+        clearTimeout(runningTimer);
+        clearTimeout(verifyingTimer);
+      };
+    }
+  }, [initMutation.isPending]);
+
+  // Simulate step progression for SuperClaude mutation
+  useEffect(() => {
+    if (superClaudeMutation.isPending) {
+      setSuperClaudeStep("preparing");
+      const runningTimer = setTimeout(() => setSuperClaudeStep("running"), 500);
+      const verifyingTimer = setTimeout(() => setSuperClaudeStep("verifying"), 4000);
+      return () => {
+        clearTimeout(runningTimer);
+        clearTimeout(verifyingTimer);
+      };
+    }
+  }, [superClaudeMutation.isPending]);
 
   const currentAgentLabel = useMemo(
     () => AGENT_OPTIONS.find((option) => option.value === selection)?.label ?? "All agents",
@@ -287,6 +371,13 @@ export function StageToolkitView(): JSX.Element {
       </section>
 
       <section className="stage-section">
+        {initMutation.isPending && (
+          <LoadingOverlay
+            title="Initializing Stage-Aware Framework"
+            subtitle={`Installing ${currentAgentLabel} configuration...`}
+            currentStep={initStep}
+          />
+        )}
         <header className="stage-section-header">
           <div>
             <h2>Initialize or reinstall instructions</h2>
@@ -348,6 +439,13 @@ export function StageToolkitView(): JSX.Element {
       </section>
 
       <section className="stage-section">
+        {superClaudeMutation.isPending && (
+          <LoadingOverlay
+            title="Installing SuperClaude Framework"
+            subtitle="Cloning repository and syncing assets..."
+            currentStep={superClaudeStep}
+          />
+        )}
         <header className="stage-section-header">
           <div>
             <h2>SuperClaude Framework</h2>

@@ -1,20 +1,18 @@
-# Codex Agent Instructions
-
 ## 🎯 PROJECT CONTEXT
 
 Before ANY work, read in this order:
-1. .claude/00-project-brief.md - Project scope and constraints
-2. .claude/01-current-phase.md - Current state and progress
-3. .codex/stage[X]-rules.md - Rules for current stage
+1. .gemini/00-project-brief.md - Project scope and constraints
+2. .gemini/01-current-phase.md - Current state and progress
+3. .gemini/02-stage[X]-rules.md - Rules for current stage
 
 ## 📝 SESSION WORKFLOW
 
 ⚠️ MANDATORY: At the START of EVERY session, BEFORE responding to user:
 
 1. **ALWAYS read these files first**:
-   - .claude/00-project-brief.md - Project scope and constraints
-   - .claude/01-current-phase.md - Current state and next steps (COMPACT)
-   - .codex/stage[X]-rules.md - Rules for current stage
+   - .gemini/00-project-brief.md - Project scope and constraints
+   - .gemini/01-current-phase.md - Current state and next steps (COMPACT)
+   - .gemini/02-stage[X]-rules.md - Rules for current stage
 
 2. **ALWAYS confirm to user** you've read the context:
    - State current phase/stage
@@ -26,10 +24,10 @@ Before ANY work, read in this order:
 **This applies EVEN IF the user's first message is a simple question.**
 Do NOT skip this protocol to "be helpful faster" - reading context IS being helpful.
 
-**Need deep context?** Read `.claude/01-session-history.md` for full session details.
+**Need deep context?** Read `.gemini/01-session-history.md` for full session details.
 
 At END of session:
-- Update .claude/01-current-phase.md with progress
+- Update .gemini/01-current-phase.md with progress
 - **CRITICAL**: Keep 01-current-phase.md under 150 lines
 
 ## 🔄 FEATURE DEVELOPMENT WORKFLOW
@@ -162,4 +160,4 @@ Available in `docs/` folder:
 
 ---
 
-*To update these instructions, modify templates/basic/.codex/AGENTS.md*
+*To update these instructions, modify templates/basic/.gemini/CUSTOM_INSTRUCTIONS.md*

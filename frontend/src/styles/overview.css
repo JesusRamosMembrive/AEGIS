@@ -31,6 +31,16 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.overview-detection-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(96, 165, 250, 0.4);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.25),
+    0 0 30px rgba(59, 130, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .overview-intro__text h2 {
@@ -207,6 +217,18 @@
   flex-direction: column;
   gap: 10px;
   min-height: 100px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.overview-highlight__card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(15, 23, 42, 0.75);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.25),
+    0 0 30px rgba(59, 130, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .overview-highlight__card--detection {
@@ -472,8 +494,12 @@
 
 .overview-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
   border-color: rgba(96, 165, 250, 0.4);
+  background: rgba(30, 41, 59, 0.85);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.25),
+    0 0 30px rgba(59, 130, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .overview-card__header {
@@ -943,12 +969,18 @@
   flex-direction: column;
   gap: 10px;
   min-height: 110px;
-  transition: border-color 0.15s, transform 0.15s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease,
+    background 0.25s ease;
 }
 
 .compact-card:hover {
+  transform: translateY(-4px);
   border-color: rgba(96, 165, 250, 0.35);
-  transform: translateY(-2px);
+  background: rgba(30, 41, 59, 0.75);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.25),
+    0 0 30px rgba(59, 130, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .compact-card__header {
@@ -1634,4 +1666,174 @@
   .info-row {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================
+   CODE MAP STATS
+   ============================================ */
+.code-map-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0;
+}
+
+.code-map-stats__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+}
+
+.code-map-stats__label {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.code-map-stats__value {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.code-map-stats__extensions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.code-map-stats__ext {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: "JetBrains Mono", monospace;
+  background: rgba(148, 163, 184, 0.15);
+  color: #a5b4fc;
+}
+
+/* ============================================
+   AGENT DONUT CHARTS
+   ============================================ */
+.agent-donuts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.agent-donuts__charts {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.agent-donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+}
+
+.agent-donut__svg {
+  display: block;
+}
+
+.agent-donut__label {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.agent-donuts__footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  font-size: 0.7rem;
+  color: #64748b;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.agent-donuts__footer span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.agent-donuts__footer span::before {
+  content: "•";
+  color: #475569;
+}
+
+.agent-donuts__footer span:first-child::before {
+  display: none;
+}
+
+/* ============================================
+   OLLAMA MODEL LIST
+   ============================================ */
+.ollama-model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.ollama-model-list__version {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.ollama-model-list__models {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ollama-model-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+}
+
+.ollama-model-list__name {
+  color: #e2e8f0;
+  font-weight: 500;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ollama-model-list__size {
+  color: #a78bfa;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.ollama-model-list__time {
+  color: #64748b;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.ollama-model-list__empty {
+  color: #64748b;
+  font-size: 0.75rem;
+  margin: 0;
+  font-style: italic;
+}
+
+.ollama-model-list__next {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
 }

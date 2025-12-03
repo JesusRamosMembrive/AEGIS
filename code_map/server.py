@@ -5,13 +5,15 @@ Aplicación FastAPI principal.
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,11 +22,19 @@ from .state import AppState
 from .settings import load_settings, save_settings
 from .api.routes import router as api_router
 
+logger = logging.getLogger(__name__)
+
 
 def _parse_allowed_origins() -> list[str]:
     raw = os.getenv("CODE_MAP_CORS_ALLOWED_ORIGINS")
     if not raw:
-        return ["*"]
+        # Default origins for local development
+        return [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
     origins = [origin.strip() for origin in raw.split(",")]
     cleaned = [origin for origin in origins if origin]
     return cleaned or ["*"]
@@ -67,6 +77,16 @@ def create_app(root: Optional[str | Path] = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        """Global exception handler to ensure all errors return proper JSON responses."""
+        logger.exception("Unhandled exception: %s", exc)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal server error: {exc}"},
+        )
+
     app.include_router(api_router, prefix="/api")
     app.state.app_state = state  # type: ignore[attr-defined]
 

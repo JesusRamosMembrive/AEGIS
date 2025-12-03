@@ -9,3 +9,6 @@ export { TopOffenders } from "./TopOffenders";
 export { PendingChangesList } from "./PendingChangesList";
 export { RecentCommits } from "./RecentCommits";
 export { AnalyzerHealth } from "./AnalyzerHealth";
+export { CodeMapStats } from "./CodeMapStats";
+export { AgentDonutCharts } from "./AgentDonutCharts";
+export { OllamaModelList } from "./OllamaModelList";

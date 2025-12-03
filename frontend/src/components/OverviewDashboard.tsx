@@ -24,6 +24,9 @@ import {
   PendingChangesList,
   RecentCommits,
   AnalyzerHealth,
+  CodeMapStats,
+  AgentDonutCharts,
+  OllamaModelList,
   type ActivityItem,
   type CardTone,
 } from "./dashboard";
@@ -227,12 +230,6 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
     timelineLatestCommit,
   ]);
 
-  // Agent status helpers
-  const agentStatusText = (installed: boolean | undefined): string =>
-    installed ? "OK" : "Missing";
-  const agentTone = (installed: boolean | undefined): CardTone =>
-    installed ? "success" : "warn";
-
   return (
     <div className="overview-view overview-view--dense">
       {/* Status Bar */}
@@ -299,7 +296,12 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
             { label: "Symbols", value: formatNumber(symbolsIndexed) },
             { label: "Changes", value: pendingChanges.length },
           ]}
-        />
+        >
+          <CodeMapStats
+            lastFullScan={lastFullScan}
+            capabilities={capabilities}
+          />
+        </CompactCard>
 
         {/* Agents Card */}
         <CompactCard
@@ -318,17 +320,12 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
           }
           link={{ to: "/stage-toolkit", label: "Setup" }}
         >
-          <div style={{ display: "flex", gap: "12px", fontSize: "0.75rem" }}>
-            <span style={{ color: claudeStatus?.installed ? "#4ade80" : "#94a3b8" }}>
-              Claude: {agentStatusText(claudeStatus?.installed)}
-            </span>
-            <span style={{ color: codexStatus?.installed ? "#4ade80" : "#94a3b8" }}>
-              Codex: {agentStatusText(codexStatus?.installed)}
-            </span>
-            <span style={{ color: geminiStatus?.installed ? "#4ade80" : "#94a3b8" }}>
-              Gemini: {agentStatusText(geminiStatus?.installed)}
-            </span>
-          </div>
+          <AgentDonutCharts
+            claude={claudeStatus}
+            codex={codexStatus}
+            gemini={geminiStatus}
+            detection={detection}
+          />
         </CompactCard>
 
         {/* Ollama Card */}
@@ -342,11 +339,11 @@ export function OverviewDashboard({ statusQuery }: OverviewDashboardProps): JSX.
             { label: "Insights", value: ollamaInsights.length },
           ]}
         >
-          {latestInsight ? (
-            <p style={{ margin: 0, fontSize: "0.75rem", color: "#94a3b8" }}>
-              Last: {latestInsight.message.slice(0, 50)}...
-            </p>
-          ) : null}
+          <OllamaModelList
+            models={ollamaStatus?.models}
+            version={ollamaStatus?.version}
+            nextInsightRun={statusData?.ollama_insights_next_run}
+          />
         </CompactCard>
       </div>
 
