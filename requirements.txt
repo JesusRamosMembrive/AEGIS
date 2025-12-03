@@ -23,7 +23,8 @@ beautifulsoup4>=4.12,<5
 esprima>=4.0,<5
 defusedxml>=0.7,<0.8
 
-# Tree-sitter (optional - requires Python <3.12)
+# Tree-sitter (optional - NOT available for Python 3.13+)
+# Provides enhanced TSX/JSX parsing. Uncomment if using Python <=3.12:
 # tree_sitter>=0.20,<0.22
 # tree_sitter_languages>=1.10,<2
 
