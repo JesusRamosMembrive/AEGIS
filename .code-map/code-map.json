@@ -8823,28 +8823,6 @@
     "errors": []
   },
   {
-    "path": "frontend/src/components/HomeView.tsx",
-    "relative": true,
-    "modified_at": "2025-12-03T18:28:38.965111+00:00",
-    "symbols": [
-      {
-        "name": "detectionBadgeLabel",
-        "kind": "function",
-        "lineno": 9,
-        "parent": null,
-        "docstring": null
-      },
-      {
-        "name": "HomeView",
-        "kind": "function",
-        "lineno": 21,
-        "parent": null,
-        "docstring": null
-      }
-    ],
-    "errors": []
-  },
-  {
     "path": "frontend/src/components/LintersView.tsx",
     "relative": true,
     "modified_at": "2025-12-01T20:01:14.804829+00:00",

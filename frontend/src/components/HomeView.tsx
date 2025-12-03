@@ -4,7 +4,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import type { StageDetectionStatus, StatusPayload } from "../api/types";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 import { TiltCard, CardIcons } from "./TiltCard";
-import { SparklesCore } from "./SparklesCore";
+import { Vortex } from "./Vortex";
 
 function detectionBadgeLabel(detection?: StageDetectionStatus): string {
   if (!detection) {
@@ -55,14 +55,16 @@ export function HomeView({
         </div>
       )}
       <section className="home-hero">
-        <SparklesCore
-          className="home-hero__sparkles"
-          background="transparent"
-          particleColor="#60a5fa"
-          particleDensity={80}
-          minSize={0.6}
-          maxSize={1.8}
-          speed={0.8}
+        <Vortex
+          containerClassName="home-hero__vortex"
+          backgroundColor="transparent"
+          baseHue={220}
+          particleCount={300}
+          rangeY={400}
+          baseSpeed={0.0}
+          rangeSpeed={0.4}
+          baseRadius={0.8}
+          rangeRadius={1.5}
         />
         <div className="home-hero__glow" aria-hidden />
         <div className="home-hero__content">

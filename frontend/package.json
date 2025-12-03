@@ -36,6 +36,7 @@
     "react-router-dom": "^6.27.0",
     "reactflow": "^11.10.3",
     "remark-gfm": "^4.0.0",
+    "simplex-noise": "^4.0.3",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
