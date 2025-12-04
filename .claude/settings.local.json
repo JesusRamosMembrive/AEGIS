@@ -17,7 +17,22 @@
       "WebFetch(domain:github.com)",
       "Bash(git commit:*)",
       "WebSearch",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(python -m py_compile:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(gemini --help:*)",
+      "Bash(gemini --list-extensions:*)",
+      "Bash(gemini mcp list:*)",
+      "Bash(gemini:*)",
+      "Bash(cat:*)",
+      "Bash(npm show:*)",
+      "Bash(npm list:*)",
+      "Bash(npm update:*)",
+      "Bash(/home/jesusramos/Workspace/AEGIS/.venv/bin/python:*)",
+      "Bash(timeout 15 gemini:*)",
+      "Bash(echo:*)",
+      "Bash(timeout 30 gemini:*)",
+      "Bash(timeout 45 gemini:*)"
     ],
     "deny": [],
     "ask": []

@@ -23,7 +23,7 @@ class MCPProxyModeHandler(BaseAgentHandler):
     Handler for MCP Proxy mode execution.
 
     Uses Claude CLI with MCP tool proxy for approval-based execution.
-    The proxy tools (atlas_write, atlas_edit, atlas_bash) request
+    The proxy tools (aegis_write, aegis_edit, aegis_bash) request
     user approval via socket before executing operations.
     """
 

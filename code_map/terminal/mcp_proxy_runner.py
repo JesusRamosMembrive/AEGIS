@@ -18,7 +18,7 @@ Architecture:
          │
          ├── Safe tools: Read, Glob, Grep (execute directly)
          │
-         └── Proxy tools: atlas_write, atlas_edit, atlas_bash
+         └── Proxy tools: aegis_write, aegis_edit, aegis_bash
                   │
                   ▼
          MCP Tool Proxy Server
@@ -47,7 +47,7 @@ import tempfile
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
-from .claude_runner import find_claude_cli
+from .claude_runner import find_claude_cli, ClaudeCLINotFoundError
 from ..mcp.constants import DEFAULT_SOCKET_PATH, CANCEL_TIMEOUT
 
 logger = logging.getLogger(__name__)
@@ -248,7 +248,7 @@ class MCPProxyRunner:
 
         config = {
             "mcpServers": {
-                "atlas-tools": {
+                "aegis-tools": {
                     "command": python_path,
                     "args": [
                         "-m",
@@ -267,7 +267,7 @@ class MCPProxyRunner:
         }
 
         # Create temp file
-        fd, path = tempfile.mkstemp(suffix=".json", prefix="atlas_mcp_")
+        fd, path = tempfile.mkstemp(suffix=".json", prefix="aegis_mcp_")
         with os.fdopen(fd, "w") as f:
             json.dump(config, f)
 
@@ -304,6 +304,21 @@ class MCPProxyRunner:
         Returns:
             Exit code from the process
         """
+        # Check for Claude CLI before creating any config files
+        try:
+            find_claude_cli()
+        except ClaudeCLINotFoundError as e:
+            logger.error(f"Claude CLI not found: {e}")
+            if on_error:
+                result = on_error(str(e))
+                if asyncio.iscoroutine(result):
+                    await result
+            if on_done:
+                result = on_done()
+                if asyncio.iscoroutine(result):
+                    await result
+            return -1
+
         mcp_config_path = self._create_mcp_config()
 
         try:

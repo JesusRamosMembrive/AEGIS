@@ -248,7 +248,7 @@ class ClaudeAgentRunner:
             # Use --permission-prompt-tool instead of --permission-mode plan
             cmd.extend([
                 "--permission-prompt-tool",
-                "mcp__atlas_approval__check_permission"
+                "mcp__aegis_approval__check_permission"
             ])
 
             # Start MCP server as subprocess or use stdio
@@ -295,7 +295,7 @@ cmd.extend([
 │                        Backend Principal (8010)                  │
 │  ┌─────────────┐    ┌──────────────┐    ┌───────────────────┐   │
 │  │ terminal.py │───▶│ ApprovalBrdg │───▶│ Unix Socket       │   │
-│  │ (WebSocket) │◀───│              │◀───│ /tmp/atlas_mcp.sock│  │
+│  │ (WebSocket) │◀───│              │◀───│ /tmp/aegis_mcp.sock│  │
 │  └─────────────┘    └──────────────┘    └─────────┬─────────┘   │
 │         │                                         │              │
 │         ▼                                         │              │
@@ -342,7 +342,7 @@ cmd.extend([
 claude -p \
   --output-format stream-json \
   --input-format stream-json \
-  --permission-prompt-tool mcp__atlas_approval__check_permission \
+  --permission-prompt-tool mcp__aegis_approval__check_permission \
   "your prompt here"
 ```
 

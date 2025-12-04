@@ -805,7 +805,7 @@
   {
     "path": "code_map/api/handlers/mcp_proxy_handler.py",
     "relative": true,
-    "modified_at": "2025-12-04T10:05:31.307608+00:00",
+    "modified_at": "2025-12-04T18:22:21.734127+00:00",
     "symbols": [
       {
         "name": "MCPProxyModeHandler",
@@ -1673,7 +1673,7 @@
   {
     "path": "code_map/api/stage.py",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.269974+00:00",
+    "modified_at": "2025-12-04T18:21:43.901549+00:00",
     "symbols": [
       {
         "name": "get_stage_status",
@@ -1702,7 +1702,7 @@
   {
     "path": "code_map/api/terminal.py",
     "relative": true,
-    "modified_at": "2025-12-04T10:22:32.748176+00:00",
+    "modified_at": "2025-12-04T18:22:21.734127+00:00",
     "symbols": [
       {
         "name": "get_or_create_mcp_socket_server",
@@ -1770,7 +1770,7 @@
       {
         "name": "codex_agent_websocket",
         "kind": "function",
-        "lineno": 1317,
+        "lineno": 1325,
         "parent": null,
         "docstring": "WebSocket endpoint for OpenAI Codex CLI JSON streaming mode\n\nProvides real-time interaction with Codex CLI using JSON events.\nEvents are normalized to the same format as Claude for frontend compatibility.\n\nClient sends:\n- {\"command\": \"run\", \"prompt\": \"...\", \"permission_mode\": \"...\", \"model\": \"...\"}\n- {\"command\": \"cancel\"}\n- {\"command\": \"tool_approval_response\", \"request_id\": \"...\", \"approved\": bool}\n\nServer sends:\n- {\"type\": \"connected\", \"cwd\": \"...\"}\n- {\"type\": \"system\", \"subtype\": \"init\", \"content\": {...}}\n- {\"type\": \"assistant\", \"subtype\": \"text\", \"content\": \"...\"}\n- {\"type\": \"assistant\", \"subtype\": \"tool_use\", \"content\": {...}}\n- {\"type\": \"user\", \"subtype\": \"tool_result\", \"content\": {...}}\n- {\"type\": \"done\"}\n- {\"type\": \"error\", \"content\": \"...\"}\n- {\"type\": \"tool_approval_request\", ...}"
       }
@@ -2706,7 +2706,7 @@
   {
     "path": "code_map/cli.py",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:30.999577+00:00",
+    "modified_at": "2025-12-04T18:21:43.901549+00:00",
     "symbols": [
       {
         "name": "_validate_root",
@@ -3352,7 +3352,7 @@
   {
     "path": "code_map/integrations/ollama_service.py",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.269974+00:00",
+    "modified_at": "2025-12-04T18:21:43.901549+00:00",
     "symbols": [
       {
         "name": "_normalize_endpoint",
@@ -4305,14 +4305,14 @@
   {
     "path": "code_map/mcp/constants.py",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:30.999577+00:00",
+    "modified_at": "2025-12-04T18:21:43.901549+00:00",
     "symbols": [],
     "errors": []
   },
   {
     "path": "code_map/mcp/permission_server.py",
     "relative": true,
-    "modified_at": "2025-12-04T10:05:30.292599+00:00",
+    "modified_at": "2025-12-04T18:22:21.734127+00:00",
     "symbols": [
       {
         "name": "PermissionServer",
@@ -4390,7 +4390,7 @@
   {
     "path": "code_map/mcp/socket_server.py",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:30.999577+00:00",
+    "modified_at": "2025-12-04T18:21:43.901549+00:00",
     "symbols": [
       {
         "name": "MCPSocketServer",
@@ -4475,7 +4475,7 @@
   {
     "path": "code_map/mcp/tool_proxy_server.py",
     "relative": true,
-    "modified_at": "2025-12-04T10:05:13.423446+00:00",
+    "modified_at": "2025-12-04T18:22:21.734127+00:00",
     "symbols": [
       {
         "name": "ToolProxyServer",
@@ -4787,7 +4787,7 @@
   {
     "path": "code_map/server.py",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.270967+00:00",
+    "modified_at": "2025-12-04T18:21:43.902550+00:00",
     "symbols": [
       {
         "name": "_parse_allowed_origins",
@@ -5163,7 +5163,7 @@
   {
     "path": "code_map/stage_toolkit.py",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.270967+00:00",
+    "modified_at": "2025-12-04T18:21:43.902550+00:00",
     "symbols": [
       {
         "name": "FileStatus",
@@ -5488,7 +5488,7 @@
   {
     "path": "code_map/terminal/__init__.py",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:30.999577+00:00",
+    "modified_at": "2025-12-04T18:21:43.902550+00:00",
     "symbols": [],
     "errors": []
   },
@@ -5840,7 +5840,7 @@
   {
     "path": "code_map/terminal/claude_runner.py",
     "relative": true,
-    "modified_at": "2025-12-04T10:08:13.857081+00:00",
+    "modified_at": "2025-12-04T18:22:21.735126+00:00",
     "symbols": [
       {
         "name": "ClaudeCLINotFoundError",
@@ -6037,7 +6037,7 @@
   {
     "path": "code_map/terminal/codex_runner.py",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:31.000576+00:00",
+    "modified_at": "2025-12-04T18:21:43.903919+00:00",
     "symbols": [
       {
         "name": "find_codex_cli",
@@ -6192,7 +6192,7 @@
   {
     "path": "code_map/terminal/gemini_runner.py",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.600315+00:00",
+    "modified_at": "2025-12-04T18:22:21.735126+00:00",
     "symbols": [
       {
         "name": "find_gemini_cli",
@@ -6211,77 +6211,91 @@
       {
         "name": "GeminiAgentRunner",
         "kind": "class",
-        "lineno": 63,
+        "lineno": 67,
         "parent": null,
         "docstring": "Executes Gemini CLI in JSON streaming mode with bidirectional communication."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 68,
+        "lineno": 72,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "run_prompt",
         "kind": "method",
-        "lineno": 86,
+        "lineno": 90,
         "parent": "GeminiAgentRunner",
         "docstring": "Execute a prompt and stream JSON events"
       },
       {
         "name": "_map_event",
         "kind": "method",
-        "lineno": 247,
+        "lineno": 299,
         "parent": "GeminiAgentRunner",
         "docstring": "Map Gemini event to Claude event format"
       },
       {
         "name": "_is_tool_use_event",
         "kind": "method",
-        "lineno": 314,
+        "lineno": 366,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_extract_tool_use_from_event",
         "kind": "method",
-        "lineno": 317,
+        "lineno": 369,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_handle_tool_approval",
         "kind": "method",
-        "lineno": 327,
+        "lineno": 379,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "_execute_tool",
         "kind": "method",
-        "lineno": 402,
+        "lineno": 454,
         "parent": "GeminiAgentRunner",
-        "docstring": null
+        "docstring": "Execute a tool locally after approval.\nThis is only called in toolApproval mode when we intercept tool calls."
       },
       {
         "name": "_execute_bash",
         "kind": "method",
-        "lineno": 415,
+        "lineno": 475,
         "parent": "GeminiAgentRunner",
-        "docstring": null
+        "docstring": "Execute a shell command."
+      },
+      {
+        "name": "_execute_write_file",
+        "kind": "method",
+        "lineno": 493,
+        "parent": "GeminiAgentRunner",
+        "docstring": "Write content to a file."
+      },
+      {
+        "name": "_execute_replace",
+        "kind": "method",
+        "lineno": 508,
+        "parent": "GeminiAgentRunner",
+        "docstring": "Replace text in a file."
       },
       {
         "name": "cancel",
         "kind": "method",
-        "lineno": 432,
+        "lineno": 533,
         "parent": "GeminiAgentRunner",
         "docstring": null
       },
       {
         "name": "respond_to_tool_approval",
         "kind": "method",
-        "lineno": 437,
+        "lineno": 538,
         "parent": "GeminiAgentRunner",
         "docstring": "Respond to a pending tool approval request."
       }
@@ -6404,7 +6418,7 @@
   {
     "path": "code_map/terminal/mcp_proxy_runner.py",
     "relative": true,
-    "modified_at": "2025-12-04T10:09:41.450870+00:00",
+    "modified_at": "2025-12-04T18:22:21.735126+00:00",
     "symbols": [
       {
         "name": "MCPProxyRunnerConfig",
@@ -6764,7 +6778,7 @@
   {
     "path": "code_map/terminal/pty_shell.py",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.601315+00:00",
+    "modified_at": "2025-12-04T18:22:21.735126+00:00",
     "symbols": [
       {
         "name": "PTYShell",
@@ -6820,33 +6834,33 @@
         "kind": "method",
         "lineno": 142,
         "parent": "PTYShell",
-        "docstring": "Resize terminal\n\nArgs:\n    cols: New terminal width\n    rows: New terminal height"
+        "docstring": "Resize terminal with dimension validation.\n\nPrevents invalid dimensions that cause line-wrap issues in TUI agents\nlike Claude Code, Gemini CLI, etc.\n\nArgs:\n    cols: New terminal width\n    rows: New terminal height"
       },
       {
         "name": "write",
         "kind": "method",
-        "lineno": 155,
+        "lineno": 170,
         "parent": "PTYShell",
         "docstring": "Write data to shell stdin\n\nArgs:\n    data: String to write to shell"
       },
       {
         "name": "read",
         "kind": "method",
-        "lineno": 173,
+        "lineno": 188,
         "parent": "PTYShell",
         "docstring": "Read shell output asynchronously\n\nContinuously reads from shell output and calls callback\nwith received data. Runs until shell process exits.\n\nArgs:\n    callback: Function to call with output data"
       },
       {
         "name": "close",
         "kind": "method",
-        "lineno": 257,
+        "lineno": 272,
         "parent": "PTYShell",
         "docstring": "Close shell process and cleanup resources"
       },
       {
         "name": "__del__",
         "kind": "method",
-        "lineno": 301,
+        "lineno": 316,
         "parent": "PTYShell",
         "docstring": "Cleanup on garbage collection"
       }
@@ -7138,7 +7152,7 @@
   {
     "path": "code_map/terminal/winpty_shell.py",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:31.000576+00:00",
+    "modified_at": "2025-12-04T18:21:43.903919+00:00",
     "symbols": [
       {
         "name": "WinPTYShell",
@@ -8425,75 +8439,75 @@
   {
     "path": "frontend/src/components/ClaudeAgentView.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T10:25:24.429235+00:00",
+    "modified_at": "2025-12-04T18:22:21.737499+00:00",
     "symbols": [
       {
         "name": "extractResultContent",
         "kind": "function",
-        "lineno": 51,
+        "lineno": 52,
         "parent": null,
         "docstring": null
       },
       {
         "name": "ClaudeAgentView",
         "kind": "function",
-        "lineno": 80,
+        "lineno": 81,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "stripApi",
         "kind": "function",
-        "lineno": 141,
+        "lineno": 145,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleGlobalKeyDown",
         "kind": "function",
-        "lineno": 318,
+        "lineno": 341,
         "parent": null,
         "docstring": null
       },
       {
         "name": "AgentHeader",
         "kind": "function",
-        "lineno": 663,
+        "lineno": 704,
         "parent": null,
         "docstring": null
       },
       {
         "name": "EmptyState",
         "kind": "function",
-        "lineno": 798,
+        "lineno": 855,
         "parent": null,
         "docstring": null
       },
       {
         "name": "MessageItem",
         "kind": "function",
-        "lineno": 817,
+        "lineno": 874,
         "parent": null,
         "docstring": null
       },
       {
         "name": "PermissionDenialsBanner",
         "kind": "function",
-        "lineno": 982,
+        "lineno": 1039,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncateInput",
         "kind": "function",
-        "lineno": 1043,
+        "lineno": 1100,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncatePath",
         "kind": "function",
-        "lineno": 1053,
+        "lineno": 1110,
         "parent": null,
         "docstring": "============================================================================"
       }
@@ -8532,7 +8546,7 @@
   {
     "path": "frontend/src/components/CodeTimelineView.tsx",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:31.000576+00:00",
+    "modified_at": "2025-12-04T18:21:43.909868+00:00",
     "symbols": [
       {
         "name": "parseDiffToSideBySide",
@@ -8667,7 +8681,7 @@
   {
     "path": "frontend/src/components/DiffViewer.tsx",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:31.001576+00:00",
+    "modified_at": "2025-12-04T18:21:43.909868+00:00",
     "symbols": [
       {
         "name": "DiffViewer",
@@ -8788,6 +8802,42 @@
     "errors": []
   },
   {
+    "path": "frontend/src/components/GeminiTerminalEmbed.tsx",
+    "relative": true,
+    "modified_at": "2025-12-04T18:22:21.737499+00:00",
+    "symbols": [
+      {
+        "name": "GeminiTerminalEmbedInner",
+        "kind": "function",
+        "lineno": 36,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "stripApi",
+        "kind": "function",
+        "lineno": 60,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "checkDimensions",
+        "kind": "function",
+        "lineno": 120,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "sendResize",
+        "kind": "function",
+        "lineno": 318,
+        "parent": null,
+        "docstring": "Handle terminal resize events"
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "frontend/src/components/HeaderBar.tsx",
     "relative": true,
     "modified_at": "2025-12-01T17:07:49.306373+00:00",
@@ -8805,7 +8855,7 @@
   {
     "path": "frontend/src/components/HomeView.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.276967+00:00",
+    "modified_at": "2025-12-04T18:21:43.909868+00:00",
     "symbols": [
       {
         "name": "detectionBadgeLabel",
@@ -9013,7 +9063,7 @@
   {
     "path": "frontend/src/components/OverviewDashboard.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.276967+00:00",
+    "modified_at": "2025-12-04T18:21:43.909868+00:00",
     "symbols": [
       {
         "name": "formatDateTime",
@@ -9171,7 +9221,7 @@
   {
     "path": "frontend/src/components/RemoteTerminalView.tsx",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:31.001576+00:00",
+    "modified_at": "2025-12-04T18:22:21.737499+00:00",
     "symbols": [
       {
         "name": "RemoteTerminalView",
@@ -9183,28 +9233,28 @@
       {
         "name": "stripApi",
         "kind": "function",
-        "lineno": 40,
+        "lineno": 37,
         "parent": null,
         "docstring": null
       },
       {
         "name": "connectToShell",
         "kind": "function",
-        "lineno": 181,
+        "lineno": 178,
         "parent": null,
         "docstring": "Manual connection function - called by user clicking \"Connect\" button"
       },
       {
         "name": "sendResize",
         "kind": "function",
-        "lineno": 282,
+        "lineno": 259,
         "parent": null,
         "docstring": null
       },
       {
         "name": "disconnectFromShell",
         "kind": "function",
-        "lineno": 310,
+        "lineno": 287,
         "parent": null,
         "docstring": "Disconnect function"
       }
@@ -9402,7 +9452,7 @@
   {
     "path": "frontend/src/components/SparklesCore.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.276967+00:00",
+    "modified_at": "2025-12-04T18:21:43.909868+00:00",
     "symbols": [
       {
         "name": "SparklesCore",
@@ -9424,7 +9474,7 @@
   {
     "path": "frontend/src/components/StageToolkitView.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.276967+00:00",
+    "modified_at": "2025-12-04T18:21:43.909868+00:00",
     "symbols": [
       {
         "name": "LoadingOverlay",
@@ -9623,7 +9673,7 @@
   {
     "path": "frontend/src/components/TiltCard.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.277967+00:00",
+    "modified_at": "2025-12-04T18:21:43.910550+00:00",
     "symbols": [
       {
         "name": "TiltCard",
@@ -9695,7 +9745,7 @@
   {
     "path": "frontend/src/components/ToolApprovalModal.tsx",
     "relative": true,
-    "modified_at": "2025-12-03T07:00:31.001576+00:00",
+    "modified_at": "2025-12-04T18:21:43.910550+00:00",
     "symbols": [
       {
         "name": "parseDiffLinesToSideBySide",
@@ -9831,7 +9881,7 @@
   {
     "path": "frontend/src/components/Vortex.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.277967+00:00",
+    "modified_at": "2025-12-04T18:21:43.910550+00:00",
     "symbols": [
       {
         "name": "Vortex",
@@ -9903,7 +9953,7 @@
   {
     "path": "frontend/src/components/dashboard/ActivityTimeline.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278801+00:00",
+    "modified_at": "2025-12-04T18:21:43.911589+00:00",
     "symbols": [
       {
         "name": "formatRelativeTime",
@@ -9925,7 +9975,7 @@
   {
     "path": "frontend/src/components/dashboard/AgentDonutCharts.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278949+00:00",
+    "modified_at": "2025-12-04T18:21:43.911634+00:00",
     "symbols": [
       {
         "name": "MiniDonut",
@@ -9954,7 +10004,7 @@
   {
     "path": "frontend/src/components/dashboard/AnalyzerHealth.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911634+00:00",
     "symbols": [
       {
         "name": "getAnalyzerLabel",
@@ -9976,7 +10026,7 @@
   {
     "path": "frontend/src/components/dashboard/CodeMapStats.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911634+00:00",
     "symbols": [
       {
         "name": "formatRelativeTime",
@@ -9998,7 +10048,7 @@
   {
     "path": "frontend/src/components/dashboard/CommandStatusBar.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "CommandStatusBar",
@@ -10013,7 +10063,7 @@
   {
     "path": "frontend/src/components/dashboard/CompactCard.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "CompactCard",
@@ -10028,7 +10078,7 @@
   {
     "path": "frontend/src/components/dashboard/CoverageGauge.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "getColorForCoverage",
@@ -10050,7 +10100,7 @@
   {
     "path": "frontend/src/components/dashboard/IssueSeverityBar.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "IssueSeverityBar",
@@ -10065,7 +10115,7 @@
   {
     "path": "frontend/src/components/dashboard/MetricsStrip.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "formatNumber",
@@ -10094,7 +10144,7 @@
   {
     "path": "frontend/src/components/dashboard/OllamaModelList.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "formatRelativeTime",
@@ -10123,7 +10173,7 @@
   {
     "path": "frontend/src/components/dashboard/PendingChangesList.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "getFileName",
@@ -10159,7 +10209,7 @@
   {
     "path": "frontend/src/components/dashboard/QuickActions.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "QuickActions",
@@ -10195,7 +10245,7 @@
   {
     "path": "frontend/src/components/dashboard/RecentCommits.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "formatRelativeTime",
@@ -10231,7 +10281,7 @@
   {
     "path": "frontend/src/components/dashboard/TopOffenders.tsx",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "getFileName",
@@ -10260,7 +10310,7 @@
   {
     "path": "frontend/src/components/dashboard/index.ts",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [],
     "errors": []
   },
@@ -10939,7 +10989,7 @@
   {
     "path": "frontend/src/hooks/useRecentCommits.ts",
     "relative": true,
-    "modified_at": "2025-12-04T09:21:57.278967+00:00",
+    "modified_at": "2025-12-04T18:21:43.911806+00:00",
     "symbols": [
       {
         "name": "useRecentCommits",
@@ -11181,124 +11231,131 @@
   {
     "path": "frontend/src/stores/claudeSessionStore.ts",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.617079+00:00",
+    "modified_at": "2025-12-04T18:22:21.737499+00:00",
     "symbols": [
       {
         "name": "selectConnected",
         "kind": "function",
-        "lineno": 1308,
+        "lineno": 1334,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "selectRunning",
         "kind": "function",
-        "lineno": 1309,
+        "lineno": 1335,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectMessages",
         "kind": "function",
-        "lineno": 1310,
+        "lineno": 1336,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectSessionInfo",
         "kind": "function",
-        "lineno": 1311,
+        "lineno": 1337,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectLastError",
         "kind": "function",
-        "lineno": 1313,
+        "lineno": 1339,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectActiveToolCalls",
         "kind": "function",
-        "lineno": 1314,
+        "lineno": 1340,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPermission",
         "kind": "function",
-        "lineno": 1316,
+        "lineno": 1342,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionDenials",
         "kind": "function",
-        "lineno": 1318,
+        "lineno": 1344,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingToolApproval",
         "kind": "function",
-        "lineno": 1320,
+        "lineno": 1346,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingMCPApproval",
         "kind": "function",
-        "lineno": 1322,
+        "lineno": 1348,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYSessionActive",
         "kind": "function",
-        "lineno": 1324,
+        "lineno": 1350,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPTYPermission",
         "kind": "function",
-        "lineno": 1326,
+        "lineno": 1352,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYThinking",
         "kind": "function",
-        "lineno": 1328,
+        "lineno": 1354,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionMode",
         "kind": "function",
-        "lineno": 1330,
+        "lineno": 1356,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectAgentType",
         "kind": "function",
-        "lineno": 1332,
+        "lineno": 1358,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPlanDescriptionOnly",
         "kind": "function",
-        "lineno": 1334,
+        "lineno": 1360,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectToolUseCountInResponse",
         "kind": "function",
-        "lineno": 1336,
+        "lineno": 1362,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "selectGeminiMode",
+        "kind": "function",
+        "lineno": 1364,
         "parent": null,
         "docstring": null
       }
@@ -13926,21 +13983,21 @@
   {
     "path": "tmp_test/custom_math.py",
     "relative": true,
-    "modified_at": "2025-12-04T10:41:38.110980+00:00",
+    "modified_at": "2025-12-04T18:22:21.737499+00:00",
     "symbols": [
       {
-        "name": "CustomMath",
-        "kind": "class",
+        "name": "divide",
+        "kind": "function",
         "lineno": 1,
         "parent": null,
-        "docstring": "Utility class for custom math operations."
+        "docstring": "Performs division of two numbers.\n\nArgs:\n    numerator: The number to be divided.\n    denominator: The number to divide by.\n\nReturns:\n    The result of the division.\n\nRaises:\n    ValueError: If the denominator is zero."
       },
       {
-        "name": "sum",
-        "kind": "method",
-        "lineno": 5,
-        "parent": "CustomMath",
-        "docstring": "Sum n numbers.\n\nArgs:\n    *numbers: Variable number of numeric arguments to sum.\n\nReturns:\n    The sum of all provided numbers.\n\nExample:\n    >>> CustomMath.sum(1, 2, 3, 4, 5)\n    15"
+        "name": "calculate_logarithm",
+        "kind": "function",
+        "lineno": 21,
+        "parent": null,
+        "docstring": "Calculates the logarithm of a number to a given base.\n\nArgs:\n    number: The number for which to calculate the logarithm.\n    base: The base of the logarithm.\n\nReturns:\n    The logarithm of the number to the given base.\n\nRaises:\n    ValueError: If the number is non-positive or the base is not positive and not equal to 1."
       }
     ],
     "errors": []

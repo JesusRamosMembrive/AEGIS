@@ -17,6 +17,11 @@ from dataclasses import dataclass
 logger = logging.getLogger(__name__)
 
 
+class ClaudeCLINotFoundError(Exception):
+    """Raised when Claude CLI cannot be found."""
+    pass
+
+
 def find_claude_cli() -> str:
     """
     Find the Claude CLI executable.
@@ -25,7 +30,10 @@ def find_claude_cli() -> str:
     Supports both Unix and Windows platforms.
 
     Returns:
-        Full path to claude CLI, or "claude" if not found (will fail at runtime)
+        Full path to claude CLI
+
+    Raises:
+        ClaudeCLINotFoundError: If Claude CLI cannot be found
     """
     import sys
 
@@ -78,11 +86,15 @@ def find_claude_cli() -> str:
             logger.info(f"Found Claude CLI at: {path}")
             return str(path)
 
-    # Fallback - will likely fail but let it try
-    logger.warning(
-        "Claude CLI not found in common locations, using 'claude' (may fail)"
+    # Claude CLI not found - raise a descriptive error
+    searched_locations = "\n  - ".join(str(p) for p in common_paths if p)
+    error_msg = (
+        "Claude CLI not found. Please install it with:\n"
+        "  npm install -g @anthropic-ai/claude-code\n\n"
+        f"Searched locations:\n  - PATH\n  - {searched_locations}"
     )
-    return "claude"
+    logger.error(error_msg)
+    raise ClaudeCLINotFoundError(error_msg)
 
 
 # Permission modes supported by Claude CLI

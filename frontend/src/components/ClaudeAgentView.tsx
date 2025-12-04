@@ -6,7 +6,8 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useClaudeSessionStore, PERMISSION_MODES, PERMISSION_MODE_LABELS, PERMISSION_MODE_DESCRIPTIONS, type PermissionMode, AGENT_TYPES, AGENT_TYPE_LABELS, AGENT_WS_ENDPOINTS, AGENT_MODELS, AGENT_SLASH_COMMANDS, type AgentType, type SlashCommand } from "../stores/claudeSessionStore";
+import { useClaudeSessionStore, PERMISSION_MODES, PERMISSION_MODE_LABELS, PERMISSION_MODE_DESCRIPTIONS, type PermissionMode, AGENT_TYPES, AGENT_TYPE_LABELS, AGENT_WS_ENDPOINTS, AGENT_MODELS, AGENT_SLASH_COMMANDS, type AgentType, type SlashCommand, GEMINI_MODES, GEMINI_MODE_LABELS, GEMINI_MODE_DESCRIPTIONS, type GeminiMode } from "../stores/claudeSessionStore";
+import { GeminiTerminalEmbed } from "./GeminiTerminalEmbed";
 import { SlashCommandMenu, slashCommandMenuStyles } from "./SlashCommandMenu";
 import { OpenShellModal, openShellModalStyles } from "./OpenShellModal";
 import { useSessionHistoryStore } from "../stores/sessionHistoryStore";
@@ -129,6 +130,9 @@ export function ClaudeAgentView() {
     // Model selection
     selectedModels,
     setSelectedModel,
+    // Gemini mode (stream vs terminal)
+    geminiMode,
+    setGeminiMode,
   } = useClaudeSessionStore();
 
   // Session history
@@ -158,15 +162,36 @@ export function ClaudeAgentView() {
 
   // Auto-connect on mount
   useEffect(() => {
-    if (!connected && !connecting) {
+    // Only connect if not already connected, connecting, or in the middle of reconnecting
+    // The store handles reconnection logic internally via onclose handler
+    // IMPORTANT: Don't connect when Gemini is in terminal mode - the embedded terminal handles its own connection
+    if (agentType === "gemini" && geminiMode === "terminal") {
+      // In terminal mode, disconnect if previously connected (e.g., switching modes)
+      if (connected) {
+        console.log("[ClaudeAgent] Gemini terminal mode - disconnecting stream WebSocket");
+        disconnect();
+      }
+      return;
+    }
+
+    if (!connected && !connecting && !isReconnecting) {
       const wsUrl = getWsUrl();
       console.log("[ClaudeAgent] Connecting to:", wsUrl);
       connect(wsUrl);
     }
-  }, [connected, connecting, connect, getWsUrl]);
+  }, [connected, connecting, isReconnecting, connect, getWsUrl, agentType, geminiMode, disconnect]);
 
   // Reconnect when agent type changes
   useEffect(() => {
+    // Don't reconnect if switching to Gemini terminal mode - it handles its own connection
+    if (agentType === "gemini" && geminiMode === "terminal") {
+      if (connected) {
+        console.log("[ClaudeAgent] Switching to Gemini terminal mode - disconnecting stream WebSocket");
+        disconnect();
+      }
+      return;
+    }
+
     // Only reconnect if we were previously connected
     if (connected) {
       console.log("[ClaudeAgent] Agent type changed to:", agentType, "- reconnecting...");
@@ -181,7 +206,7 @@ export function ClaudeAgentView() {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [agentType]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [agentType, geminiMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -419,6 +444,8 @@ export function ClaudeAgentView() {
         onModelChange={(model) => setSelectedModel(agentType, model)}
         permissionMode={permissionMode}
         onPermissionModeChange={setPermissionMode}
+        geminiMode={geminiMode}
+        onGeminiModeChange={setGeminiMode}
         totalInputTokens={totalInputTokens}
         totalOutputTokens={totalOutputTokens}
         isReconnecting={isReconnecting}
@@ -449,150 +476,164 @@ export function ClaudeAgentView() {
         </div>
       )}
 
-      {/* Messages Area */}
-      <div
-        className="claude-messages-container"
-        role="log"
-        aria-label="Conversation messages"
-        aria-live="polite"
-        aria-relevant="additions"
-      >
-        {messages.length === 0 && !running ? (
-          <EmptyState />
-        ) : (
-          <div className="claude-messages" role="list">
-            {messages.map((msg, idx) => (
-              <MessageItem key={msg.id || idx} message={msg} />
-            ))}
+      {/* Conditional: Gemini Terminal Mode OR Stream Mode UI */}
+      {agentType === "gemini" && geminiMode === "terminal" ? (
+        /* Gemini Terminal Mode - embedded terminal with native approval prompts */
+        <div className="gemini-terminal-wrapper">
+          <GeminiTerminalEmbed
+            selectedModel={selectedModels[agentType]}
+            cwd={cwd ?? undefined}
+          />
+        </div>
+      ) : (
+        /* Stream Mode - JSON streaming with messages and input */
+        <>
+          {/* Messages Area */}
+          <div
+            className="claude-messages-container"
+            role="log"
+            aria-label="Conversation messages"
+            aria-live="polite"
+            aria-relevant="additions"
+          >
+            {messages.length === 0 && !running ? (
+              <EmptyState />
+            ) : (
+              <div className="claude-messages" role="list">
+                {messages.map((msg, idx) => (
+                  <MessageItem key={msg.id || idx} message={msg} />
+                ))}
 
-            {/* Running indicator */}
-            {running && (
-              <div
-                className="claude-thinking"
-                role="status"
-                aria-live="polite"
-                aria-label="Claude is processing your request"
-              >
-                <div className="thinking-content">
-                  <span className="thinking-icon" aria-hidden="true">
-                    <BrainIcon size={20} />
-                  </span>
-                  <span className="thinking-text">The agent is thinking...</span>
-                  {activeToolCalls.size > 0 && (
-                    <span className="active-tools" aria-label={`Running ${activeToolCalls.size} tools`}>
-                      Running {activeToolCalls.size} tool
-                      {activeToolCalls.size > 1 ? "s" : ""}
-                    </span>
-                  )}
-                  <span className="escape-hint">Press Esc to cancel</span>
-                </div>
-                <div className="thinking-progress" role="progressbar" aria-label="Processing">
-                  <div className="progress-bar" />
-                </div>
+                {/* Running indicator */}
+                {running && (
+                  <div
+                    className="claude-thinking"
+                    role="status"
+                    aria-live="polite"
+                    aria-label="Claude is processing your request"
+                  >
+                    <div className="thinking-content">
+                      <span className="thinking-icon" aria-hidden="true">
+                        <BrainIcon size={20} />
+                      </span>
+                      <span className="thinking-text">The agent is thinking...</span>
+                      {activeToolCalls.size > 0 && (
+                        <span className="active-tools" aria-label={`Running ${activeToolCalls.size} tools`}>
+                          Running {activeToolCalls.size} tool
+                          {activeToolCalls.size > 1 ? "s" : ""}
+                        </span>
+                      )}
+                      <span className="escape-hint">Press Esc to cancel</span>
+                    </div>
+                    <div className="thinking-progress" role="progressbar" aria-label="Processing">
+                      <div className="progress-bar" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Execute Plan button - shown when Claude only described actions */}
+                {planDescriptionOnly && !running && (
+                  <div className="execute-plan-banner" role="status">
+                    <div className="plan-banner-content">
+                      <span className="plan-banner-icon" aria-hidden="true"><ClipboardListIcon size={20} /></span>
+                      <span className="plan-banner-text">
+                        Claude described changes above. Click "Execute Plan" to apply them automatically.
+                      </span>
+                    </div>
+                    <button
+                      className="execute-plan-btn"
+                      onClick={executePlan}
+                      aria-label="Execute the described plan automatically"
+                    >
+                      <ZapIcon size={16} /> Execute Plan
+                    </button>
+                  </div>
+                )}
+
+                {/* Error display */}
+                {lastError && (
+                  <div className="claude-error" role="alert" aria-live="assertive">
+                    <span className="error-icon" aria-hidden="true">!</span>
+                    <span className="error-text">{lastError}</span>
+                  </div>
+                )}
+
+                {/* Permission denials - tools that were blocked */}
+                {permissionDenials.length > 0 && (
+                  <PermissionDenialsBanner
+                    denials={permissionDenials}
+                    onAddPermission={handleAddPermission}
+                    onClear={clearPermissionDenials}
+                    addingPermissions={addingPermissions}
+                  />
+                )}
+
+                <div ref={messagesEndRef} />
               </div>
             )}
+          </div>
 
-            {/* Execute Plan button - shown when Claude only described actions */}
-            {planDescriptionOnly && !running && (
-              <div className="execute-plan-banner" role="status">
-                <div className="plan-banner-content">
-                  <span className="plan-banner-icon" aria-hidden="true"><ClipboardListIcon size={20} /></span>
-                  <span className="plan-banner-text">
-                    Claude described changes above. Click "Execute Plan" to apply them automatically.
-                  </span>
-                </div>
+          {/* Input Area */}
+          <div className="claude-input-container" ref={inputContainerRef}>
+            <form onSubmit={handleSubmit} className="claude-input-form" role="form" aria-label="Send message to Claude">
+              <div className="claude-input-wrapper">
+                <label htmlFor="claude-prompt-input" className="visually-hidden">
+                  Enter your message for Claude
+                </label>
+                <textarea
+                  id="claude-prompt-input"
+                  ref={inputRef}
+                  value={promptValue}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    connected
+                      ? `Ask ${AGENT_TYPE_LABELS[agentType]} anything... (Type / for commands)`
+                      : "Connecting..."
+                  }
+                  disabled={!connected || running}
+                  className="claude-input"
+                  rows={3}
+                  aria-describedby="input-hint"
+                  aria-haspopup="listbox"
+                  aria-expanded={slashMenuVisible}
+                />
+                <span id="input-hint" className="visually-hidden">
+                  Press Enter to send, Shift+Enter for new line. Type / to see available commands.
+                </span>
+                {/* Slash Command Menu */}
+                <SlashCommandMenu
+                  commands={AGENT_SLASH_COMMANDS[agentType]}
+                  filter={slashFilter}
+                  onSelect={handleSlashCommandSelect}
+                  onClose={handleSlashMenuClose}
+                  visible={slashMenuVisible}
+                />
+              </div>
+              <div className="claude-input-actions">
                 <button
-                  className="execute-plan-btn"
-                  onClick={executePlan}
-                  aria-label="Execute the described plan automatically"
+                  type="submit"
+                  disabled={!connected || running || !promptValue.trim()}
+                  className="claude-send-btn"
+                  aria-label="Send message"
                 >
-                  <ZapIcon size={16} /> Execute Plan
+                  Send
                 </button>
+                {running && (
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="claude-cancel-btn"
+                    aria-label="Cancel current operation"
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
-            )}
-
-            {/* Error display */}
-            {lastError && (
-              <div className="claude-error" role="alert" aria-live="assertive">
-                <span className="error-icon" aria-hidden="true">!</span>
-                <span className="error-text">{lastError}</span>
-              </div>
-            )}
-
-            {/* Permission denials - tools that were blocked */}
-            {permissionDenials.length > 0 && (
-              <PermissionDenialsBanner
-                denials={permissionDenials}
-                onAddPermission={handleAddPermission}
-                onClear={clearPermissionDenials}
-                addingPermissions={addingPermissions}
-              />
-            )}
-
-            <div ref={messagesEndRef} />
+            </form>
           </div>
-        )}
-      </div>
-
-      {/* Input Area */}
-      <div className="claude-input-container" ref={inputContainerRef}>
-        <form onSubmit={handleSubmit} className="claude-input-form" role="form" aria-label="Send message to Claude">
-          <div className="claude-input-wrapper">
-            <label htmlFor="claude-prompt-input" className="visually-hidden">
-              Enter your message for Claude
-            </label>
-            <textarea
-              id="claude-prompt-input"
-              ref={inputRef}
-              value={promptValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                connected
-                  ? `Ask ${AGENT_TYPE_LABELS[agentType]} anything... (Type / for commands)`
-                  : "Connecting..."
-              }
-              disabled={!connected || running}
-              className="claude-input"
-              rows={3}
-              aria-describedby="input-hint"
-              aria-haspopup="listbox"
-              aria-expanded={slashMenuVisible}
-            />
-            <span id="input-hint" className="visually-hidden">
-              Press Enter to send, Shift+Enter for new line. Type / to see available commands.
-            </span>
-            {/* Slash Command Menu */}
-            <SlashCommandMenu
-              commands={AGENT_SLASH_COMMANDS[agentType]}
-              filter={slashFilter}
-              onSelect={handleSlashCommandSelect}
-              onClose={handleSlashMenuClose}
-              visible={slashMenuVisible}
-            />
-          </div>
-          <div className="claude-input-actions">
-            <button
-              type="submit"
-              disabled={!connected || running || !promptValue.trim()}
-              className="claude-send-btn"
-              aria-label="Send message"
-            >
-              Send
-            </button>
-            {running && (
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="claude-cancel-btn"
-                aria-label="Cancel current operation"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+        </>
+      )}
       </div>{/* End of claude-agent-card */}
 
       <style>{styles}</style>
@@ -648,6 +689,8 @@ interface AgentHeaderProps {
   onModelChange: (model: string) => void;
   permissionMode: PermissionMode;
   onPermissionModeChange: (mode: PermissionMode) => void;
+  geminiMode: GeminiMode;
+  onGeminiModeChange: (mode: GeminiMode) => void;
   totalInputTokens: number;
   totalOutputTokens: number;
   isReconnecting: boolean;
@@ -670,6 +713,8 @@ function AgentHeader({
   onModelChange,
   permissionMode,
   onPermissionModeChange,
+  geminiMode,
+  onGeminiModeChange,
   totalInputTokens,
   totalOutputTokens,
   isReconnecting,
@@ -762,6 +807,20 @@ function AgentHeader({
             </option>
           ))}
         </select>
+        {agentType === "gemini" && (
+          <select
+            className="gemini-mode-select"
+            value={geminiMode}
+            onChange={(e) => onGeminiModeChange(e.target.value as GeminiMode)}
+            title={`Gemini mode: ${GEMINI_MODE_DESCRIPTIONS[geminiMode]}`}
+          >
+            {GEMINI_MODES.map((mode) => (
+              <option key={mode} value={mode} title={GEMINI_MODE_DESCRIPTIONS[mode]}>
+                {GEMINI_MODE_LABELS[mode]}
+              </option>
+            ))}
+          </select>
+        )}
         {totalTokens > 0 && (
           <span
             className="token-usage"
@@ -1110,9 +1169,9 @@ const styles = `
 .claude-agent-view {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: calc(100vh - 120px);
-  padding: 20px;
+  height: calc(100vh - 120px);
+  max-height: calc(100vh - 120px);
+  padding: 12px 20px 20px 20px;
   background: transparent;
   color: var(--agent-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -2476,6 +2535,72 @@ const styles = `
 
   .denial-add-btn {
     margin-left: auto;
+  }
+}
+
+/* ============================================================================
+   GEMINI TERMINAL MODE STYLES
+   ============================================================================ */
+
+/* Gemini mode select - styled to match other selects */
+.gemini-mode-select {
+  padding: 6px 12px;
+  font-size: 12px;
+  background: rgba(66, 133, 244, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(66, 133, 244, 0.4);
+  border-radius: 8px;
+  color: #60a5fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  max-width: 160px;
+}
+
+.gemini-mode-select:hover {
+  background: rgba(66, 133, 244, 0.35);
+  border-color: rgba(66, 133, 244, 0.6);
+  color: #93c5fd;
+}
+
+.gemini-mode-select:focus {
+  border-color: rgba(66, 133, 244, 0.7);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.gemini-mode-select option {
+  background: var(--agent-bg-secondary);
+  color: var(--agent-text-primary);
+  padding: 8px;
+}
+
+/* Gemini terminal wrapper - fills available space */
+.gemini-terminal-wrapper {
+  flex: 1;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  overflow: hidden;
+  height: 100%;
+}
+
+.gemini-terminal-wrapper .gemini-terminal-embed {
+  flex: 1;
+  min-height: 400px;
+  height: 100%;
+}
+
+/* Mobile adjustments for Gemini mode */
+@media (max-width: 480px) {
+  .gemini-mode-select {
+    padding: 4px 8px;
+    font-size: 11px;
+    max-width: 120px;
+  }
+
+  .gemini-terminal-wrapper {
+    padding: 8px;
   }
 }
 `;

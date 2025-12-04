@@ -8,7 +8,7 @@ It receives permission requests from Claude Code and coordinates with the
 AEGIS backend to get user approval via the frontend UI.
 
 Usage with Claude Code:
-    claude -p --permission-prompt-tool mcp__atlas_approval__check_permission "prompt"
+    claude -p --permission-prompt-tool mcp__aegis_approval__check_permission "prompt"
 
 The server communicates with the AEGIS backend via Unix socket to:
 1. Receive permission requests from Claude Code

@@ -31,9 +31,6 @@ export function RemoteTerminalView() {
   const fitAddonRef = useRef<FitAddon | null>(null);
   const disposablesRef = useRef<{ data?: any; resize?: any; observer?: ResizeObserver }>({});
 
-  // Claude Code redraw detection
-  const lastFrameRef = useRef<string>("");
-  const redrawPatternRef = useRef(new RegExp('\\x1b\\[2K.*\\x1b\\[1A', 'g'));
 
   const wsBaseUrl = useMemo(() => {
     console.log(`[WS] useMemo recomputing wsBaseUrl, backendUrl=${backendUrl}`);
@@ -222,32 +219,12 @@ export function RemoteTerminalView() {
     };
 
     socket.onmessage = (event) => {
-      const message = event.data;
+      // DEBUG: Log raw data to understand duplication
+      const data = event.data;
+      console.log('[PTY RAW]', JSON.stringify(data).slice(0, 200));
+      console.log('[PTY LEN]', data.length, 'chars');
 
-
-
-      // Detect Claude Code redraw pattern (multiple line clears + cursor ups)
-      // When detected, clear terminal and write fresh content
-      const isRedraw = redrawPatternRef.current.test(message);
-      if (isRedraw) {
-        // This is a redraw frame from Claude Code
-        // Clear terminal to prevent duplicate/stacking content
-        xtermRef.current?.clear();
-
-        // Strip the redraw control sequences and write clean content
-        const cleanMessage = message
-          .replace(/\x1b\[2K/g, '')      // Remove "erase line"
-          .replace(/\x1b\[\d*A/g, '')    // Remove "cursor up"
-          .replace(/\x1b\[\d*G/g, '')    // Remove "cursor to column"
-          .replace(/\x1b\[\?2026[hl]/g, '') // Remove synchronized output
-          .replace(/\x1b\[\?25[hl]/g, '');  // Remove cursor visibility
-
-        lastFrameRef.current = cleanMessage;
-        xtermRef.current?.write(cleanMessage);
-      } else {
-        // Regular output - just write it
-        xtermRef.current?.write(message);
-      }
+      xtermRef.current?.write(data);
     };
 
     socket.onerror = (err) => {

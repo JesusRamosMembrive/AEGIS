@@ -812,8 +812,13 @@ async def agent_websocket(websocket: WebSocket):
                         f"Running prompt (mode={permission_mode}): {prompt[:50]}..."
                     )
 
-                    # Start execution
-                    await handler.handle_run(prompt, message)
+                    # Start execution - await handle_run to create the task,
+                    # but DON'T await the returned task itself.
+                    # The handler creates an asyncio.Task that runs independently,
+                    # allowing the WebSocket loop to continue receiving messages
+                    # (cancel, tool_approval_response, etc.) during execution
+                    _run_task = await handler.handle_run(prompt, message)
+                    # Note: _run_task runs in background, we don't await it here
 
                 elif command == "permission_response":
                     if (
@@ -1264,11 +1269,19 @@ async def gemini_agent_websocket(websocket: WebSocket):
                     permission_mode = message.get("permission_mode", "default")
                     model = message.get("model", "gemini-2.5-flash")
 
+                    # Gemini approval mode controls CLI-level permissions:
+                    # - "auto_edit": Allows file operations but NOT shell commands (safer)
+                    # - "yolo": Allows everything including shell commands (dangerous)
+                    gemini_approval_mode = message.get("gemini_approval_mode", "auto_edit")
+                    if gemini_approval_mode not in ("auto_edit", "yolo"):
+                        gemini_approval_mode = "auto_edit"
+
                     config = GeminiRunnerConfig(
                         cwd=cwd,
                         model=model,
                         permission_mode=permission_mode,
                         auto_approve_safe_tools=message.get("auto_approve_safe", False),
+                        gemini_approval_mode=gemini_approval_mode,
                     )
                     runner = GeminiAgentRunner(config)
 
