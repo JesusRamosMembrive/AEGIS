@@ -1,55 +1,165 @@
 # Codex Agent Instructions
 
-## 📍 Contexto del proyecto
+## 🎯 PROJECT CONTEXT
 
-- **Marco:** Stage-Aware Development Framework  
-- **Objetivo:** Evitar sobre-ingeniería guiando a la IA según la etapa de madurez del proyecto.  
-- **Stage actual:** Consulta `.codex/stage*-rules.md` y correlación con `.claude/01-current-phase.md`.
+Before ANY work, read in this order:
+1. .claude/00-project-brief.md - Project scope and constraints
+2. .claude/01-current-phase.md - Current state and progress
+3. .codex/stage[X]-rules.md - Rules for current stage
 
-## ✅ Protocolo inicial (OBLIGATORIO)
+## 📝 SESSION WORKFLOW
 
-Antes de ejecutar cualquier acción:
+⚠️ MANDATORY: At the START of EVERY session, BEFORE responding to user:
 
-1. Lee los siguientes archivos (usa el comando `Read` o equivalentes de Codex):
-   - `.claude/00-project-brief.md`
-   - `.claude/01-current-phase.md`
-   - `.codex/stage*-rules.md` correspondiente a la etapa actual
-2. Confirma al usuario:
-   - Qué etapa detectaste
-   - Qué se completó en la última sesión
-   - Qué dudas tienes antes de continuar
-3. Solicita aclaraciones si falta información. No avances hasta recibir confirmación.
+1. **ALWAYS read these files first**:
+   - .claude/00-project-brief.md - Project scope and constraints
+   - .claude/01-current-phase.md - Current state and next steps (COMPACT)
+   - .codex/stage[X]-rules.md - Rules for current stage
 
-## 🧭 Lineamientos generales
+2. **ALWAYS confirm to user** you've read the context:
+   - State current phase/stage
+   - Summarize what was last done
+   - Ask for clarification if anything is unclear
 
-- Respeta las reglas de la etapa indicada (Prototipado, Estructuración, Escalado).
-- Propón un plan de acción antes de modificar archivos.
-- Pide aprobación para decisiones arquitectónicas o para introducir dependencias nuevas.
-- Prefiere soluciones evolutivas: añade complejidad sólo cuando el dolor actual lo justifique.
+3. **ONLY THEN** respond to the user's request
 
-## 🏁 Al finalizar cada sesión
+**This applies EVEN IF the user's first message is a simple question.**
+Do NOT skip this protocol to "be helpful faster" - reading context IS being helpful.
 
-1. Actualiza `.claude/01-current-phase.md` con:
-   - Cambios realizados (archivos incluidos)
-   - Decisiones y justificaciones
-   - Tareas pendientes o riesgos detectados
-   - Próximos pasos recomendados
-2. Resumen final al usuario confirmando que la documentación quedó actualizada.
+**Need deep context?** Read `.claude/01-session-history.md` for full session details.
 
-## 🚫 Evita
+At END of session:
+- Update .claude/01-current-phase.md with progress
+- **CRITICAL**: Keep 01-current-phase.md under 150 lines
 
-- Introducir abstracciones o frameworks sin un problema concreto que lo exija.
-- Asumir que recordamos contexto previo sin re-leer los archivos fuente.
-- Ignorar reglas de etapa o combinar etapas sin validación.
-- Saltarte la propuesta de plan cuando la tarea es moderada o compleja.
+## 🔄 FEATURE DEVELOPMENT WORKFLOW
 
-## 📚 Recursos adicionales
+For ANY new feature, follow this workflow with explicit gates:
 
-- `.codex/stage*-rules.md`: Reglas por etapa adaptadas a Codex.
-- `docs/QUICK_START.md`: Flujo recomendado paso a paso.
-- `docs/STAGES_COMPARISON.md`: Comparativa rápida entre etapas.
-- Documentación oficial Codex CLI (`docs/config.md`, `docs/prompts.md` en repositorio principal de Codex).
+```
+1. CHECK/CREATE → 2. PLAN → 3. APPROVE → 4. IMPLEMENT → 5. TEST → 6. VALIDATE → 7. APPROVE
+```
+
+### Phase 1: PLANNING
+**Output**: `docs/{feature}/architecture.md`
+
+**Steps**:
+1. Check if `docs/{feature}/` exists
+   - If exists: **READ existing documentation first**
+   - If not: Create the directory
+2. Analyze requirements and constraints
+3. Design stage-appropriate architecture
+4. Define testing strategy (unit + integration)
+5. Document in `docs/{feature}/architecture.md`
+
+**Architecture must include**:
+- Context & Requirements
+- Stage Assessment
+- Component Structure
+- Technology Stack with trade-offs
+- Build Order with dependencies
+- **Testing Strategy** (what to test, how)
+- Evolution Triggers
+
+**🚦 GATE**: Present plan to user. **WAIT FOR APPROVAL** before Phase 2.
+
+### Phase 2: IMPLEMENTATION
+**Output**: Code files + `docs/{feature}/implementation.md`
+
+**Steps**:
+1. **READ `architecture.md` FIRST** (mandatory)
+2. Implement components in specified build order
+3. Write unit tests for each component
+4. **Run unit tests - MUST PASS**
+5. Write integration tests (if Stage 2+)
+6. **Run integration tests - MUST PASS**
+7. Track progress in `docs/{feature}/implementation.md`
+
+**Testing Requirements by Stage**:
+| Stage | Unit Tests | Integration Tests |
+|-------|------------|-------------------|
+| 1 (PoC) | Optional | Not required |
+| 2 (Prototype) | Basic coverage | Optional |
+| 3 (Production) | Full coverage | Required |
+| 4 (Scale) | Full + edge cases | Full + performance |
+
+**🚦 GATE**: All tests must **PASS** before Phase 3.
+
+### Phase 3: VALIDATION
+**Output**: `docs/{feature}/qa-report.md`
+
+**Steps**:
+1. Read `architecture.md` and `implementation.md`
+2. Validate implementation matches plan
+3. Verify all tests pass
+4. Check security, correctness, performance
+5. Verify stage-appropriate complexity
+6. Document findings in `docs/{feature}/qa-report.md`
+
+**Recommendation options**:
+- ✅ **APPROVED**: Feature complete
+- ⚠️ **MINOR FIXES**: Small changes needed
+- ❌ **REQUEST CHANGES**: Return to Phase 2
+
+**🚦 GATE**: Present QA report to user. **WAIT FOR FINAL APPROVAL**.
+
+## 📁 DOCUMENTATION STRUCTURE
+
+For each feature, maintain:
+```
+docs/{feature-name}/
+├── architecture.md      # Phase 1: Plan
+├── implementation.md    # Phase 2: Progress
+├── qa-report.md        # Phase 3: Validation
+└── blockers.md         # Issues (optional)
+```
+
+## ⚠️ CRITICAL RULES
+
+### Workflow Compliance
+- **NEVER skip phases** (must go 1 → 2 → 3)
+- **NEVER implement without approved plan**
+- **NEVER skip tests** (except Stage 1 PoC)
+- **NEVER proceed without user approval at gates**
+- **ALWAYS read existing docs before changes**
+
+### Session Management
+- Never implement without reading current context
+- Never skip updating progress at end of session
+- Never assume you remember from previous sessions
+- Always check current stage rules before proposing solutions
+
+### Stage Awareness
+- **Stage 1 (PoC)**: Speed and simplicity, minimal tests
+- **Stage 2 (Prototype)**: Basic structure, basic tests
+- **Stage 3 (Production)**: Full tests, error handling
+- **Stage 4 (Scale)**: Performance tests, edge cases
+
+## 🚫 NEVER
+
+- Skip reading `docs/{feature}/architecture.md` before implementing
+- Implement without user approval on the plan
+- Skip writing tests (Stage 2+)
+- Proceed to validation with failing tests
+- Over-engineer beyond current stage
+- Make undocumented deviations from plan
+
+## 📚 PROJECT RESOURCES
+
+Available in `docs/` folder:
+- **README.md** - Workflow documentation and templates
+- **PROMPT_LIBRARY.md** - Templates for common situations
+- **QUICK_START.md** - Workflow guide
+- **STAGES_COMPARISON.md** - Quick reference table
+
+## 💡 REMEMBER
+
+- **Check → Plan → Approve → Implement → Test → Validate → Approve**
+- Tests are mandatory (Stage 2+)
+- User approval required at gates
+- Simplicity > Completeness
+- When in doubt, check the stage rules
 
 ---
 
-*Este archivo se copia automáticamente por `init_project.py` y actúa como guía base para Codex. Personalízalo si el proyecto requiere instrucciones específicas.*
+*To update these instructions, modify templates/basic/.codex/AGENTS.md*

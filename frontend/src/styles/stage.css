@@ -64,12 +64,24 @@
 
 .stage-card {
   background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 14px;
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.stage-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(59, 130, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .stage-card header {
@@ -338,6 +350,185 @@
   margin-bottom: 8px;
 }
 
+/* Loading overlay */
+.stage-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  z-index: 10;
+  animation: stage-overlay-fade-in 0.3s ease-out;
+}
+
+@keyframes stage-overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.stage-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(148, 163, 184, 0.2);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: stage-spin 0.8s linear infinite;
+}
+
+@keyframes stage-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.stage-loading-text {
+  color: #e2e8f0;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.stage-loading-subtext {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.stage-loading-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.stage-loading-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  transition: all 0.3s ease;
+}
+
+.stage-loading-step.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  animation: stage-step-pulse 1.5s ease-in-out infinite;
+}
+
+.stage-loading-step.completed {
+  background: rgba(45, 212, 191, 0.15);
+  color: #5eead4;
+}
+
+.stage-loading-step-icon {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes stage-step-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+}
+
+/* Section needs relative positioning for overlay */
+.stage-section {
+  position: relative;
+}
+
+.stage-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #cbd5f5;
+  cursor: pointer;
+}
+
+.stage-checkbox input {
+  accent-color: #38bdf8;
+  width: 16px;
+  height: 16px;
+}
+
+.stage-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.stage-warning-text {
+  color: #fbbf24;
+  font-size: 0.85rem;
+}
+
+.stage-log-details {
+  margin-top: 16px;
+}
+
+.stage-log-details summary {
+  cursor: pointer;
+  color: #38bdf8;
+  font-size: 0.9rem;
+}
+
+.stage-log-entries {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stage-log-entry {
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.stage-log-entry p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stage-log-entry code {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+/* Two-column grid for frameworks section */
+.stage-frameworks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.stage-frameworks-grid .stage-card {
+  height: 100%;
+}
+
 @media (max-width: 960px) {
   .stage-toolkit {
     padding: 16px;
@@ -355,5 +546,13 @@
   .stage-radio-group {
     justify-content: space-between;
     width: 100%;
+  }
+
+  .stage-loading-steps {
+    flex-direction: column;
+  }
+
+  .stage-frameworks-grid {
+    grid-template-columns: 1fr;
   }
 }

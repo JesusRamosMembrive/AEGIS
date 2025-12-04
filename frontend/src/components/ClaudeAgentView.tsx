@@ -403,8 +403,10 @@ export function ClaudeAgentView() {
         agentType={agentType}
       />
 
-      {/* Header */}
-      <AgentHeader
+      {/* Glass Card Container */}
+      <div className="claude-agent-card">
+        {/* Header */}
+        <AgentHeader
         connected={connected}
         connecting={connecting}
         running={running}
@@ -591,6 +593,7 @@ export function ClaudeAgentView() {
           </div>
         </form>
       </div>
+      </div>{/* End of claude-agent-card */}
 
       <style>{styles}</style>
       <style>{slashCommandMenuStyles}</style>
@@ -1107,9 +1110,10 @@ const styles = `
 .claude-agent-view {
   display: flex;
   flex-direction: column;
-  height: calc(80vh - 55px); /* Account for parent layout elements */
-  max-height: calc(100vh - 90px);
-  background: var(--agent-bg-primary);
+  height: 100%;
+  min-height: calc(100vh - 120px);
+  padding: 20px;
+  background: transparent;
   color: var(--agent-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   position: relative;
@@ -1117,7 +1121,22 @@ const styles = `
 }
 
 .claude-agent-view.sidebar-open {
-  padding-left: 280px;
+  padding-left: 300px;
+}
+
+/* Glass Card Container */
+.claude-agent-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(10.5px);
+  -webkit-backdrop-filter: blur(10.5px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* Adjust padding when file sidebar is open. 
@@ -1205,25 +1224,27 @@ const styles = `
 .continue-toggle {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  font-size: 11px;
-  background: var(--agent-bg-tertiary);
-  border: 1px solid var(--agent-border-secondary);
-  border-radius: 4px;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
   color: var(--agent-text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .continue-toggle:hover {
-  background: var(--agent-border-secondary);
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(96, 165, 250, 0.35);
   color: var(--agent-text-secondary);
 }
 
 .continue-toggle.active {
-  background: var(--agent-success-bg);
-  border-color: var(--agent-accent-green);
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
   color: var(--agent-accent-green);
 }
 
@@ -1236,71 +1257,57 @@ const styles = `
   font-weight: 500;
 }
 
-/* Model select */
-.model-select {
-  padding: 4px 8px;
-  font-size: 11px;
-  background: var(--agent-bg-tertiary);
-  border: 1px solid var(--agent-border-secondary);
-  border-radius: 4px;
+/* Selects with glassmorphism */
+.model-select,
+.permission-mode-select,
+.agent-type-select {
+  padding: 6px 12px;
+  font-size: 12px;
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
   color: var(--agent-text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   outline: none;
-  max-width: 180px;
+  max-width: 200px;
 }
 
-.model-select:hover {
-  background: var(--agent-border-secondary);
+.model-select:hover,
+.permission-mode-select:hover,
+.agent-type-select:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(96, 165, 250, 0.35);
   color: var(--agent-text-primary);
 }
 
-.model-select:focus {
-  border-color: var(--agent-accent-blue);
+.model-select:focus,
+.permission-mode-select:focus,
+.agent-type-select:focus {
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }
 
-.model-select option {
+.model-select option,
+.permission-mode-select option,
+.agent-type-select option {
   background: var(--agent-bg-secondary);
   color: var(--agent-text-primary);
-}
-
-/* Permission mode select */
-.permission-mode-select {
-  padding: 4px 8px;
-  font-size: 11px;
-  background: var(--agent-bg-tertiary);
-  border: 1px solid var(--agent-border-secondary);
-  border-radius: 4px;
-  color: var(--agent-text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-  outline: none;
-}
-
-.permission-mode-select:hover {
-  background: var(--agent-border-secondary);
-  color: var(--agent-text-primary);
-}
-
-.permission-mode-select:focus {
-  border-color: var(--agent-accent-blue);
-}
-
-.permission-mode-select option {
-  background: var(--agent-bg-secondary);
-  color: var(--agent-text-primary);
+  padding: 8px;
 }
 
 /* Token usage display */
 .token-usage {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  font-size: 11px;
-  background: var(--agent-bg-tertiary);
-  border: 1px solid var(--agent-border-secondary);
-  border-radius: 4px;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
   color: var(--agent-text-secondary);
 }
 
@@ -1325,10 +1332,14 @@ const styles = `
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 12px;
-  background: var(--agent-bg-secondary);
-  border-bottom: 1px solid var(--agent-border-primary);
-  flex-shrink: 0; /* Prevent header from shrinking */
+  padding: 14px 18px;
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(10.5px);
+  -webkit-backdrop-filter: blur(10.5px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 18px 18px 0 0;
+  flex-shrink: 0;
+  gap: 12px;
 }
 
 .claude-header-left {
@@ -1339,7 +1350,7 @@ const styles = `
 
 .claude-title {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--agent-text-primary);
 }
@@ -1347,8 +1358,12 @@ const styles = `
 .claude-status {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 10px;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
 }
 
 .status-dot {
@@ -1376,10 +1391,11 @@ const styles = `
 }
 
 .claude-model {
-  font-size: 9px;
-  padding: 1px 6px;
-  background: var(--agent-bg-tertiary);
-  border-radius: 3px;
+  font-size: 11px;
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
   color: var(--agent-text-secondary);
 }
 
@@ -1390,46 +1406,60 @@ const styles = `
 }
 
 .claude-cwd {
-  font-size: 9px;
-  color: var(--agent-text-muted);
-  font-family: monospace;
+  font-size: 12px;
+  padding: 6px 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
+  color: var(--agent-text-secondary);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  max-width: 350px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .claude-header-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .header-btn {
-  padding: 2px 8px;
-  font-size: 10px;
-  background: var(--agent-bg-tertiary);
-  border: 1px solid var(--agent-border-secondary);
-  border-radius: 3px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
   color: var(--agent-text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .header-btn:hover {
-  background: var(--agent-border-secondary);
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(96, 165, 250, 0.35);
   color: var(--agent-text-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .header-btn.primary {
-  background: var(--agent-accent-blue);
-  border-color: var(--agent-accent-blue);
-  color: white;
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #60a5fa;
 }
 
 .header-btn.primary:hover {
-  background: var(--agent-accent-blue-hover);
+  background: rgba(59, 130, 246, 0.5);
+  border-color: rgba(59, 130, 246, 0.7);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
 }
 
 .header-btn.active {
-  background: var(--agent-accent-blue);
-  border-color: var(--agent-accent-blue);
-  color: white;
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #60a5fa;
 }
 
 /* Messages Container - Fixed height scroll */
@@ -1968,10 +1998,13 @@ const styles = `
 
 /* Input Area */
 .claude-input-container {
-  padding: 8px 12px;
-  background: var(--agent-bg-secondary);
-  border-top: 1px solid var(--agent-border-primary);
-  flex-shrink: 0; /* Prevent input area from shrinking */
+  padding: 14px 18px;
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(10.5px);
+  -webkit-backdrop-filter: blur(10.5px);
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 0 0 18px 18px;
+  flex-shrink: 0;
 }
 
 .claude-input-form {
@@ -1987,20 +2020,22 @@ const styles = `
 
 .claude-input {
   width: 100%;
-  padding: 8px 10px;
-  background: var(--agent-bg-primary);
-  border: 1px solid var(--agent-border-secondary);
-  border-radius: 6px;
+  padding: 12px 14px;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
   color: var(--agent-text-primary);
-  font-size: 12px;
+  font-size: 14px;
   font-family: inherit;
   resize: none;
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .claude-input:focus {
-  border-color: var(--agent-accent-blue);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .claude-input:disabled {
@@ -2019,40 +2054,48 @@ const styles = `
 }
 
 .claude-send-btn {
-  padding: 5px 16px;
-  background: var(--agent-accent-blue);
-  border: none;
-  border-radius: 4px;
-  color: white;
-  font-size: 11px;
-  font-weight: 500;
+  padding: 8px 20px;
+  background: rgba(59, 130, 246, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  border-radius: 10px;
+  color: #60a5fa;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
 }
 
 .claude-send-btn:hover:not(:disabled) {
-  background: var(--agent-accent-blue-hover);
+  background: rgba(59, 130, 246, 0.6);
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  color: white;
 }
 
 .claude-send-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .claude-cancel-btn {
-  padding: 5px 16px;
-  background: var(--agent-accent-red);
-  border: none;
-  border-radius: 4px;
-  color: white;
-  font-size: 11px;
-  font-weight: 500;
+  padding: 8px 20px;
+  background: rgba(239, 68, 68, 0.3);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 10px;
+  color: #f87171;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
 }
 
 .claude-cancel-btn:hover {
-  background: var(--agent-accent-red-hover);
+  background: rgba(239, 68, 68, 0.5);
+  border-color: rgba(239, 68, 68, 0.8);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  color: white;
 }
 
 /* ============================================================================
@@ -2118,8 +2161,13 @@ const styles = `
 
 /* Mobile (480px and below) */
 @media (max-width: 480px) {
-  .claude-header {
+  .claude-agent-view {
     padding: 10px;
+  }
+
+  .claude-header {
+    padding: 10px 12px;
+    flex-wrap: wrap;
   }
 
   .claude-title {
@@ -2127,7 +2175,8 @@ const styles = `
   }
 
   .claude-header-left {
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
   }
 
   .claude-status .status-text {
@@ -2135,20 +2184,19 @@ const styles = `
   }
 
   .claude-model {
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: none;
   }
 
   .continue-toggle .toggle-label {
     display: none;
   }
 
-  .permission-mode-select {
-    padding: 3px 6px;
-    font-size: 10px;
-    max-width: 100px;
+  .model-select,
+  .permission-mode-select,
+  .agent-type-select {
+    padding: 4px 8px;
+    font-size: 11px;
+    max-width: 120px;
   }
 
   .token-usage .token-cost {
@@ -2156,12 +2204,16 @@ const styles = `
   }
 
   .header-btn {
-    padding: 4px 8px;
+    padding: 5px 10px;
     font-size: 11px;
   }
 
   .claude-header-actions {
     gap: 4px;
+  }
+
+  .claude-cwd {
+    display: none;
   }
 
   .connection-error-banner {

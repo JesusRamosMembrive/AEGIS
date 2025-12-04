@@ -12,7 +12,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Sequence, Tuple
 
 from stage_config import StageMetrics, collect_metrics
 
@@ -215,6 +215,22 @@ async def stage_status(
     return await asyncio.to_thread(_compute_status, root, metrics)
 
 
+def _run_initializer_sync(
+    command: List[str], cwd: str
+) -> Tuple[int, str, str]:
+    """Run initializer subprocess synchronously (for use in thread)."""
+    import subprocess
+
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        cwd=cwd,
+        text=True,
+        errors="replace",
+    )
+    return result.returncode, result.stdout, result.stderr
+
+
 async def run_initializer(
     root: Path, agents: AgentSelection, *, force: bool = False
 ) -> Dict[str, object]:
@@ -226,8 +242,6 @@ async def run_initializer(
         agents: Selección de agentes a instalar
         force: Si True, fuerza reinstalación limpia (elimina archivos existentes)
     """
-    from asyncio.subprocess import PIPE  # noqa: WPS433
-
     repo_root = Path(__file__).resolve().parents[1]
     script_path = repo_root / "init_project.py"
     target = root.expanduser().resolve()
@@ -250,35 +264,55 @@ async def run_initializer(
 
     command.append("--skip-claude-init")
 
-    process = await asyncio.create_subprocess_exec(
-        *command,
-        stdout=PIPE,
-        stderr=PIPE,
-        cwd=str(repo_root),
+    try:
+        # Use subprocess.run in a thread to avoid Windows asyncio subprocess issues
+        returncode, stdout, stderr = await asyncio.to_thread(
+            _run_initializer_sync, command, str(repo_root)
+        )
+
+        status_payload = await stage_status(target)
+
+        return {
+            "success": returncode == 0,
+            "exit_code": returncode,
+            "command": command,
+            "stdout": stdout,
+            "stderr": stderr,
+            "status": status_payload,
+        }
+    except Exception as exc:
+        # Return error as structured response rather than raising
+        status_payload = await stage_status(target)
+        return {
+            "success": False,
+            "exit_code": -1,
+            "command": command,
+            "stdout": "",
+            "stderr": f"Error executing subprocess: {exc}",
+            "status": status_payload,
+        }
+
+
+def _run_command_sync(
+    command: Sequence[str], cwd: Optional[str] = None
+) -> Tuple[int, str, str]:
+    """Run command synchronously (for use in thread)."""
+    import subprocess
+
+    result = subprocess.run(
+        list(command),
+        capture_output=True,
+        cwd=cwd,
+        text=True,
+        errors="replace",
     )
-    stdout_bytes, stderr_bytes = await process.communicate()
-
-    stdout = stdout_bytes.decode("utf-8", errors="replace")
-    stderr = stderr_bytes.decode("utf-8", errors="replace")
-
-    status_payload = await stage_status(target)
-
-    return {
-        "success": process.returncode == 0,
-        "exit_code": process.returncode,
-        "command": command,
-        "stdout": stdout,
-        "stderr": stderr,
-        "status": status_payload,
-    }
+    return result.returncode, result.stdout, result.stderr
 
 
 async def install_superclaude_framework(root: Path) -> Dict[str, object]:
     """
     Clona o actualiza SuperClaude Framework y sincroniza sus assets principales.
     """
-    from asyncio.subprocess import PIPE  # noqa: WPS433
-
     workspace = root.expanduser().resolve()
     cache_root = workspace / ".stage-cache"
     clone_dir = cache_root / "superclaude-framework"
@@ -292,23 +326,20 @@ async def install_superclaude_framework(root: Path) -> Dict[str, object]:
     async def run_command(
         command: Sequence[str], *, cwd: Optional[Path] = None
     ) -> Dict[str, object]:
-        process = await asyncio.create_subprocess_exec(
-            *command,
-            stdout=PIPE,
-            stderr=PIPE,
-            cwd=str(cwd) if cwd else None,
+        # Use subprocess.run in a thread to avoid Windows asyncio subprocess issues
+        returncode, stdout, stderr = await asyncio.to_thread(
+            _run_command_sync, command, str(cwd) if cwd else None
         )
-        stdout_bytes, stderr_bytes = await process.communicate()
         entry: Dict[str, object] = {
             "command": list(command),
-            "stdout": stdout_bytes.decode("utf-8", errors="replace"),
-            "stderr": stderr_bytes.decode("utf-8", errors="replace"),
-            "exit_code": process.returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+            "exit_code": returncode,
         }
         logs.append(entry)
-        if process.returncode != 0:
+        if returncode != 0:
             raise RuntimeError(
-                f"El comando {' '.join(command)} terminó con código {process.returncode}",
+                f"El comando {' '.join(command)} terminó con código {returncode}",
             )
         return entry
 

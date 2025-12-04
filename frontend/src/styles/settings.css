@@ -115,12 +115,24 @@
 
 .settings-card {
   background: rgba(18, 22, 33, 0.9);
-  border: 1px solid #23283c;
+  border: 1px solid rgba(35, 40, 60, 0.8);
   border-radius: 16px;
   padding: 22px 24px;
   display: flex;
   flex-direction: column;
   gap: 18px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.settings-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(18, 22, 33, 0.95);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(59, 130, 246, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .settings-card h2 {

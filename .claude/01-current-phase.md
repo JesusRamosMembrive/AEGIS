@@ -1,142 +1,116 @@
 # Estado Actual del Proyecto
 
-**Última actualización**: 2025-11-26
-**Etapa detectada**: Stage 3 (Production-Ready)
-**Proyecto**: AEGIS - Stage-Aware Development Framework + Code Map Backend
+**Última actualización**: 2025-12-03
+**Etapa detectada**: [Se actualiza automáticamente]
+**Versión**: 1.0
 
 ---
 
-## ESTADO ACTUAL
-
-**Completado (esta sesión):**
-- ✅ **Claude Agent JSON Streaming - Fases 2-5** - UI completa
-  - Fase 2: Markdown rendering, syntax highlighting, copy buttons
-  - Fase 3: Session history sidebar con localStorage persistence
-  - Fase 4: Token tracking, keyboard shortcuts, progress indicators
-  - Fase 5: Polish (reconexión, responsive, accesibilidad, theming)
+## 📍 ESTADO ACTUAL
 
 **En progreso:**
-- Ninguno actualmente
+- [Describe qué estás implementando/investigando AHORA]
+
+**Completado recientemente:**
+- [Último cambio importante #1]
+- [Último cambio importante #2]
 
 **Bloqueado/Pendiente:**
-- Ninguno actualmente
+- [Issues que necesitan resolverse antes de continuar]
 
 ---
 
-## ÚLTIMA SESIÓN: Claude Agent UI Improvements (2025-11-26)
+## 🎯 PRÓXIMOS PASOS
 
-### Resumen de Cambios
+1. **Inmediato** (Esta sesión):
+   - [Tarea prioritaria #1]
+   - [Tarea prioritaria #2]
 
-Se implementaron las fases 2-4 del Claude Agent JSON Streaming:
+2. **Corto plazo** (Próximas 1-3 sesiones):
+   - [Feature o mejora planificada]
+   - [Refactor o deuda técnica]
 
-### Fase 2: UI Mejorada ✅
-- **MarkdownRenderer** (`frontend/src/components/MarkdownRenderer.tsx`)
-  - react-markdown + remark-gfm para GFM completo
-  - prism-react-renderer con tema Night Owl
-  - Números de línea en code blocks
-  - Botón "Copy" con feedback visual ("Copied!")
-  - Soporte: headers, listas, blockquotes, tablas, inline code
-
-### Fase 3: Gestión de Sesión ✅
-- **SessionHistoryStore** (`frontend/src/stores/sessionHistoryStore.ts`)
-  - Zustand con persist middleware
-  - localStorage con max 50 sesiones
-  - Serialización Date <-> string
-  - Auto-save debounced (1 segundo)
-
-- **SessionHistorySidebar** (`frontend/src/components/SessionHistorySidebar.tsx`)
-  - Toggle colapsable
-  - Lista con título, preview, fecha, modelo
-  - Cargar/eliminar sesiones
-  - Botón "New Session" y "Clear All"
-
-- **Continue Toggle** en header
-  - Indica modo Continue (⟳) o Fresh (○)
-  - Controla flag `--continue` de Claude Code
-
-### Fase 4: Features Avanzados ✅
-- **Token Tracking** en `claudeSessionStore.ts`
-  - `totalInputTokens`, `totalOutputTokens`
-  - Se acumulan de eventos con `usage`
-
-- **Token Display** en header
-  - Total tokens + costo estimado
-  - Pricing Sonnet: $3/M input, $15/M output
-
-- **Keyboard Shortcuts**
-  - `Esc` - Cancelar operación
-  - `Ctrl+L` - Limpiar mensajes
-  - `Ctrl+Shift+N` - Nueva sesión
-  - `/` - Enfocar input
-
-- **Progress Indicator** mejorado
-  - Barra animada con gradiente
-  - Badge "Running X tools"
-  - Hint "Press Esc to cancel"
-
-### Archivos Creados
-
-| Archivo | Descripción |
-|---------|-------------|
-| `frontend/src/components/MarkdownRenderer.tsx` | Markdown + syntax highlighting |
-| `frontend/src/components/SessionHistorySidebar.tsx` | Sidebar historial |
-| `frontend/src/stores/sessionHistoryStore.ts` | Store persistencia |
-
-### Archivos Modificados
-
-| Archivo | Cambios |
-|---------|---------|
-| `frontend/src/components/ClaudeAgentView.tsx` | Sidebar integration, shortcuts, token display, progress bar |
-| `frontend/src/components/HeaderBar.tsx` | Añadido link "Agent" a navegación |
-| `frontend/src/stores/claudeSessionStore.ts` | Token tracking (totalInputTokens, totalOutputTokens) |
-| `docs/claude-agent-streaming.md` | Documentación actualizada con progreso fases |
-
-### Commit
-```
-876cf33 Implements Claude Agent UI improvements (Phases 2-4)
-```
+3. **Mediano plazo** (Cuando sea necesario):
+   - [Evoluciones futuras basadas en pain points]
 
 ---
 
-## PRÓXIMOS PASOS
+## 📝 DECISIONES RECIENTES
 
-1. **Agent Monitoring Dashboard** (próximo):
-   - Continuar con SSE endpoint
-   - Frontend: useAuditEventStream hook
+### [Nombre de la decisión] (2025-12-03)
+**Qué**: [Breve descripción]
+**Por qué**: [Razón principal]
+**Impacto**: [Archivos/componentes afectados]
 
-2. **Posibles mejoras futuras:**
-   - System mode para theming (seguir preferencia del sistema)
-   - Persistencia de preferencia de tema en localStorage (ya implementado)
-   - Más tests E2E
+### [Decisión anterior importante]
+**Qué**: [Descripción]
+**Por qué**: [Razón]
+**Impacto**: [Archivos afectados]
 
 ---
 
-## CONTEXTO CRÍTICO
+## 🚨 CONTEXTO CRÍTICO
 
 **Restricciones importantes:**
-- Stage-aware: No sobre-ingenierizar más allá del stage actual (Stage 3)
-- YAGNI enforcement: Solo añadir features cuando hay dolor real 3+ veces
-- Separation of concerns: Workflow docs (.claude/doc/) vs Code analysis (frontend)
+- [Constraint #1 que afecta decisiones de diseño]
+- [Constraint #2]
 
 **Patrones establecidos:**
-- Templates en `templates/basic/.claude/` para nuevos proyectos
-- Backend FastAPI con async/await en `code_map/`
-- Frontend React + Zustand + TanStack Query en `frontend/src/`
+- [Patrón #1 que debe seguirse en nuevo código]
+- [Patrón #2]
 
 **No hacer:**
-- No modificar templates sin actualizar test_full_flow.sh
-- No añadir features al frontend sin evidencia de pain point real
-- No saltarse el workflow de 3 fases (Planning → Implementation → Validation)
+- [Anti-patrón o decisión explícitamente rechazada]
 
 ---
 
-## RECURSOS
+## 📚 RECURSOS
 
-- **Documentación técnica completa**: `docs/claude-agent-streaming.md`
-- **Historial completo**: Ver `.claude/01-session-history.md`
-- **Arquitectura 3-phase**: Ver `.claude/doc/README.md`
+- **Historial completo**: Ver `.claude/01-session-history.md` para contexto profundo
+- **Arquitectura**: Ver `docs/{feature}/architecture.md` para planes detallados
+- **Documentación**: Ver `docs/` para guías técnicas
 
 ---
 
-*Última sesión: 2025-11-26*
-*Branch: develop*
+## 🔄 TEMPLATE DE ACTUALIZACIÓN
+
+**Al final de cada sesión, actualiza esta sección:**
+
+```markdown
+## Sesión: [YYYY-MM-DD]
+
+**Implementado:**
+- [Archivo]: [Cambio específico]
+- [Archivo]: [Cambio específico]
+
+**Decisiones:**
+- [Decisión técnica tomada y por qué]
+
+**Próxima sesión debe:**
+- [Acción prioritaria #1]
+- [Acción prioritaria #2]
+
+**Movido a historial:** ✅ (Copiar detalle completo a 01-session-history.md)
+```
+
+---
+
+**💡 TIP**: Mantén este archivo <150 líneas. Mueve detalles antiguos a `01-session-history.md` regularmente.
+
+## 🎯 Detected Stage: Stage 3 (High Confidence)
+
+**Auto-detected on:** 2025-12-03 17:47
+
+**Detection reasoning:**
+- Large or complex codebase (221 files, ~57384 LOC)
+- Multiple patterns detected: Factory Pattern, Repository, Service Layer
+
+**Metrics:**
+- Files: 221
+- LOC: ~57384
+- Patterns: Factory Pattern, Repository, Service Layer
+
+**Recommended actions:**
+- Follow rules in `.claude/02-stage3-rules.md`
+- Use stage-aware agents for guidance
+- Re-assess stage after significant changes

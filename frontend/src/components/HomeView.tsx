@@ -3,7 +3,8 @@ import type { UseQueryResult } from "@tanstack/react-query";
 
 import type { StageDetectionStatus, StatusPayload } from "../api/types";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
-import { TiltCard } from "./TiltCard";
+import { TiltCard, CardIcons } from "./TiltCard";
+import { Vortex } from "./Vortex";
 
 function detectionBadgeLabel(detection?: StageDetectionStatus): string {
   if (!detection) {
@@ -54,10 +55,21 @@ export function HomeView({
         </div>
       )}
       <section className="home-hero">
+        <Vortex
+          containerClassName="home-hero__vortex"
+          backgroundColor="transparent"
+          baseHue={220}
+          particleCount={300}
+          rangeY={400}
+          baseSpeed={0.0}
+          rangeSpeed={0.4}
+          baseRadius={0.8}
+          rangeRadius={1.5}
+        />
         <div className="home-hero__glow" aria-hidden />
         <div className="home-hero__content">
           <div className="home-hero__badges">
-            <span className="home-version-pill">v2.0.0</span>
+            <span className="home-version-pill">v3.0.0</span>
             <span className={`home-stage-pill ${detectionTone}`}>
               {stageStatusQuery.isLoading ? "Calculating…" : detectionLabel}
             </span>
@@ -157,7 +169,7 @@ export function HomeView({
       </section>
 
       <section className="home-card-grid">
-        <TiltCard to="/stage-toolkit">
+        <TiltCard to="/stage-toolkit" icon={<CardIcons.StageToolkit />}>
           <div className="home-card-body">
             <h3>Project Stage Toolkit</h3>
             <p>
@@ -168,7 +180,7 @@ export function HomeView({
           <span className="home-card-cta">Open toolkit →</span>
         </TiltCard>
 
-        <TiltCard to="/overview">
+        <TiltCard to="/overview" icon={<CardIcons.Overview />}>
           <div className="home-card-body">
             <h3>Overview</h3>
             <p>
@@ -179,7 +191,7 @@ export function HomeView({
           <span className="home-card-cta">Open overview →</span>
         </TiltCard>
 
-        <TiltCard to="/code-map">
+        <TiltCard to="/code-map" icon={<CardIcons.CodeAnalysis />}>
           <div className="home-card-body">
             <h3>Code Analysis</h3>
             <p>
@@ -190,7 +202,7 @@ export function HomeView({
           <span className="home-card-cta">Open Analysis →</span>
         </TiltCard>
 
-        <TiltCard to="/docs">
+        <TiltCard to="/docs" icon={<CardIcons.Docs />}>
           <div className="home-card-body">
             <h3>Docs</h3>
             <p>
@@ -201,7 +213,7 @@ export function HomeView({
           <span className="home-card-cta">Open Docs →</span>
         </TiltCard>
 
-        <TiltCard to="/class-uml">
+        <TiltCard to="/class-uml" icon={<CardIcons.ClassUML />}>
           <div className="home-card-body">
             <h3>Class UML</h3>
             <p>
@@ -212,7 +224,7 @@ export function HomeView({
           <span className="home-card-cta">View UML →</span>
         </TiltCard>
 
-        <TiltCard to="/timeline">
+        <TiltCard to="/timeline" icon={<CardIcons.Timeline />}>
           <div className="home-card-body">
             <h3>Code Timeline</h3>
             <p>
@@ -222,7 +234,7 @@ export function HomeView({
           <span className="home-card-cta">Open Timeline →</span>
         </TiltCard>
 
-        <TiltCard to="/terminal">
+        <TiltCard to="/terminal" icon={<CardIcons.Terminal />}>
           <div className="home-card-body">
             <h3>Remote Terminal</h3>
             <p>
@@ -232,17 +244,17 @@ export function HomeView({
           <span className="home-card-cta">Open Terminal →</span>
         </TiltCard>
 
-        <TiltCard to="/agent">
+        <TiltCard to="/agent" icon={<CardIcons.Agent />}>
           <div className="home-card-body">
-            <h3>Claude Agent</h3>
+            <h3>Agents</h3>
             <p>
-              Interact with Claude Code through a structured UI. Send prompts, see tool calls and results in real-time without TUI rendering issues.
+              Orchestrate AI coding agents (Claude, Codex, Gemini) through a unified UI. Send prompts, monitor tool calls, and view results in real-time.
             </p>
           </div>
-          <span className="home-card-cta">Open Agent →</span>
+          <span className="home-card-cta">Open Agents →</span>
         </TiltCard>
 
-        <TiltCard to="/linters">
+        <TiltCard to="/linters" icon={<CardIcons.Linters />}>
           <div className="home-card-body">
             <h3>Linters</h3>
             <p>
@@ -252,7 +264,7 @@ export function HomeView({
           <span className="home-card-cta">View linters →</span>
         </TiltCard>
 
-        <TiltCard to="/ollama">
+        <TiltCard to="/ollama" icon={<CardIcons.Ollama />}>
           <div className="home-card-body">
             <h3>Ollama Insights</h3>
             <p>
@@ -262,7 +274,7 @@ export function HomeView({
           <span className="home-card-cta">Open Ollama →</span>
         </TiltCard>
 
-        <TiltCard to="/prompts">
+        <TiltCard to="/prompts" icon={<CardIcons.Prompts />}>
           <div className="home-card-body">
             <h3>Prompts</h3>
             <p>
@@ -272,7 +284,7 @@ export function HomeView({
           <span className="home-card-cta">Open Prompts →</span>
         </TiltCard>
 
-        <TiltCard to="/settings">
+        <TiltCard to="/settings" icon={<CardIcons.Settings />}>
           <div className="home-card-body">
             <h3>Settings</h3>
             <p>

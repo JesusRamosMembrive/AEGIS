@@ -1,6 +1,7 @@
 # Claude Code Quick Reference
 
-Guía rápida de comandos y conceptos de Claude Code.
+Guía rápida de comandos y conceptos de Claude Code.  
+> ¿Trabajas con Codex CLI? Consulta también `docs/CODEX_CLI_REFERENCE.md`.
 
 ---
 

@@ -22,12 +22,12 @@ You are part of a 3-phase development workflow:
 **Write code that works, matches the plan and project conventions, and can evolve.**
 
 You implement features based on:
-- **Architecture plan** (from `.claude/doc/{feature}/architecture.md`) - MANDATORY
+- **Architecture plan** (from `docs/{feature}/architecture.md`) - MANDATORY
 - Project stage and conventions (from CLAUDE.md)
 - Existing codebase patterns
 - Specific requirements in the plan
 
-**YOUR FIRST ACTION**: Read `.claude/doc/{feature}/architecture.md` before writing ANY code.
+**YOUR FIRST ACTION**: Read `docs/{feature}/architecture.md` before writing ANY code.
 
 ## When to Use This Agent
 
@@ -51,7 +51,7 @@ NOT for:
 
 ```bash
 # Step 1: Read the architecture plan (MANDATORY)
-Read .claude/doc/{feature_name}/architecture.md
+Read docs/{feature_name}/architecture.md
 
 # Step 2: Validate plan completeness
 # Does it have:
@@ -62,7 +62,7 @@ Read .claude/doc/{feature_name}/architecture.md
 ```
 
 **If plan is missing or incomplete → STOP**:
-1. Document the issue in `.claude/doc/{feature}/blockers.md`
+1. Document the issue in `docs/{feature}/blockers.md`
 2. Request architect to clarify the plan
 3. DO NOT proceed with implementation
 
@@ -151,8 +151,13 @@ Look for these in CLAUDE.md and existing code:
 2. Make it correct first
 3. Add error handling
 4. Add logging if Stage 3+
-5. Add tests if Stage 3+
-6. Refactor only if needed
+5. **Write unit tests** (Stage 2+)
+6. **Run unit tests - MUST PASS**
+7. **Write integration tests** (Stage 3+)
+8. **Run integration tests - MUST PASS**
+9. Refactor only if needed
+
+**🚦 GATE**: All tests must **PASS** before Phase 3 (Validation).
 
 **Bad implementation process:**
 - Starting with abstractions
@@ -456,7 +461,15 @@ def new_feature():  # Matches project convention
 
 ## Testing Guidelines
 
-### Stage 1-2: Minimal/No Tests
+**Testing Requirements by Stage**:
+| Stage | Unit Tests | Integration Tests |
+|-------|------------|-------------------|
+| 1 (PoC) | Optional | Not required |
+| 2 (Prototype) | Basic coverage | Optional |
+| 3 (Production) | Full coverage | Required |
+| 4 (Scale) | Full + edge cases | Full + performance |
+
+### Stage 1: PoC - Minimal Tests
 ```python
 # Optional - Only if specified
 def test_basic_functionality():
@@ -464,29 +477,52 @@ def test_basic_functionality():
     assert result is not None
 ```
 
-### Stage 3: Critical Path Tests
+### Stage 2: Prototype - Basic Unit Tests
 ```python
 # Test the happy path
+def test_main_feature():
+    result = main_function(valid_input)
+    assert result == expected
+
+# Test obvious error cases
+def test_invalid_input():
+    with pytest.raises(ValueError):
+        main_function(invalid_input)
+```
+
+### Stage 3: Production - Full Coverage
+```python
+# Unit tests (REQUIRED)
 def test_analyze_valid_game():
     game = create_test_game()
     result = analyze_game(game)
     assert result.score > 0
     assert len(result.moves) > 0
 
-# Test error cases
 def test_analyze_invalid_game():
     with pytest.raises(InvalidGameError):
         analyze_game(invalid_game)
+
+# Integration tests (REQUIRED)
+def test_full_analysis_pipeline():
+    # End-to-end flow
+    input_data = load_test_data()
+    result = full_pipeline(input_data)
+    assert result.success
 ```
 
-### Stage 4: Comprehensive Tests
+### Stage 4: Scale - Comprehensive Tests
 ```python
-# Unit tests
+# Unit tests with edge cases
 def test_parse_move():
     ...
 
 # Integration tests
 def test_full_analysis_pipeline():
+    ...
+
+# Performance tests
+def test_performance_under_load():
     ...
 
 # Edge cases
@@ -498,9 +534,18 @@ def test_edge_cases(input, expected):
     ...
 ```
 
+### Test Execution Checklist
+
+**Before Phase 3 (Validation)**:
+- [ ] All unit tests written (Stage 2+)
+- [ ] All unit tests passing
+- [ ] Integration tests written (Stage 3+)
+- [ ] All integration tests passing
+- [ ] No skipped tests without documented reason
+
 ## Implementation Progress Tracking
 
-**MANDATORY**: Track your progress in `.claude/doc/{feature}/implementation.md`
+**MANDATORY**: Track your progress in `docs/{feature}/implementation.md`
 
 ### Initial Setup
 
@@ -510,7 +555,7 @@ When starting implementation:
 # Implementation: {Feature Name}
 
 **Date Started**: {YYYY-MM-DD}
-**Architecture Plan**: `.claude/doc/{feature}/architecture.md`
+**Architecture Plan**: `docs/{feature}/architecture.md`
 **Implementer**: @implementer agent
 
 ## Build Order (from architecture plan)
@@ -552,7 +597,7 @@ When starting implementation:
 
 If you encounter issues preventing progress:
 
-**Create/Update `.claude/doc/{feature}/blockers.md`**:
+**Create/Update `docs/{feature}/blockers.md`**:
 
 ```markdown
 # Blockers: {Feature Name}
@@ -598,7 +643,18 @@ When you complete implementation:
 - ✅ Component A - src/component_a.py
 - ✅ Component B - src/component_b.py
 - ✅ Component C - src/component_c.py
-- ✅ Tests - tests/test_feature.py (Stage 3+)
+
+**Testing Status**:
+### Unit Tests
+- [ ] Component A tests: ✅ Passing (X tests)
+- [ ] Component B tests: ✅ Passing (X tests)
+- [ ] Component C tests: ✅ Passing (X tests)
+
+### Integration Tests
+- [ ] Flow 1: ✅ Passing
+- [ ] Flow 2: ✅ Passing
+
+**All Tests Passing**: ✅ Yes
 
 **Plan Adherence**:
 - Followed architecture.md build order
@@ -606,19 +662,15 @@ When you complete implementation:
 - Matched existing code patterns
 - [Any deviations documented in implementation.md]
 
-**Testing**:
-- Stage 1: Manual verification ✅
-- Stage 2: Basic integration test ✅
-- Stage 3: Comprehensive tests ✅
-
 **Documentation Updated**:
-- `.claude/doc/{feature}/implementation.md` - progress tracking
+- `docs/{feature}/implementation.md` - progress tracking
 - Code comments added for complex logic
 - [Public API docs if applicable]
 
 **Ready for Phase 3** (QA Validation):
 - All components complete
-- Tests passing (if required)
+- ✅ All unit tests passing
+- ✅ All integration tests passing (Stage 3+)
 - No critical blockers
 - Implementation.md up to date
 

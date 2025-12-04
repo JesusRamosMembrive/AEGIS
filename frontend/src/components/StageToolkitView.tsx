@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import type {
@@ -10,6 +10,62 @@ import type {
 import { useStageInitMutation } from "../hooks/useStageInitMutation";
 import { useStageStatusQuery } from "../hooks/useStageStatusQuery";
 import { useSuperClaudeInstallMutation } from "../hooks/useSuperClaudeInstallMutation";
+
+type LoadingStep = "preparing" | "running" | "verifying";
+
+const LOADING_STEPS: { key: LoadingStep; label: string }[] = [
+  { key: "preparing", label: "Preparing" },
+  { key: "running", label: "Running" },
+  { key: "verifying", label: "Verifying" },
+];
+
+function LoadingOverlay({
+  title,
+  subtitle,
+  currentStep,
+}: {
+  title: string;
+  subtitle?: string;
+  currentStep?: LoadingStep;
+}): JSX.Element {
+  return (
+    <div className="stage-loading-overlay">
+      <div className="stage-spinner" />
+      <div className="stage-loading-text">
+        {title}
+        {subtitle && <div className="stage-loading-subtext">{subtitle}</div>}
+      </div>
+      {currentStep && (
+        <div className="stage-loading-steps">
+          {LOADING_STEPS.map((step) => {
+            const stepIndex = LOADING_STEPS.findIndex((s) => s.key === step.key);
+            const currentIndex = LOADING_STEPS.findIndex((s) => s.key === currentStep);
+            const isCompleted = stepIndex < currentIndex;
+            const isActive = step.key === currentStep;
+
+            return (
+              <div
+                key={step.key}
+                className={`stage-loading-step ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
+              >
+                {isCompleted && (
+                  <svg className="stage-loading-step-icon" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+                {step.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const AGENT_OPTIONS: { value: StageAgentSelection; label: string }[] = [
   { value: "all", label: "All (Claude + Codex + Gemini)" },
@@ -192,6 +248,8 @@ export function StageToolkitView(): JSX.Element {
 
   const [selection, setSelection] = useState<StageAgentSelection>("all");
   const [forceReset, setForceReset] = useState(false);
+  const [initStep, setInitStep] = useState<LoadingStep>("preparing");
+  const [superClaudeStep, setSuperClaudeStep] = useState<LoadingStep>("preparing");
 
   const stageStatus = statusQuery.data;
   const initResult = initMutation.data;
@@ -204,6 +262,32 @@ export function StageToolkitView(): JSX.Element {
   const superClaudeError = superClaudeMutation.error
     ? String(superClaudeMutation.error.message || superClaudeMutation.error)
     : null;
+
+  // Simulate step progression for init mutation
+  useEffect(() => {
+    if (initMutation.isPending) {
+      setInitStep("preparing");
+      const runningTimer = setTimeout(() => setInitStep("running"), 500);
+      const verifyingTimer = setTimeout(() => setInitStep("verifying"), 3000);
+      return () => {
+        clearTimeout(runningTimer);
+        clearTimeout(verifyingTimer);
+      };
+    }
+  }, [initMutation.isPending]);
+
+  // Simulate step progression for SuperClaude mutation
+  useEffect(() => {
+    if (superClaudeMutation.isPending) {
+      setSuperClaudeStep("preparing");
+      const runningTimer = setTimeout(() => setSuperClaudeStep("running"), 500);
+      const verifyingTimer = setTimeout(() => setSuperClaudeStep("verifying"), 4000);
+      return () => {
+        clearTimeout(runningTimer);
+        clearTimeout(verifyingTimer);
+      };
+    }
+  }, [superClaudeMutation.isPending]);
 
   const currentAgentLabel = useMemo(
     () => AGENT_OPTIONS.find((option) => option.value === selection)?.label ?? "All agents",
@@ -287,6 +371,13 @@ export function StageToolkitView(): JSX.Element {
       </section>
 
       <section className="stage-section">
+        {initMutation.isPending && (
+          <LoadingOverlay
+            title="Initializing Stage-Aware Framework"
+            subtitle={`Installing ${currentAgentLabel} configuration...`}
+            currentStep={initStep}
+          />
+        )}
         <header className="stage-section-header">
           <div>
             <h2>Initialize or reinstall instructions</h2>
@@ -348,115 +439,158 @@ export function StageToolkitView(): JSX.Element {
       </section>
 
       <section className="stage-section">
+        {superClaudeMutation.isPending && (
+          <LoadingOverlay
+            title="Installing SuperClaude Framework"
+            subtitle="Cloning repository and syncing assets..."
+            currentStep={superClaudeStep}
+          />
+        )}
         <header className="stage-section-header">
           <div>
-            <h2>SuperClaude Framework</h2>
+            <h2>Frameworks y extensiones</h2>
             <p>
-              Sincroniza los comandos <code>/sc</code>, 16 agentes especializados, 7 modos y 8 servidores
-              MCP recomendados directamente desde la{" "}
-              <a
-                href="https://github.com/SuperClaude-Org/SuperClaude_Framework"
-                target="_blank"
-                rel="noreferrer"
-              >
-                distribución oficial
-              </a>
-              .
+              Instala frameworks y skills para potenciar tus agentes de Claude Code.
             </p>
           </div>
         </header>
 
-        <article className="stage-card">
-          <dl className="stage-metrics">
-            {(Object.keys(SUPERCLAUDE_REFERENCE_COUNTS) as SuperClaudeStatKey[]).map((key) => (
-              <div key={key}>
-                <dt>{SUPERCLAUDE_LABELS[key]}</dt>
-                <dd>{superClaudeCounts[key]}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <div className="stage-actions">
-            <button
-              className="primary-btn"
-              type="button"
-              onClick={handleSuperClaudeInstall}
-              disabled={superClaudeMutation.isPending}
-            >
-              {superClaudeMutation.isPending ? "Instalando…" : "Instalar SuperClaude"}
-            </button>
-            <a
-              className="secondary-btn"
-              href="https://github.com/SuperClaude-Org/SuperClaude_Framework"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Abrir repositorio
-            </a>
-          </div>
-
-          {superClaudeError ? <p className="stage-error">{superClaudeError}</p> : null}
-
-          {superClaudeResult ? (
-            <div>
-              {superClaudeResult.installed_at ? (
-                <p className="stage-meta">
-                  Última ejecución: {new Date(superClaudeResult.installed_at).toLocaleString()}
-                </p>
-              ) : null}
-              {superClaudeResult.source_commit ? (
-                <p className="stage-meta">
-                  Commit: <code>{superClaudeResult.source_commit.slice(0, 12)}</code>
-                </p>
-              ) : null}
-
-              {superClaudeResult.copied_paths.length > 0 ? (
-                <>
-                  <h4>Rutas sincronizadas</h4>
-                  <ul className="stage-list">
-                    {superClaudeResult.copied_paths.map((path) => (
-                      <li key={path}>
-                        <code>{path}</code>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <p className="stage-hint">
-                  Los activos ya están disponibles en <code>.claude/</code> y <code>docs/superclaude</code>.
-                </p>
-              )}
-
-              {superClaudeResult.logs.length > 0 ? (
-                <details className="stage-log-details">
-                  <summary>Ver registro ({superClaudeResult.logs.length})</summary>
-                  <div className="stage-log-entries">
-                    {superClaudeResult.logs.map((log, index) => {
-                      const stdout = log.stdout.trim();
-                      const stderr = log.stderr.trim();
-                      return (
-                        <div key={`${log.command.join(" ")}-${index}`} className="stage-log-entry">
-                          <p>
-                            <code>{log.command.join(" ")}</code>{" "}
-                            <span className={`stage-badge ${log.exit_code === 0 ? "success" : "warn"}`}>
-                              {log.exit_code === 0 ? "OK" : `Exit ${log.exit_code}`}
-                            </span>
-                          </p>
-                          {stdout ? <pre className="stage-output">{stdout}</pre> : null}
-                          {stderr ? <pre className="stage-output error">{stderr}</pre> : null}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </details>
-              ) : null}
-            </div>
-          ) : (
-            <p className="stage-hint">
-              Ejecuta el instalador para copiar los agentes, modos y servidores MCP recomendados.
+        <div className="stage-frameworks-grid">
+          <article className="stage-card">
+            <header>
+              <h3>SuperClaude Framework</h3>
+            </header>
+            <p>
+              Comandos <code>/sc</code>, 16 agentes especializados, 7 modos y 8 servidores MCP.
             </p>
-          )}
-        </article>
+            <dl className="stage-metrics">
+              {(Object.keys(SUPERCLAUDE_REFERENCE_COUNTS) as SuperClaudeStatKey[]).map((key) => (
+                <div key={key}>
+                  <dt>{SUPERCLAUDE_LABELS[key]}</dt>
+                  <dd>{superClaudeCounts[key]}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="stage-actions">
+              <button
+                className="primary-btn"
+                type="button"
+                onClick={handleSuperClaudeInstall}
+                disabled={superClaudeMutation.isPending}
+              >
+                {superClaudeMutation.isPending ? "Instalando…" : "Instalar"}
+              </button>
+              <a
+                className="secondary-btn"
+                href="https://github.com/SuperClaude-Org/SuperClaude_Framework"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Repositorio
+              </a>
+            </div>
+
+            {superClaudeError ? <p className="stage-error">{superClaudeError}</p> : null}
+
+            {superClaudeResult ? (
+              <div>
+                {superClaudeResult.installed_at ? (
+                  <p className="stage-meta">
+                    Instalado: {new Date(superClaudeResult.installed_at).toLocaleString()}
+                  </p>
+                ) : null}
+                {superClaudeResult.source_commit ? (
+                  <p className="stage-meta">
+                    Commit: <code>{superClaudeResult.source_commit.slice(0, 12)}</code>
+                  </p>
+                ) : null}
+
+                {superClaudeResult.copied_paths.length > 0 ? (
+                  <details className="stage-log-details">
+                    <summary>Rutas sincronizadas ({superClaudeResult.copied_paths.length})</summary>
+                    <ul className="stage-list">
+                      {superClaudeResult.copied_paths.map((path) => (
+                        <li key={path}>
+                          <code>{path}</code>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : (
+                  <p className="stage-hint">
+                    Activos en <code>.claude/</code> y <code>docs/superclaude</code>.
+                  </p>
+                )}
+
+                {superClaudeResult.logs.length > 0 ? (
+                  <details className="stage-log-details">
+                    <summary>Ver registro ({superClaudeResult.logs.length})</summary>
+                    <div className="stage-log-entries">
+                      {superClaudeResult.logs.map((log, index) => {
+                        const stdout = log.stdout.trim();
+                        const stderr = log.stderr.trim();
+                        return (
+                          <div key={`${log.command.join(" ")}-${index}`} className="stage-log-entry">
+                            <p>
+                              <code>{log.command.join(" ")}</code>{" "}
+                              <span className={`stage-badge ${log.exit_code === 0 ? "success" : "warn"}`}>
+                                {log.exit_code === 0 ? "OK" : `Exit ${log.exit_code}`}
+                              </span>
+                            </p>
+                            {stdout ? <pre className="stage-output">{stdout}</pre> : null}
+                            {stderr ? <pre className="stage-output error">{stderr}</pre> : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                ) : null}
+              </div>
+            ) : (
+              <p className="stage-hint">
+                Instala agentes, modos y servidores MCP recomendados.
+              </p>
+            )}
+          </article>
+
+          <article className="stage-card">
+            <header>
+              <h3>Awesome Claude Skills</h3>
+            </header>
+            <p>
+              Coleccion de skills de la comunidad para Claude Code por{" "}
+              <a href="https://composio.dev" target="_blank" rel="noreferrer">Composio</a>.
+            </p>
+            <dl className="stage-metrics">
+              <div>
+                <dt>Skills disponibles</dt>
+                <dd>50+</dd>
+              </div>
+              <div>
+                <dt>Categorias</dt>
+                <dd>PDF, Excel, APIs...</dd>
+              </div>
+            </dl>
+
+            <div className="stage-actions">
+              <a
+                className="primary-btn"
+                href="https://github.com/ComposioHQ/awesome-claude-skills"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Ver Skills
+              </a>
+            </div>
+
+            <p className="stage-hint">
+              <strong>Instalacion:</strong><br />
+              Linux/macOS: <code>~/.config/claude-code/skills/</code><br />
+              Windows: <code>%APPDATA%\claude-code\skills\</code>
+            </p>
+          </article>
+        </div>
       </section>
 
       <section className="stage-section">

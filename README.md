@@ -94,33 +94,72 @@ python init_project.py --detect-only /path/to/project
 
 ### AEGIS Backend
 
-**Start the API server:**
+#### Linux / macOS
+
 ```bash
-# Run development server
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run backend server
 python -m code_map.cli run --root /path/to/your/project
 
-# Or using short form
-python -m code_map --root /path/to/your/project
-
-# Access API docs at: http://localhost:8010/docs
+# Or use the startup script
+./start-local.sh
 ```
 
-**Frontend (React UI):**
+#### Windows
+
+```powershell
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run backend server
+.venv\Scripts\python -m code_map.cli run --root C:\path\to\your\project
+
+# Or with uvicorn directly
+.venv\Scripts\uvicorn code_map.server:app --host 0.0.0.0 --port 8010 --reload
+```
+
+**Access API docs at:** http://localhost:8010/docs
+
+#### Frontend (React UI)
+
 ```bash
 cd frontend
-npm install  # or your package manager
+npm install  # or pnpm / yarn
 npm run dev
 # Access UI at: http://localhost:5173
 ```
 
-**Environment Configuration:**
+#### Environment Configuration
+
+**Linux / macOS:**
 ```bash
-# API server
 export CODE_MAP_HOST=0.0.0.0      # Default: 127.0.0.1
 export CODE_MAP_PORT=8080          # Default: 8010
+export OLLAMA_HOST=http://localhost:11434  # Optional
+```
 
-# Ollama integration (optional)
-export OLLAMA_HOST=http://localhost:11434
+**Windows (PowerShell):**
+```powershell
+$env:CODE_MAP_HOST = "0.0.0.0"
+$env:CODE_MAP_PORT = "8080"
+$env:OLLAMA_HOST = "http://localhost:11434"
+```
+
+**Windows (CMD):**
+```cmd
+set CODE_MAP_HOST=0.0.0.0
+set CODE_MAP_PORT=8080
+set OLLAMA_HOST=http://localhost:11434
 ```
 
 ---
@@ -475,18 +514,60 @@ python init_project.py my-project
 
 ### Full Setup (Backend + Frontend)
 
+#### Linux / macOS
+
 ```bash
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
 # Install Python dependencies
 pip install -r requirements.txt
 
 # Install frontend dependencies
 cd frontend
-npm install  # or pnpm install / yarn install
+npm install
+cd ..
 
-# Optional: Install linter tools
+# Start backend
+python -m code_map.cli run --root .
+
+# In another terminal, start frontend
+cd frontend && npm run dev
+```
+
+#### Windows
+
+```powershell
+# Create and activate virtual environment
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Install frontend dependencies
+cd frontend
+npm install
+cd ..
+
+# Start backend (use the venv Python!)
+.venv\Scripts\python -m code_map.cli run --root .
+
+# In another terminal, start frontend
+cd frontend
+npm run dev
+```
+
+> **Note:** On Windows, always use `.venv\Scripts\python` to ensure you're using the virtual environment Python (3.12) and not the system Python.
+
+### Optional Dependencies
+
+```bash
+# Linter tools (for code quality reports)
 pip install ruff mypy bandit pytest pytest-cov
 
-# Optional: Install Ollama for AI insights
+# Ollama for AI insights
 # https://ollama.ai/download
 ```
 
