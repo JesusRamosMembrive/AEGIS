@@ -2,13 +2,13 @@
 """
 MCP Tool Proxy Server for AEGIS Tool Approval.
 
-This server provides proxy tools (atlas_write, atlas_edit, atlas_bash) that
+This server provides proxy tools (aegis_write, aegis_edit, aegis_bash) that
 require user approval before execution. When Claude uses these tools, the
 server communicates with the AEGIS backend to get user approval.
 
 Architecture:
 1. Claude CLI runs with --disallowed-tools "Write,Edit,Bash"
-2. This MCP server provides atlas_write, atlas_edit, atlas_bash
+2. This MCP server provides aegis_write, aegis_edit, aegis_bash
 3. Claude uses proxy tools instead of native tools
 4. Proxy tools request approval via Unix socket to AEGIS backend
 5. If approved, proxy executes the operation and returns result
@@ -17,7 +17,7 @@ Architecture:
 Usage with Claude Code:
     claude -p \\
         --disallowed-tools "Write,Edit,Bash" \\
-        --mcp-config /path/to/atlas_proxy.json \\
+        --mcp-config /path/to/aegis_proxy.json \\
         --dangerously-skip-permissions \\
         "your prompt"
 
@@ -210,7 +210,7 @@ class ToolProxyServer:
         """Generate preview for Bash command"""
         return f"EXECUTE COMMAND:\n$ {command}"
 
-    async def atlas_write(self, file_path: str, content: str) -> str:
+    async def aegis_write(self, file_path: str, content: str) -> str:
         """
         Write content to a file (requires approval).
 
@@ -246,7 +246,7 @@ class ToolProxyServer:
         except Exception as e:
             return f"[ERROR] Failed to write file: {e}"
 
-    async def atlas_edit(
+    async def aegis_edit(
         self,
         file_path: str,
         old_string: str,
@@ -308,7 +308,7 @@ class ToolProxyServer:
         except Exception as e:
             return f"[ERROR] Failed to edit file: {e}"
 
-    async def atlas_bash(
+    async def aegis_bash(
         self, command: str, timeout: int = COMMAND_TIMEOUT_MS, description: str = ""
     ) -> str:
         """
@@ -395,7 +395,7 @@ def create_mcp_server():
     mcp = FastMCP("aegis_tools")
 
     @mcp.tool()
-    async def atlas_write(file_path: str, content: str) -> str:
+    async def aegis_write(file_path: str, content: str) -> str:
         """
         Write content to a file. Creates parent directories if needed.
         This tool requires user approval before execution.
@@ -405,10 +405,10 @@ def create_mcp_server():
             content: Content to write to the file
         """
         server = get_server()
-        return await server.atlas_write(file_path, content)
+        return await server.aegis_write(file_path, content)
 
     @mcp.tool()
-    async def atlas_edit(
+    async def aegis_edit(
         file_path: str, old_string: str, new_string: str, replace_all: bool = False
     ) -> str:
         """
@@ -422,10 +422,10 @@ def create_mcp_server():
             replace_all: If True, replace all occurrences (default False)
         """
         server = get_server()
-        return await server.atlas_edit(file_path, old_string, new_string, replace_all)
+        return await server.aegis_edit(file_path, old_string, new_string, replace_all)
 
     @mcp.tool()
-    async def atlas_bash(
+    async def aegis_bash(
         command: str, timeout: int = 120000, description: str = ""
     ) -> str:
         """
@@ -438,11 +438,11 @@ def create_mcp_server():
             description: Optional description of what the command does
         """
         server = get_server()
-        return await server.atlas_bash(command, timeout, description)
+        return await server.aegis_bash(command, timeout, description)
 
     # Also provide read-only tools that don't need approval
     @mcp.tool()
-    async def atlas_read(file_path: str, offset: int = 0, limit: int = 2000) -> str:
+    async def aegis_read(file_path: str, offset: int = 0, limit: int = 2000) -> str:
         """
         Read content from a file. Does not require approval.
 

@@ -58,6 +58,10 @@ class GeminiRunnerConfig:
     timeout: Optional[float] = None
     permission_mode: str = "default"
     auto_approve_safe_tools: bool = False
+    # Gemini-specific approval mode: "auto_edit" (safer) or "yolo" (full access)
+    # "auto_edit" allows file operations but NOT shell commands
+    # "yolo" allows everything including shell commands (dangerous)
+    gemini_approval_mode: str = "auto_edit"
 
 
 class GeminiAgentRunner:
@@ -106,6 +110,27 @@ class GeminiAgentRunner:
         # Add model flag if not using default
         if self.config.model and self.config.model != "gemini-2.5-flash":
             cmd.extend(["--model", self.config.model])
+
+        # Set approval mode - Gemini CLI requires explicit approval mode to expose tools
+        # Without it, write tools (write_file, replace, run_shell_command) aren't available
+        # Options:
+        # - "default": Gemini prompts for approval (can't handle in stream mode - hangs)
+        # - "auto_edit": Auto-approve write_file/replace, but NOT run_shell_command
+        # - "yolo": Auto-approve all tools including run_shell_command
+        #
+        # We use config.gemini_approval_mode which defaults to "auto_edit" for safety.
+        # This prevents Gemini from running destructive shell commands (rm, git init, etc.)
+        # while still allowing file read/write operations.
+        #
+        # If permission_mode is "toolApproval", we still need auto_edit/yolo because
+        # we can't handle Gemini's interactive approval prompts in stream-json mode.
+        # The toolApproval logic in AEGIS is a separate layer on top.
+        gemini_mode = self.config.gemini_approval_mode
+        if gemini_mode == "yolo":
+            cmd.extend(["--yolo"])
+        else:
+            # Default to auto_edit for safer operation
+            cmd.extend(["--approval-mode", "auto_edit"])
 
         logger.info(f"Starting Gemini CLI: {' '.join(cmd)}...")
 
@@ -184,13 +209,30 @@ class GeminiAgentRunner:
                 if self.process.stderr is None:
                     return
 
-                # Informational messages from CLI that should not be shown as errors
-                info_patterns = [
+                # Patterns to skip entirely (informational, not errors)
+                skip_patterns = [
                     "loaded cached credentials",
                     "authenticating",
                     "loading",
                     "initializing",
                     "connecting",
+                    "yolo mode",  # YOLO mode notification
+                    "auto_edit mode",  # auto_edit mode notification
+                    "all tool calls will be automatically approved",
+                    "edit tools will be automatically approved",
+                    "approval mode",
+                ]
+
+                # Patterns to log but not show to user (API/backend issues)
+                log_only_patterns = [
+                    "attempt",  # "Attempt 1 failed with status 429"
+                    "retrying",
+                    "gaxioserror",  # Google API errors
+                    "resource exhausted",
+                    "rate limit",
+                    "429",
+                    "too many requests",
+                    "backoff",
                 ]
 
                 while self.running and not self._cancelled:
@@ -200,13 +242,23 @@ class GeminiAgentRunner:
                             break
 
                         line_str = line.decode("utf-8").strip()
-                        if line_str and on_error:
-                            # Skip informational messages that aren't real errors
-                            line_lower = line_str.lower()
-                            if any(pattern in line_lower for pattern in info_patterns):
-                                logger.debug(f"[Gemini stderr info] {line_str}")
-                                continue
+                        if not line_str:
+                            continue
 
+                        line_lower = line_str.lower()
+
+                        # Skip informational messages entirely
+                        if any(pattern in line_lower for pattern in skip_patterns):
+                            logger.debug(f"[Gemini info] {line_str}")
+                            continue
+
+                        # Log API errors but don't send to frontend
+                        if any(pattern in line_lower for pattern in log_only_patterns):
+                            logger.warning(f"[Gemini API] {line_str[:200]}")
+                            continue
+
+                        # Send other errors to frontend
+                        if on_error:
                             result = on_error(line_str)
                             if asyncio.iscoroutine(result):
                                 await result
@@ -400,19 +452,28 @@ class GeminiAgentRunner:
                 await result
 
     async def _execute_tool(self, tool_name: str, tool_input: dict) -> dict:
-        # Simplified version of _execute_tool
-        # In a real implementation, we should share this logic
+        """
+        Execute a tool locally after approval.
+        This is only called in toolApproval mode when we intercept tool calls.
+        """
         if tool_name == "run_shell_command":
             # Gemini uses run_shell_command, Claude uses Bash
             return await self._execute_bash(tool_input)
 
-        # Add other mappings as needed
+        if tool_name == "write_file":
+            return await self._execute_write_file(tool_input)
+
+        if tool_name == "replace":
+            return await self._execute_replace(tool_input)
+
+        # For other tools, let them pass through - they're read-only
         return {
-            "content": f"Tool {tool_name} not implemented in runner",
+            "content": f"Tool {tool_name} not implemented in runner (read-only tools execute in CLI)",
             "is_error": True,
         }
 
     async def _execute_bash(self, tool_input: dict) -> dict:
+        """Execute a shell command."""
         command = tool_input.get("command", "")
         try:
             proc = await asyncio.create_subprocess_shell(
@@ -426,6 +487,46 @@ class GeminiAgentRunner:
                 "content": stdout.decode("utf-8") + stderr.decode("utf-8"),
                 "is_error": proc.returncode != 0,
             }
+        except Exception as e:
+            return {"content": str(e), "is_error": True}
+
+    async def _execute_write_file(self, tool_input: dict) -> dict:
+        """Write content to a file."""
+        file_path = tool_input.get("file_path", "")
+        content = tool_input.get("content", "")
+        try:
+            # Resolve path relative to cwd
+            from pathlib import Path
+
+            full_path = Path(self.config.cwd) / file_path
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            full_path.write_text(content)
+            return {"content": f"File written: {file_path}", "is_error": False}
+        except Exception as e:
+            return {"content": str(e), "is_error": True}
+
+    async def _execute_replace(self, tool_input: dict) -> dict:
+        """Replace text in a file."""
+        file_path = tool_input.get("file_path", "")
+        old_string = tool_input.get("old_string", "")
+        new_string = tool_input.get("new_string", "")
+        try:
+            from pathlib import Path
+
+            full_path = Path(self.config.cwd) / file_path
+            if not full_path.exists():
+                return {"content": f"File not found: {file_path}", "is_error": True}
+
+            content = full_path.read_text()
+            if old_string not in content:
+                return {
+                    "content": f"String not found in {file_path}",
+                    "is_error": True,
+                }
+
+            new_content = content.replace(old_string, new_string, 1)
+            full_path.write_text(new_content)
+            return {"content": f"Replaced in {file_path}", "is_error": False}
         except Exception as e:
             return {"content": str(e), "is_error": True}
 

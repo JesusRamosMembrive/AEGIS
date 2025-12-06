@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useClaudeSessionStore, PERMISSION_MODES, PERMISSION_MODE_LABELS, PERMISSION_MODE_DESCRIPTIONS, type PermissionMode, AGENT_TYPES, AGENT_TYPE_LABELS, AGENT_WS_ENDPOINTS, AGENT_MODELS, AGENT_SLASH_COMMANDS, type AgentType, type SlashCommand } from "../stores/claudeSessionStore";
+import { TerminalSocketIO, terminalSocketIOStyles } from "./TerminalSocketIO";
 import { SlashCommandMenu, slashCommandMenuStyles } from "./SlashCommandMenu";
 import { OpenShellModal, openShellModalStyles } from "./OpenShellModal";
 import { useSessionHistoryStore } from "../stores/sessionHistoryStore";
@@ -85,6 +86,7 @@ export function ClaudeAgentView() {
   const [slashMenuVisible, setSlashMenuVisible] = useState(false);
   const [slashFilter, setSlashFilter] = useState("");
   const [openShellModalVisible, setOpenShellModalVisible] = useState(false);
+  const [terminalConnected, setTerminalConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
@@ -156,18 +158,44 @@ export function ClaudeAgentView() {
     return `${wsBase}${endpoint}`;
   }, [backendUrl, agentType]);
 
+  // Check if this agent uses embedded terminal (not streaming WebSocket)
+  const usesTerminalSocketIO = agentType === "codex" || agentType === "gemini";
+
   // Auto-connect on mount
   useEffect(() => {
-    if (!connected && !connecting) {
+    // Only connect if not already connected, connecting, or in the middle of reconnecting
+    // The store handles reconnection logic internally via onclose handler
+    // IMPORTANT: Don't connect for Codex/Gemini - they use Socket.IO terminal
+    if (usesTerminalSocketIO) {
+      // Disconnect if previously connected (e.g., switching from Claude)
+      if (connected) {
+        console.log("[ClaudeAgent] Terminal Socket.IO mode - disconnecting stream WebSocket");
+        disconnect();
+      }
+      return;
+    }
+
+    if (!connected && !connecting && !isReconnecting) {
       const wsUrl = getWsUrl();
       console.log("[ClaudeAgent] Connecting to:", wsUrl);
       connect(wsUrl);
     }
-  }, [connected, connecting, connect, getWsUrl]);
+  }, [connected, connecting, isReconnecting, connect, getWsUrl, usesTerminalSocketIO, disconnect]);
 
   // Reconnect when agent type changes
   useEffect(() => {
-    // Only reconnect if we were previously connected
+    // Don't reconnect if switching to Codex/Gemini - they use Socket.IO terminal
+    if (usesTerminalSocketIO) {
+      if (connected) {
+        console.log("[ClaudeAgent] Switching to terminal Socket.IO mode - disconnecting stream WebSocket");
+        disconnect();
+      }
+      // Clear messages when switching agents
+      clearMessages();
+      return;
+    }
+
+    // Only reconnect if we were previously connected (switching back to Claude)
     if (connected) {
       console.log("[ClaudeAgent] Agent type changed to:", agentType, "- reconnecting...");
       disconnect();
@@ -181,7 +209,7 @@ export function ClaudeAgentView() {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [agentType]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [agentType, usesTerminalSocketIO]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -407,8 +435,8 @@ export function ClaudeAgentView() {
       <div className="claude-agent-card">
         {/* Header */}
         <AgentHeader
-        connected={connected}
-        connecting={connecting}
+        connected={usesTerminalSocketIO ? terminalConnected : connected}
+        connecting={usesTerminalSocketIO ? false : connecting}
         running={running}
         sessionInfo={sessionInfo}
         cwd={cwd}
@@ -427,6 +455,7 @@ export function ClaudeAgentView() {
         onReconnect={handleReconnect}
         onNewSession={newSession}
         onClearMessages={clearMessages}
+        usesTerminal={usesTerminalSocketIO}
       />
 
       {/* Connection Error Banner */}
@@ -449,150 +478,169 @@ export function ClaudeAgentView() {
         </div>
       )}
 
-      {/* Messages Area */}
-      <div
-        className="claude-messages-container"
-        role="log"
-        aria-label="Conversation messages"
-        aria-live="polite"
-        aria-relevant="additions"
-      >
-        {messages.length === 0 && !running ? (
-          <EmptyState />
-        ) : (
-          <div className="claude-messages" role="list">
-            {messages.map((msg, idx) => (
-              <MessageItem key={msg.id || idx} message={msg} />
-            ))}
+      {/* Conditional: Terminal Socket.IO (Codex/Gemini) OR Claude Stream Mode */}
+      {usesTerminalSocketIO ? (
+        /* Terminal Socket.IO Mode - for Codex and Gemini */
+        <div className="agent-terminal-wrapper">
+          <style>{terminalSocketIOStyles}</style>
+          <TerminalSocketIO
+            autoConnect
+            welcomeMessage={`${AGENT_TYPE_LABELS[agentType]} Terminal`}
+            height="100%"
+            className="agent-terminal-embed"
+            onConnectionChange={setTerminalConnected}
+            initialCommand={agentType === "gemini" ? "gemini" : agentType === "codex" ? "codex" : undefined}
+          />
+        </div>
+      ) : (
+        /* Stream Mode - JSON streaming with messages and input */
+        <>
+          {/* Messages Area */}
+          <div
+            className="claude-messages-container"
+            role="log"
+            aria-label="Conversation messages"
+            aria-live="polite"
+            aria-relevant="additions"
+          >
+            {messages.length === 0 && !running ? (
+              <EmptyState />
+            ) : (
+              <div className="claude-messages" role="list">
+                {messages.map((msg, idx) => (
+                  <MessageItem key={msg.id || idx} message={msg} />
+                ))}
 
-            {/* Running indicator */}
-            {running && (
-              <div
-                className="claude-thinking"
-                role="status"
-                aria-live="polite"
-                aria-label="Claude is processing your request"
-              >
-                <div className="thinking-content">
-                  <span className="thinking-icon" aria-hidden="true">
-                    <BrainIcon size={20} />
-                  </span>
-                  <span className="thinking-text">The agent is thinking...</span>
-                  {activeToolCalls.size > 0 && (
-                    <span className="active-tools" aria-label={`Running ${activeToolCalls.size} tools`}>
-                      Running {activeToolCalls.size} tool
-                      {activeToolCalls.size > 1 ? "s" : ""}
-                    </span>
-                  )}
-                  <span className="escape-hint">Press Esc to cancel</span>
-                </div>
-                <div className="thinking-progress" role="progressbar" aria-label="Processing">
-                  <div className="progress-bar" />
-                </div>
+                {/* Running indicator */}
+                {running && (
+                  <div
+                    className="claude-thinking"
+                    role="status"
+                    aria-live="polite"
+                    aria-label="Claude is processing your request"
+                  >
+                    <div className="thinking-content">
+                      <span className="thinking-icon" aria-hidden="true">
+                        <BrainIcon size={20} />
+                      </span>
+                      <span className="thinking-text">The agent is thinking...</span>
+                      {activeToolCalls.size > 0 && (
+                        <span className="active-tools" aria-label={`Running ${activeToolCalls.size} tools`}>
+                          Running {activeToolCalls.size} tool
+                          {activeToolCalls.size > 1 ? "s" : ""}
+                        </span>
+                      )}
+                      <span className="escape-hint">Press Esc to cancel</span>
+                    </div>
+                    <div className="thinking-progress" role="progressbar" aria-label="Processing">
+                      <div className="progress-bar" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Execute Plan button - shown when Claude only described actions */}
+                {planDescriptionOnly && !running && (
+                  <div className="execute-plan-banner" role="status">
+                    <div className="plan-banner-content">
+                      <span className="plan-banner-icon" aria-hidden="true"><ClipboardListIcon size={20} /></span>
+                      <span className="plan-banner-text">
+                        Claude described changes above. Click "Execute Plan" to apply them automatically.
+                      </span>
+                    </div>
+                    <button
+                      className="execute-plan-btn"
+                      onClick={executePlan}
+                      aria-label="Execute the described plan automatically"
+                    >
+                      <ZapIcon size={16} /> Execute Plan
+                    </button>
+                  </div>
+                )}
+
+                {/* Error display */}
+                {lastError && (
+                  <div className="claude-error" role="alert" aria-live="assertive">
+                    <span className="error-icon" aria-hidden="true">!</span>
+                    <span className="error-text">{lastError}</span>
+                  </div>
+                )}
+
+                {/* Permission denials - tools that were blocked */}
+                {permissionDenials.length > 0 && (
+                  <PermissionDenialsBanner
+                    denials={permissionDenials}
+                    onAddPermission={handleAddPermission}
+                    onClear={clearPermissionDenials}
+                    addingPermissions={addingPermissions}
+                  />
+                )}
+
+                <div ref={messagesEndRef} />
               </div>
             )}
+          </div>
 
-            {/* Execute Plan button - shown when Claude only described actions */}
-            {planDescriptionOnly && !running && (
-              <div className="execute-plan-banner" role="status">
-                <div className="plan-banner-content">
-                  <span className="plan-banner-icon" aria-hidden="true"><ClipboardListIcon size={20} /></span>
-                  <span className="plan-banner-text">
-                    Claude described changes above. Click "Execute Plan" to apply them automatically.
-                  </span>
-                </div>
+          {/* Input Area */}
+          <div className="claude-input-container" ref={inputContainerRef}>
+            <form onSubmit={handleSubmit} className="claude-input-form" role="form" aria-label="Send message to Claude">
+              <div className="claude-input-wrapper">
+                <label htmlFor="claude-prompt-input" className="visually-hidden">
+                  Enter your message for Claude
+                </label>
+                <textarea
+                  id="claude-prompt-input"
+                  ref={inputRef}
+                  value={promptValue}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    connected
+                      ? `Ask ${AGENT_TYPE_LABELS[agentType]} anything... (Type / for commands)`
+                      : "Connecting..."
+                  }
+                  disabled={!connected || running}
+                  className="claude-input"
+                  rows={3}
+                  aria-describedby="input-hint"
+                  aria-haspopup="listbox"
+                  aria-expanded={slashMenuVisible}
+                />
+                <span id="input-hint" className="visually-hidden">
+                  Press Enter to send, Shift+Enter for new line. Type / to see available commands.
+                </span>
+                {/* Slash Command Menu */}
+                <SlashCommandMenu
+                  commands={AGENT_SLASH_COMMANDS[agentType]}
+                  filter={slashFilter}
+                  onSelect={handleSlashCommandSelect}
+                  onClose={handleSlashMenuClose}
+                  visible={slashMenuVisible}
+                />
+              </div>
+              <div className="claude-input-actions">
                 <button
-                  className="execute-plan-btn"
-                  onClick={executePlan}
-                  aria-label="Execute the described plan automatically"
+                  type="submit"
+                  disabled={!connected || running || !promptValue.trim()}
+                  className="claude-send-btn"
+                  aria-label="Send message"
                 >
-                  <ZapIcon size={16} /> Execute Plan
+                  Send
                 </button>
+                {running && (
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="claude-cancel-btn"
+                    aria-label="Cancel current operation"
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
-            )}
-
-            {/* Error display */}
-            {lastError && (
-              <div className="claude-error" role="alert" aria-live="assertive">
-                <span className="error-icon" aria-hidden="true">!</span>
-                <span className="error-text">{lastError}</span>
-              </div>
-            )}
-
-            {/* Permission denials - tools that were blocked */}
-            {permissionDenials.length > 0 && (
-              <PermissionDenialsBanner
-                denials={permissionDenials}
-                onAddPermission={handleAddPermission}
-                onClear={clearPermissionDenials}
-                addingPermissions={addingPermissions}
-              />
-            )}
-
-            <div ref={messagesEndRef} />
+            </form>
           </div>
-        )}
-      </div>
-
-      {/* Input Area */}
-      <div className="claude-input-container" ref={inputContainerRef}>
-        <form onSubmit={handleSubmit} className="claude-input-form" role="form" aria-label="Send message to Claude">
-          <div className="claude-input-wrapper">
-            <label htmlFor="claude-prompt-input" className="visually-hidden">
-              Enter your message for Claude
-            </label>
-            <textarea
-              id="claude-prompt-input"
-              ref={inputRef}
-              value={promptValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                connected
-                  ? `Ask ${AGENT_TYPE_LABELS[agentType]} anything... (Type / for commands)`
-                  : "Connecting..."
-              }
-              disabled={!connected || running}
-              className="claude-input"
-              rows={3}
-              aria-describedby="input-hint"
-              aria-haspopup="listbox"
-              aria-expanded={slashMenuVisible}
-            />
-            <span id="input-hint" className="visually-hidden">
-              Press Enter to send, Shift+Enter for new line. Type / to see available commands.
-            </span>
-            {/* Slash Command Menu */}
-            <SlashCommandMenu
-              commands={AGENT_SLASH_COMMANDS[agentType]}
-              filter={slashFilter}
-              onSelect={handleSlashCommandSelect}
-              onClose={handleSlashMenuClose}
-              visible={slashMenuVisible}
-            />
-          </div>
-          <div className="claude-input-actions">
-            <button
-              type="submit"
-              disabled={!connected || running || !promptValue.trim()}
-              className="claude-send-btn"
-              aria-label="Send message"
-            >
-              Send
-            </button>
-            {running && (
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="claude-cancel-btn"
-                aria-label="Cancel current operation"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+        </>
+      )}
       </div>{/* End of claude-agent-card */}
 
       <style>{styles}</style>
@@ -656,6 +704,7 @@ interface AgentHeaderProps {
   onReconnect: () => void;
   onNewSession: () => void;
   onClearMessages: () => void;
+  usesTerminal: boolean;
 }
 
 function AgentHeader({
@@ -678,6 +727,7 @@ function AgentHeader({
   onReconnect,
   onNewSession,
   onClearMessages,
+  usesTerminal,
 }: AgentHeaderProps) {
   const toggleContinueSession = useCallback(() => {
     useClaudeSessionStore.setState((state) => ({
@@ -738,30 +788,34 @@ function AgentHeader({
             </option>
           ))}
         </select>
-        <select
-          className="model-select"
-          value={selectedModel}
-          onChange={(e) => onModelChange(e.target.value)}
-          title={`Select model for ${AGENT_TYPE_LABELS[agentType]}`}
-        >
-          {AGENT_MODELS[agentType].map((model) => (
-            <option key={model} value={model}>
-              {model}
-            </option>
-          ))}
-        </select>
-        <select
-          className="permission-mode-select"
-          value={permissionMode}
-          onChange={(e) => onPermissionModeChange(e.target.value as PermissionMode)}
-          title={`Permission mode: ${PERMISSION_MODE_DESCRIPTIONS[permissionMode]}\n\nNote: Stream mode doesn't support interactive prompts. Use 'Bypass All' for full autonomy or configure allowed tools in .claude/settings.local.json`}
-        >
-          {PERMISSION_MODES.map((mode) => (
-            <option key={mode} value={mode} title={PERMISSION_MODE_DESCRIPTIONS[mode]}>
-              {PERMISSION_MODE_LABELS[mode]}
-            </option>
-          ))}
-        </select>
+        {!usesTerminal && (
+          <>
+            <select
+              className="model-select"
+              value={selectedModel}
+              onChange={(e) => onModelChange(e.target.value)}
+              title={`Select model for ${AGENT_TYPE_LABELS[agentType]}`}
+            >
+              {AGENT_MODELS[agentType].map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+            </select>
+            <select
+              className="permission-mode-select"
+              value={permissionMode}
+              onChange={(e) => onPermissionModeChange(e.target.value as PermissionMode)}
+              title={`Permission mode: ${PERMISSION_MODE_DESCRIPTIONS[permissionMode]}\n\nNote: Stream mode doesn't support interactive prompts. Use 'Bypass All' for full autonomy or configure allowed tools in .claude/settings.local.json`}
+            >
+              {PERMISSION_MODES.map((mode) => (
+                <option key={mode} value={mode} title={PERMISSION_MODE_DESCRIPTIONS[mode]}>
+                  {PERMISSION_MODE_LABELS[mode]}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
         {totalTokens > 0 && (
           <span
             className="token-usage"
@@ -775,19 +829,21 @@ function AgentHeader({
       </div>
       <div className="claude-header-right">
         {cwd && <span className="claude-cwd" title={cwd}>{truncatePath(cwd, 40)}</span>}
-        <div className="claude-header-actions">
-          <button onClick={onClearMessages} className="header-btn" title="Clear messages (Ctrl+L)">
-            Clear
-          </button>
-          <button onClick={onNewSession} className="header-btn" title="Start new session (Ctrl+Shift+N)">
-            New Session
-          </button>
-          {!connected && !connecting && (
-            <button onClick={onReconnect} className="header-btn primary" title="Reconnect">
-              Reconnect
+        {!usesTerminal && (
+          <div className="claude-header-actions">
+            <button onClick={onClearMessages} className="header-btn" title="Clear messages (Ctrl+L)">
+              Clear
             </button>
-          )}
-        </div>
+            <button onClick={onNewSession} className="header-btn" title="Start new session (Ctrl+Shift+N)">
+              New Session
+            </button>
+            {!connected && !connecting && (
+              <button onClick={onReconnect} className="header-btn primary" title="Reconnect">
+                Reconnect
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1110,9 +1166,9 @@ const styles = `
 .claude-agent-view {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: calc(100vh - 120px);
-  padding: 20px;
+  height: calc(100vh - 180px);
+  max-height: calc(100vh - 180px);
+  padding: 12px 20px 20px 20px;
   background: transparent;
   color: var(--agent-text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -2476,6 +2532,44 @@ const styles = `
 
   .denial-add-btn {
     margin-left: auto;
+  }
+}
+
+/* ============================================================================
+   AGENT TERMINAL MODE STYLES (Codex/Gemini)
+   ============================================================================ */
+
+/* Agent terminal wrapper - fills available space (Codex/Gemini) */
+.agent-terminal-wrapper {
+  flex: 1;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  overflow: hidden;
+  height: 100%;
+}
+
+.agent-terminal-wrapper .agent-terminal-embed {
+  flex: 1;
+  min-height: 400px;
+  height: 100%;
+}
+
+.agent-terminal-wrapper .terminal-embed {
+  height: 100%;
+}
+
+.agent-terminal-wrapper .terminal-embed-content {
+  flex: 1;
+  min-height: 350px;
+}
+
+/* Mobile adjustments for terminal mode */
+@media (max-width: 480px) {
+  .agent-terminal-wrapper {
+    padding: 8px;
+    min-height: 300px;
   }
 }
 `;

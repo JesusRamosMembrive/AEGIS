@@ -15,7 +15,7 @@ El modo `sdk` lo solucionaba usando el SDK de Anthropic directamente, pero **req
 Usar el **CLI de Claude con un MCP Tool Proxy Server** que:
 
 1. Deshabilita las tools nativas peligrosas (`--disallowed-tools "Write,Edit,Bash"`)
-2. Expone tools proxy via MCP: `atlas_write`, `atlas_edit`, `atlas_bash`
+2. Expone tools proxy via MCP: `aegis_write`, `aegis_edit`, `aegis_bash`
 3. Intercepta las llamadas y pide aprobación antes de ejecutar
 4. **Usa tu suscripción existente de Claude CLI** (€108/mes o lo que pagues)
 
@@ -52,10 +52,10 @@ Usar el **CLI de Claude con un MCP Tool Proxy Server** que:
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │         Claude CLI                    MCP Tool Proxy Server       │   │
 │  │  ┌─────────────────────────────┐    ┌───────────────────────────┐│   │
-│  │  │ --disallowed-tools          │    │ atlas_write()             ││   │
-│  │  │   "Write,Edit,Bash"         │───▶│ atlas_edit()              ││   │
-│  │  │                             │    │ atlas_bash()              ││   │
-│  │  │ --mcp-config atlas.json     │    │                           ││   │
+│  │  │ --disallowed-tools          │    │ aegis_write()             ││   │
+│  │  │   "Write,Edit,Bash"         │───▶│ aegis_edit()              ││   │
+│  │  │                             │    │ aegis_bash()              ││   │
+│  │  │ --mcp-config aegis.json     │    │                           ││   │
 │  │  │ --dangerously-skip-         │    │ ┌───────────────────────┐ ││   │
 │  │  │   permissions               │    │ │ request_approval()    │─┼┼───┘
 │  │  └─────────────────────────────┘    │ └───────────────────────┘ ││
@@ -100,7 +100,7 @@ MCP server que expone tools proxy que requieren aprobación.
 
 ```python
 class ToolProxyServer:
-    async def atlas_write(self, file_path: str, content: str) -> str:
+    async def aegis_write(self, file_path: str, content: str) -> str:
         """Write con aprobación requerida"""
         preview = self._generate_write_preview(file_path, content)
         approved, feedback = await self._request_approval("write", params, preview)
@@ -110,13 +110,13 @@ class ToolProxyServer:
         Path(file_path).write_text(content)
         return f"Successfully wrote to {file_path}"
 
-    async def atlas_edit(self, file_path, old_string, new_string, replace_all=False):
+    async def aegis_edit(self, file_path, old_string, new_string, replace_all=False):
         """Edit con aprobación requerida"""
         preview = self._generate_edit_preview(...)
         approved, feedback = await self._request_approval("edit", params, preview)
         # ...
 
-    async def atlas_bash(self, command: str, timeout=120000, description=""):
+    async def aegis_bash(self, command: str, timeout=120000, description=""):
         """Bash con aprobación requerida"""
         preview = self._generate_bash_preview(command)
         approved, feedback = await self._request_approval("bash", params, preview)
@@ -182,7 +182,7 @@ Crea MCPProxyRunner → Crea config MCP temporal
 Inicia Claude CLI:
   claude -p \
     --disallowed-tools "Write,Edit,Bash" \
-    --mcp-config /tmp/atlas_xxx.json \
+    --mcp-config /tmp/aegis_xxx.json \
     --dangerously-skip-permissions \
     ...
 ```
@@ -193,7 +193,7 @@ Inicia Claude CLI:
 Claude CLI: "Voy a crear el archivo..."
                 │
                 ▼
-Claude emite tool_use: atlas_write
+Claude emite tool_use: aegis_write
                 │
                 ▼
 MCP Tool Proxy Server recibe la llamada

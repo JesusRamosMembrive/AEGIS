@@ -43,6 +43,23 @@ export type AgentType = "claude" | "codex" | "gemini";
 
 export const AGENT_TYPES: AgentType[] = ["claude", "codex", "gemini"];
 
+// Gemini-specific execution modes
+// - stream: JSON streaming with auto_edit (auto-approves file ops, blocks shell)
+// - terminal: Embedded terminal with native Gemini approval prompts
+export type GeminiMode = "stream" | "terminal";
+
+export const GEMINI_MODES: GeminiMode[] = ["stream", "terminal"];
+
+export const GEMINI_MODE_LABELS: Record<GeminiMode, string> = {
+  stream: "Stream Mode",
+  terminal: "Terminal Mode",
+};
+
+export const GEMINI_MODE_DESCRIPTIONS: Record<GeminiMode, string> = {
+  stream: "Auto-approve file operations, block shell commands (faster, no prompts)",
+  terminal: "Interactive terminal with native approval prompts (full control)",
+};
+
 export const AGENT_TYPE_LABELS: Record<AgentType, string> = {
   claude: "Claude Code",
   codex: "OpenAI Codex",
@@ -237,6 +254,7 @@ interface ClaudeSessionStore {
   permissionMode: PermissionMode;
   agentType: AgentType;
   selectedModels: SelectedModels;
+  geminiMode: GeminiMode;
 
   // Messages and tool calls
   messages: ClaudeMessage[];
@@ -295,6 +313,7 @@ interface ClaudeSessionStore {
   setAgentType: (type: AgentType) => void;
   setSelectedModel: (agentType: AgentType, model: string) => void;
   getCurrentModel: () => string;
+  setGeminiMode: (mode: GeminiMode) => void;
 
   // Permission actions
   respondToPermission: (approved: boolean, always?: boolean) => void;
@@ -371,6 +390,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       permissionMode: "mcpProxy" as PermissionMode,
       agentType: "claude" as AgentType,
       selectedModels: { ...AGENT_DEFAULT_MODELS },
+      geminiMode: "stream" as GeminiMode,
       messages: [],
       activeToolCalls: new Map(),
       completedToolCalls: [],
@@ -507,10 +527,29 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
 
       // Disconnect
       disconnect: () => {
-        const { _ws } = get();
-        if (_ws) {
-          _ws.close();
+        const { _ws, _reconnectTimeout } = get();
+
+        // Clear any pending reconnect timeout
+        if (_reconnectTimeout) {
+          clearTimeout(_reconnectTimeout);
         }
+
+        // Clear wsUrl FIRST to prevent auto-reconnect in onclose handler
+        // The onclose handler checks: event.code !== 1000 && currentState.wsUrl
+        // By clearing wsUrl before close, we ensure no reconnection attempt
+        set({
+          wsUrl: null,
+          _reconnectTimeout: null,
+          isReconnecting: false,
+          reconnectAttempts: 0,
+          reconnectDelay: RECONNECT_CONFIG.baseDelay,
+          connectionError: null,
+        });
+
+        if (_ws) {
+          _ws.close(1000, "Intentional disconnect");
+        }
+
         set({
           connected: false,
           connecting: false,
@@ -636,6 +675,11 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
       getCurrentModel: () => {
         const state = get();
         return state.selectedModels[state.agentType] || AGENT_DEFAULT_MODELS[state.agentType];
+      },
+
+      // Set Gemini execution mode
+      setGeminiMode: (mode: GeminiMode) => {
+        set({ geminiMode: mode });
       },
 
       // Respond to a permission request
@@ -1292,6 +1336,7 @@ export const useClaudeSessionStore = create<ClaudeSessionStore>()(
           agentType: state.agentType,
           permissionMode: state.permissionMode,
           selectedModels: state.selectedModels,
+          geminiMode: state.geminiMode,
         }),
       }
     ),
@@ -1335,3 +1380,5 @@ export const selectPlanDescriptionOnly = (state: ClaudeSessionStore) =>
   state.planDescriptionOnly;
 export const selectToolUseCountInResponse = (state: ClaudeSessionStore) =>
   state.toolUseCountInResponse;
+export const selectGeminiMode = (state: ClaudeSessionStore) =>
+  state.geminiMode;
