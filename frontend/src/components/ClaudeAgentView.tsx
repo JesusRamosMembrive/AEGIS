@@ -1166,8 +1166,8 @@ const styles = `
 .claude-agent-view {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px);
+  height: calc(100vh - 180px);
+  max-height: calc(100vh - 180px);
   padding: 12px 20px 20px 20px;
   background: transparent;
   color: var(--agent-text-primary);

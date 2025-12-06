@@ -8802,7 +8802,7 @@
   {
     "path": "frontend/src/components/ClaudeAgentView.tsx",
     "relative": true,
-    "modified_at": "2025-12-05T15:14:47.463649+00:00",
+    "modified_at": "2025-12-06T06:21:31.809045+00:00",
     "symbols": [
       {
         "name": "extractResultContent",
@@ -8835,42 +8835,42 @@
       {
         "name": "AgentHeader",
         "kind": "function",
-        "lineno": 709,
+        "lineno": 710,
         "parent": null,
         "docstring": null
       },
       {
         "name": "EmptyState",
         "kind": "function",
-        "lineno": 851,
+        "lineno": 852,
         "parent": null,
         "docstring": null
       },
       {
         "name": "MessageItem",
         "kind": "function",
-        "lineno": 870,
+        "lineno": 871,
         "parent": null,
         "docstring": null
       },
       {
         "name": "PermissionDenialsBanner",
         "kind": "function",
-        "lineno": 1035,
+        "lineno": 1036,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncateInput",
         "kind": "function",
-        "lineno": 1096,
+        "lineno": 1097,
         "parent": null,
         "docstring": null
       },
       {
         "name": "truncatePath",
         "kind": "function",
-        "lineno": 1106,
+        "lineno": 1107,
         "parent": null,
         "docstring": "============================================================================"
       }
@@ -9866,19 +9866,19 @@
   {
     "path": "frontend/src/components/TerminalSocketIO.tsx",
     "relative": true,
-    "modified_at": "2025-12-05T15:10:35.190884+00:00",
+    "modified_at": "2025-12-05T15:28:54.566783+00:00",
     "symbols": [
       {
         "name": "TerminalSocketIOInner",
         "kind": "function",
-        "lineno": 37,
+        "lineno": 39,
         "parent": null,
         "docstring": null
       },
       {
         "name": "stripApi",
         "kind": "function",
-        "lineno": 77,
+        "lineno": 80,
         "parent": null,
         "docstring": null
       }
@@ -11552,131 +11552,131 @@
   {
     "path": "frontend/src/stores/claudeSessionStore.ts",
     "relative": true,
-    "modified_at": "2025-12-04T18:22:21.737499+00:00",
+    "modified_at": "2025-12-05T15:21:53.532674+00:00",
     "symbols": [
       {
         "name": "selectConnected",
         "kind": "function",
-        "lineno": 1334,
+        "lineno": 1353,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "selectRunning",
         "kind": "function",
-        "lineno": 1335,
+        "lineno": 1354,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectMessages",
         "kind": "function",
-        "lineno": 1336,
+        "lineno": 1355,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectSessionInfo",
         "kind": "function",
-        "lineno": 1337,
+        "lineno": 1356,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectLastError",
         "kind": "function",
-        "lineno": 1339,
+        "lineno": 1358,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectActiveToolCalls",
         "kind": "function",
-        "lineno": 1340,
+        "lineno": 1359,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPermission",
         "kind": "function",
-        "lineno": 1342,
+        "lineno": 1361,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionDenials",
         "kind": "function",
-        "lineno": 1344,
+        "lineno": 1363,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingToolApproval",
         "kind": "function",
-        "lineno": 1346,
+        "lineno": 1365,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingMCPApproval",
         "kind": "function",
-        "lineno": 1348,
+        "lineno": 1367,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYSessionActive",
         "kind": "function",
-        "lineno": 1350,
+        "lineno": 1369,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPendingPTYPermission",
         "kind": "function",
-        "lineno": 1352,
+        "lineno": 1371,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPTYThinking",
         "kind": "function",
-        "lineno": 1354,
+        "lineno": 1373,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPermissionMode",
         "kind": "function",
-        "lineno": 1356,
+        "lineno": 1375,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectAgentType",
         "kind": "function",
-        "lineno": 1358,
+        "lineno": 1377,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectPlanDescriptionOnly",
         "kind": "function",
-        "lineno": 1360,
+        "lineno": 1379,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectToolUseCountInResponse",
         "kind": "function",
-        "lineno": 1362,
+        "lineno": 1381,
         "parent": null,
         "docstring": null
       },
       {
         "name": "selectGeminiMode",
         "kind": "function",
-        "lineno": 1364,
+        "lineno": 1383,
         "parent": null,
         "docstring": null
       }
@@ -14304,7 +14304,7 @@
   {
     "path": "tmp_test/custom_math.py",
     "relative": true,
-    "modified_at": "2025-12-04T18:22:21.737499+00:00",
+    "modified_at": "2025-12-06T06:32:09.495559+00:00",
     "symbols": [
       {
         "name": "divide",
