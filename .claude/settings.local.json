@@ -42,7 +42,11 @@
       "Bash(.venv/bin/pip install:*)",
       "Bash(timeout 5 .venv/bin/python:*)",
       "Bash(grep:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(xargs:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

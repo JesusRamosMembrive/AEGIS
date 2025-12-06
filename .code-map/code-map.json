@@ -137,110 +137,110 @@
   {
     "path": "code_map/analyzer_registry.py",
     "relative": true,
-    "modified_at": "2025-11-10T11:33:54.677950+00:00",
+    "modified_at": "2025-12-06T18:12:20.094080+00:00",
     "symbols": [
       {
         "name": "AnalyzerCapability",
         "kind": "class",
-        "lineno": 21,
+        "lineno": 22,
         "parent": null,
         "docstring": "Descripci\u00f3n de la disponibilidad de un analizador por dominio."
       },
       {
         "name": "PlainTextAnalyzer",
         "kind": "class",
-        "lineno": 33,
+        "lineno": 34,
         "parent": null,
         "docstring": "Analizador de reserva cuando no existe soporte espec\u00edfico."
       },
       {
         "name": "parse",
         "kind": "method",
-        "lineno": 36,
+        "lineno": 37,
         "parent": "PlainTextAnalyzer",
         "docstring": "Genera un resumen vac\u00edo para un archivo de texto plano."
       },
       {
         "name": "AnalyzerProtocol",
         "kind": "class",
-        "lineno": 47,
+        "lineno": 48,
         "parent": null,
         "docstring": null
       },
       {
         "name": "parse",
         "kind": "method",
-        "lineno": 48,
+        "lineno": 49,
         "parent": "AnalyzerProtocol",
         "docstring": null
       },
       {
         "name": "AnalyzerRegistry",
         "kind": "class",
-        "lineno": 51,
+        "lineno": 52,
         "parent": null,
         "docstring": "Agrupa los analizadores disponibles y proporciona sus capacidades."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 56,
+        "lineno": 59,
         "parent": "AnalyzerRegistry",
         "docstring": "Inicializa el registro de analizadores."
       },
       {
         "name": "get",
         "kind": "method",
-        "lineno": 90,
+        "lineno": 97,
         "parent": "AnalyzerRegistry",
         "docstring": "Obtiene el analizador para una extensi\u00f3n de archivo."
       },
       {
         "name": "items",
         "kind": "method",
-        "lineno": 94,
+        "lineno": 101,
         "parent": "AnalyzerRegistry",
         "docstring": "Itera sobre los pares (extensi\u00f3n, analizador) registrados."
       },
       {
         "name": "analyzers",
         "kind": "method",
-        "lineno": 99,
+        "lineno": 106,
         "parent": "AnalyzerRegistry",
         "docstring": "Diccionario de los analizadores registrados."
       },
       {
         "name": "capabilities",
         "kind": "method",
-        "lineno": 104,
+        "lineno": 111,
         "parent": "AnalyzerRegistry",
         "docstring": "Lista de las capacidades de los analizadores."
       },
       {
         "name": "_build_override_map",
         "kind": "method",
-        "lineno": 108,
+        "lineno": 115,
         "parent": "AnalyzerRegistry",
         "docstring": "Construye un mapa de analizadores personalizados."
       },
       {
         "name": "_default_analyzer_for",
         "kind": "method",
-        "lineno": 117,
+        "lineno": 124,
         "parent": "AnalyzerRegistry",
         "docstring": "Obtiene el analizador por defecto para una extensi\u00f3n de archivo."
       },
       {
         "name": "_build_capabilities",
         "kind": "method",
-        "lineno": 131,
+        "lineno": 142,
         "parent": "AnalyzerRegistry",
         "docstring": "Construye la lista de capacidades de los analizadores."
       },
       {
         "name": "_normalize_extension",
         "kind": "method",
-        "lineno": 236,
+        "lineno": 293,
         "parent": "AnalyzerRegistry",
         "docstring": "Normaliza una extensi\u00f3n de archivo."
       }
@@ -1828,6 +1828,112 @@
         "lineno": 351,
         "parent": null,
         "docstring": "Lists events for a run, ordered chronologically."
+      }
+    ],
+    "errors": []
+  },
+  {
+    "path": "code_map/c_analyzer.py",
+    "relative": true,
+    "modified_at": "2025-12-06T18:11:14.977152+00:00",
+    "symbols": [
+      {
+        "name": "_CParser",
+        "kind": "class",
+        "lineno": 18,
+        "parent": null,
+        "docstring": "Wrapper ligero sobre el parser de tree-sitter para C/C++."
+      },
+      {
+        "name": "for_language",
+        "kind": "method",
+        "lineno": 24,
+        "parent": "_CParser",
+        "docstring": "Construye un parser configurado para el lenguaje indicado (c o cpp)."
+      },
+      {
+        "name": "CAnalyzer",
+        "kind": "class",
+        "lineno": 38,
+        "parent": null,
+        "docstring": "Analizador basado en tree-sitter para archivos C/C++."
+      },
+      {
+        "name": "__init__",
+        "kind": "method",
+        "lineno": 41,
+        "parent": "CAnalyzer",
+        "docstring": "Inicializa el parser adecuado y comprueba la disponibilidad de dependencias."
+      },
+      {
+        "name": "parse",
+        "kind": "method",
+        "lineno": 60,
+        "parent": "CAnalyzer",
+        "docstring": "Analiza un archivo C/C++ y devuelve los s\u00edmbolos detectados.\n\nArgs:\n    path: Ruta del archivo a analizar."
+      },
+      {
+        "name": "_collect_from_children",
+        "kind": "method",
+        "lineno": 100,
+        "parent": "CAnalyzer",
+        "docstring": "Recorre recursivamente el \u00e1rbol sint\u00e1ctico para extraer s\u00edmbolos."
+      },
+      {
+        "name": "_extract_function_name",
+        "kind": "method",
+        "lineno": 258,
+        "parent": "CAnalyzer",
+        "docstring": "Extrae el nombre de una definici\u00f3n de funci\u00f3n."
+      },
+      {
+        "name": "_find_declarator_name",
+        "kind": "method",
+        "lineno": 267,
+        "parent": "CAnalyzer",
+        "docstring": "Busca recursivamente el nombre en un declarador."
+      },
+      {
+        "name": "_extract_function_declaration_name",
+        "kind": "method",
+        "lineno": 303,
+        "parent": "CAnalyzer",
+        "docstring": "Extrae el nombre de una declaraci\u00f3n de funci\u00f3n (prototipo)."
+      },
+      {
+        "name": "_extract_type_name",
+        "kind": "method",
+        "lineno": 320,
+        "parent": "CAnalyzer",
+        "docstring": "Extrae el nombre de un struct, class o enum."
+      },
+      {
+        "name": "_extract_typedef_name",
+        "kind": "method",
+        "lineno": 333,
+        "parent": "CAnalyzer",
+        "docstring": "Extrae el nombre del tipo definido por typedef."
+      },
+      {
+        "name": "_extract_identifier",
+        "kind": "method",
+        "lineno": 342,
+        "parent": "CAnalyzer",
+        "docstring": "Obtiene el identificador asociado a un nodo, si existe."
+      },
+      {
+        "name": "_find_child",
+        "kind": "method",
+        "lineno": 354,
+        "parent": "CAnalyzer",
+        "docstring": "Busca el primer hijo del tipo indicado dentro de un nodo."
+      },
+      {
+        "name": "_find_leading_comment",
+        "kind": "method",
+        "lineno": 361,
+        "parent": "CAnalyzer",
+        "docstring": "Localiza comentarios inmediatamente anteriores a un nodo."
       }
     ],
     "errors": []
@@ -3766,82 +3872,82 @@
   {
     "path": "code_map/scanner.py",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.598315+00:00",
+    "modified_at": "2025-12-06T18:11:27.600336+00:00",
     "symbols": [
       {
         "name": "ProjectScanner",
         "kind": "class",
-        "lineno": 43,
+        "lineno": 50,
         "parent": null,
         "docstring": "Coordina los escaneos completos de una ruta ra\u00edz."
       },
       {
         "name": "__init__",
         "kind": "method",
-        "lineno": 46,
+        "lineno": 53,
         "parent": "ProjectScanner",
         "docstring": "Inicializa el scanner.\n\nArgs:\n    root: La ruta ra\u00edz del proyecto a escanear.\n    analyzer: (Opcional) Un analizador de archivos personalizado para archivos .py.\n    analyzers: (Opcional) Un mapeo de extensiones de archivo a analizadores personalizados.\n    exclude_dirs: (Opcional) Una secuencia de nombres de directorios a excluir.\n    include_docstrings: (Opcional) Si es True, se incluir\u00e1n los docstrings en el an\u00e1lisis.\n    extensions: (Opcional) Una secuencia de extensiones de archivo a incluir en el escaneo."
       },
       {
         "name": "scan",
         "kind": "method",
-        "lineno": 100,
+        "lineno": 107,
         "parent": "ProjectScanner",
         "docstring": "Ejecuta un recorrido completo del \u00e1rbol y devuelve res\u00famenes por archivo."
       },
       {
         "name": "scan_and_update_index",
         "kind": "method",
-        "lineno": 110,
+        "lineno": 117,
         "parent": "ProjectScanner",
         "docstring": "Ejecuta un escaneo, actualiza el \u00edndice y opcionalmente persiste un snapshot.\n\nArgs:\n    index: El \u00edndice de s\u00edmbolos a actualizar.\n    persist: Si es True, se guardar\u00e1 un snapshot del \u00edndice.\n    store: (Opcional) El almac\u00e9n de snapshots a utilizar.\n\nReturns:\n    Una lista de res\u00famenes de archivos."
       },
       {
         "name": "hydrate_index_from_snapshot",
         "kind": "method",
-        "lineno": 136,
+        "lineno": 143,
         "parent": "ProjectScanner",
         "docstring": "Carga un snapshot (si existe) y lo aplica al \u00edndice antes de escanear.\n\nArgs:\n    index: El \u00edndice de s\u00edmbolos a hidratar.\n    store: (Opcional) El almac\u00e9n de snapshots a utilizar.\n\nReturns:\n    Una lista de res\u00famenes de archivos del snapshot."
       },
       {
         "name": "apply_change_batch",
         "kind": "method",
-        "lineno": 156,
+        "lineno": 163,
         "parent": "ProjectScanner",
         "docstring": "Reprocesa los archivos afectados por un lote de cambios y actualiza el \u00edndice.\n\nArgs:\n    batch: El lote de cambios a aplicar.\n    index: El \u00edndice de s\u00edmbolos a actualizar.\n    persist: Si es True, se guardar\u00e1 un snapshot del \u00edndice.\n    store: (Opcional) El almac\u00e9n de snapshots a utilizar.\n\nReturns:\n    Un diccionario con las rutas de los archivos actualizados y eliminados."
       },
       {
         "name": "_iter_supported_files",
         "kind": "method",
-        "lineno": 209,
+        "lineno": 216,
         "parent": "ProjectScanner",
         "docstring": "Genera rutas absolutas a cada archivo con extensi\u00f3n soportada."
       },
       {
         "name": "_should_exclude",
         "kind": "method",
-        "lineno": 223,
+        "lineno": 230,
         "parent": "ProjectScanner",
         "docstring": "Determina si una ruta debe ser excluida del escaneo."
       },
       {
         "name": "_default_store",
         "kind": "method",
-        "lineno": 233,
+        "lineno": 240,
         "parent": "ProjectScanner",
         "docstring": "Crea una instancia por defecto de SnapshotStore."
       },
       {
         "name": "_within_root",
         "kind": "method",
-        "lineno": 239,
+        "lineno": 246,
         "parent": "ProjectScanner",
         "docstring": "Comprueba si una ruta est\u00e1 dentro de la ra\u00edz del proyecto."
       },
       {
         "name": "_dedupe_paths",
         "kind": "method",
-        "lineno": 247,
+        "lineno": 254,
         "parent": "ProjectScanner",
         "docstring": "Elimina duplicados y rutas fuera de la ra\u00edz de una lista de rutas."
       }
@@ -6416,6 +6522,19 @@
     "errors": []
   },
   {
+    "path": "frontend/dist/assets/index-CBwTXOe-.js",
+    "relative": true,
+    "modified_at": "2025-12-06T18:21:57.801680+00:00",
+    "symbols": [],
+    "errors": [
+      {
+        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
+        "lineno": null,
+        "col_offset": null
+      }
+    ]
+  },
+  {
     "path": "frontend/dist/assets/index-DZPQ17YG.js",
     "relative": true,
     "modified_at": "2025-12-01T10:48:33.705028+00:00",
@@ -6429,22 +6548,9 @@
     ]
   },
   {
-    "path": "frontend/dist/assets/index-oxxhPzvC.js",
-    "relative": true,
-    "modified_at": "2025-12-06T08:03:37.626119+00:00",
-    "symbols": [],
-    "errors": [
-      {
-        "message": "No se pudo parsear el archivo: Line 5: Unexpected token {",
-        "lineno": null,
-        "col_offset": null
-      }
-    ]
-  },
-  {
     "path": "frontend/dist/index.html",
     "relative": true,
-    "modified_at": "2025-12-06T08:03:37.625636+00:00",
+    "modified_at": "2025-12-06T18:21:57.799680+00:00",
     "symbols": [
       {
         "name": "root",
@@ -6848,47 +6954,40 @@
   {
     "path": "frontend/src/components/AgentSidebar.tsx",
     "relative": true,
-    "modified_at": "2025-11-30T21:26:14.610676+00:00",
+    "modified_at": "2025-12-06T08:03:29.790521+00:00",
     "symbols": [
       {
         "name": "AgentSidebar",
         "kind": "function",
-        "lineno": 42,
+        "lineno": 36,
         "parent": null,
         "docstring": "============================================================================="
       },
       {
-        "name": "HistoryTab",
-        "kind": "function",
-        "lineno": 137,
-        "parent": null,
-        "docstring": null
-      },
-      {
-        "name": "formatDate",
-        "kind": "function",
-        "lineno": 183,
-        "parent": null,
-        "docstring": null
-      },
-      {
         "name": "FilesTab",
         "kind": "function",
-        "lineno": 260,
+        "lineno": 102,
         "parent": null,
         "docstring": null
       },
       {
         "name": "FileItem",
         "kind": "function",
-        "lineno": 312,
+        "lineno": 152,
+        "parent": null,
+        "docstring": null
+      },
+      {
+        "name": "formatNumber",
+        "kind": "function",
+        "lineno": 203,
         "parent": null,
         "docstring": null
       },
       {
         "name": "StatsTab",
         "kind": "function",
-        "lineno": 350,
+        "lineno": 209,
         "parent": null,
         "docstring": null
       }
@@ -7077,19 +7176,19 @@
   {
     "path": "frontend/src/components/ClaudeAgentView.tsx",
     "relative": true,
-    "modified_at": "2025-12-06T07:11:11.588822+00:00",
+    "modified_at": "2025-12-06T08:03:09.414221+00:00",
     "symbols": [
       {
         "name": "ClaudeAgentView",
         "kind": "function",
-        "lineno": 25,
+        "lineno": 23,
         "parent": null,
         "docstring": "============================================================================"
       },
       {
         "name": "AgentHeader",
         "kind": "function",
-        "lineno": 118,
+        "lineno": 91,
         "parent": null,
         "docstring": null
       }
@@ -7797,54 +7896,54 @@
   {
     "path": "frontend/src/components/SettingsView.tsx",
     "relative": true,
-    "modified_at": "2025-11-10T16:44:50.329922+00:00",
+    "modified_at": "2025-12-06T18:21:25.900367+00:00",
     "symbols": [
       {
         "name": "extractCustomExcludes",
         "kind": "function",
-        "lineno": 24,
+        "lineno": 26,
         "parent": null,
         "docstring": null
       },
       {
         "name": "sortExcludes",
         "kind": "function",
-        "lineno": 31,
+        "lineno": 33,
         "parent": null,
         "docstring": null
       },
       {
         "name": "SettingsView",
         "kind": "function",
-        "lineno": 35,
+        "lineno": 37,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleSave",
         "kind": "function",
-        "lineno": 120,
+        "lineno": 123,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleAddExclude",
         "kind": "function",
-        "lineno": 154,
+        "lineno": 157,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleRemoveExclude",
         "kind": "function",
-        "lineno": 177,
+        "lineno": 180,
         "parent": null,
         "docstring": null
       },
       {
         "name": "handleDirectorySelect",
         "kind": "function",
-        "lineno": 205,
+        "lineno": 208,
         "parent": null,
         "docstring": null
       }
@@ -9004,6 +9103,21 @@
     "errors": []
   },
   {
+    "path": "frontend/src/components/settings/SupportedExtensionsSection.tsx",
+    "relative": true,
+    "modified_at": "2025-12-06T18:20:16.112667+00:00",
+    "symbols": [
+      {
+        "name": "SupportedExtensionsSection",
+        "kind": "function",
+        "lineno": 8,
+        "parent": null,
+        "docstring": null
+      }
+    ],
+    "errors": []
+  },
+  {
     "path": "frontend/src/components/terminal/AgentOverlay.tsx",
     "relative": true,
     "modified_at": "2025-11-30T21:26:14.616410+00:00",
@@ -9613,21 +9727,14 @@
   {
     "path": "frontend/src/stores/claudeSessionStore.ts",
     "relative": true,
-    "modified_at": "2025-12-06T07:09:01.450770+00:00",
+    "modified_at": "2025-12-06T07:41:41.727690+00:00",
     "symbols": [
       {
         "name": "selectAgentType",
         "kind": "function",
-        "lineno": 171,
+        "lineno": 126,
         "parent": null,
         "docstring": "============================================================================"
-      },
-      {
-        "name": "selectSelectedModels",
-        "kind": "function",
-        "lineno": 172,
-        "parent": null,
-        "docstring": null
       }
     ],
     "errors": []
