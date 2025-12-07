@@ -15,6 +15,7 @@ import {
 } from "../stores/claudeSessionStore";
 import { TerminalSocketIO, terminalSocketIOStyles } from "./TerminalSocketIO";
 import { AgentSidebar } from "./AgentSidebar";
+import { useConnectionWarning } from "../hooks/useConnectionWarning";
 
 // ============================================================================
 // Main Component
@@ -28,6 +29,9 @@ export function ClaudeAgentView() {
 
   // Store state - simplified to just agent configuration
   const { agentType, setAgentType } = useClaudeSessionStore();
+
+  // Warn user if they try to navigate away with active connection
+  useConnectionWarning({ isConnected: terminalConnected });
 
   // Handle agent type change - remount terminal with new command
   const handleAgentTypeChange = useCallback((newType: AgentType) => {
