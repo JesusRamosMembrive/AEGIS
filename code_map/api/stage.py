@@ -5,8 +5,9 @@ Rutas para gestionar la inicialización y verificación Stage-Aware.
 
 from __future__ import annotations
 
+import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..stage_toolkit import (
     AgentSelection,
@@ -22,6 +23,8 @@ from .schemas import (
     StageStatusResponse,
     SuperClaudeInstallResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/stage", tags=["stage"])
 
@@ -47,10 +50,17 @@ async def initialize_stage_assets(
     - agents: "claude", "codex", "gemini", "both" (claude+codex), "all" (los tres)
     - force: Si True, fuerza reinstalación limpia
     """
-    agents: AgentSelection = request.agents  # type: ignore[assignment]
-    force: bool = getattr(request, "force", False)
-    result = await run_initializer(state.settings.root_path, agents, force=force)
-    return StageInitResponse.model_validate(result)
+    try:
+        agents: AgentSelection = request.agents  # type: ignore[assignment]
+        force: bool = getattr(request, "force", False)
+        result = await run_initializer(state.settings.root_path, agents, force=force)
+        return StageInitResponse.model_validate(result)
+    except Exception as exc:
+        logger.exception("Error initializing stage assets: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error initializing stage assets: {exc}",
+        ) from exc
 
 
 @router.post("/superclaude/install", response_model=SuperClaudeInstallResponse)

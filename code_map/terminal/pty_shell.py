@@ -141,12 +141,27 @@ class PTYShell:
 
     def resize(self, cols: int, rows: int) -> None:
         """
-        Resize terminal
+        Resize terminal with dimension validation.
+
+        Prevents invalid dimensions that cause line-wrap issues in TUI agents
+        like Claude Code, Gemini CLI, etc.
 
         Args:
             cols: New terminal width
             rows: New terminal height
         """
+        # Minimum valid dimensions for TUI agents
+        MIN_COLS = 40
+        MIN_ROWS = 10
+
+        # Validate and correct invalid dimensions
+        if cols < MIN_COLS:
+            logger.warning(f"Invalid cols={cols}, using minimum {MIN_COLS}")
+            cols = MIN_COLS
+        if rows < MIN_ROWS:
+            logger.warning(f"Invalid rows={rows}, using minimum {MIN_ROWS}")
+            rows = MIN_ROWS
+
         self.cols = cols
         self.rows = rows
         self._set_winsize(cols, rows)

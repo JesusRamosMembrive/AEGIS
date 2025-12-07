@@ -436,6 +436,9 @@ def _detect_ollama(*, timeout: float = 1.5) -> OllamaStatus:
                 )
             )
         running = True
+        # If the endpoint responds, Ollama is definitely installed
+        # (even if binary not found in PATH, e.g., Windows service)
+        installed = True
     else:
         if fetch_error:
             if warning:

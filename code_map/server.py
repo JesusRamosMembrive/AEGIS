@@ -5,13 +5,16 @@ Aplicación FastAPI principal.
 
 from __future__ import annotations
 
+import logging
 import os
+import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,11 +23,23 @@ from .state import AppState
 from .settings import load_settings, save_settings
 from .api.routes import router as api_router
 
+# Socket.IO PTY server (Unix only for now)
+_IS_WINDOWS = sys.platform == "win32"
+_pty_server: Optional[Any] = None
+
+logger = logging.getLogger(__name__)
+
 
 def _parse_allowed_origins() -> list[str]:
     raw = os.getenv("CODE_MAP_CORS_ALLOWED_ORIGINS")
     if not raw:
-        return ["*"]
+        # Default origins for local development
+        return [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
     origins = [origin.strip() for origin in raw.split(",")]
     cleaned = [origin for origin in origins if origin]
     return cleaned or ["*"]
@@ -67,6 +82,16 @@ def create_app(root: Optional[str | Path] = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        """Global exception handler to ensure all errors return proper JSON responses."""
+        logger.exception("Unhandled exception: %s", exc)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal server error: {exc}"},
+        )
+
     app.include_router(api_router, prefix="/api")
     app.state.app_state = state  # type: ignore[attr-defined]
 
@@ -83,4 +108,49 @@ def create_app(root: Optional[str | Path] = None) -> FastAPI:
     return app
 
 
+def create_app_with_socketio(root: Optional[str | Path] = None) -> Any:
+    """
+    Create FastAPI app combined with Socket.IO PTY server.
+
+    On Unix: Returns combined ASGI app with Socket.IO at /pty namespace
+    On Windows: Returns plain FastAPI app (Socket.IO PTY not supported)
+
+    Args:
+        root: Project root path
+
+    Returns:
+        Combined ASGI application
+    """
+    global _pty_server
+
+    fastapi_app = create_app(root)
+
+    if _IS_WINDOWS:
+        logger.info("Windows detected - Socket.IO PTY not available, using WebSocket fallback")
+        return fastapi_app
+
+    try:
+        from .terminal.socketio_pty import SocketIOPTYServer
+
+        cors_origins = _parse_allowed_origins()
+        _pty_server = SocketIOPTYServer(cors_allowed_origins=cors_origins)
+
+        # Combine Socket.IO with FastAPI
+        combined_app = _pty_server.get_asgi_app(fastapi_app)
+
+        logger.info("Socket.IO PTY server initialized at /pty namespace")
+        return combined_app
+
+    except ImportError as e:
+        logger.warning(f"Socket.IO PTY not available: {e}. Using WebSocket fallback.")
+        return fastapi_app
+    except Exception as e:
+        logger.error(f"Failed to initialize Socket.IO PTY: {e}. Using WebSocket fallback.")
+        return fastapi_app
+
+
+# Default app without Socket.IO (for backwards compatibility)
 app = create_app()
+
+# Combined app with Socket.IO PTY support
+app_with_socketio = create_app_with_socketio()

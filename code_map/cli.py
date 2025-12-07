@@ -12,6 +12,8 @@ from typing import Optional, TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover - solo para tipado
     import typer  # type: ignore[import-not-found]
 else:  # pragma: no cover - manejo de dependencia opcional en runtime
+
+
     try:
         import typer  # type: ignore[import-not-found]
     except ImportError as exc:  # pragma: no cover
@@ -96,9 +98,11 @@ def run(
         fg=typer.colors.GREEN,
     )
 
+    # Use the combined app with Socket.IO PTY support
+    # Falls back to plain FastAPI on Windows or if Socket.IO init fails
     config = uvicorn.Config(
-        "code_map.server:create_app",
-        factory=True,
+        "code_map.server:app_with_socketio",
+        factory=False,
         host=host,
         port=port,
         log_level=log_level.lower(),

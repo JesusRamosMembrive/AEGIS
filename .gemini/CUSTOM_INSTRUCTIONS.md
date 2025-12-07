@@ -1,0 +1,163 @@
+## 🎯 PROJECT CONTEXT
+
+Before ANY work, read in this order:
+1. .gemini/00-project-brief.md - Project scope and constraints
+2. .gemini/01-current-phase.md - Current state and progress
+3. .gemini/02-stage[X]-rules.md - Rules for current stage
+
+## 📝 SESSION WORKFLOW
+
+⚠️ MANDATORY: At the START of EVERY session, BEFORE responding to user:
+
+1. **ALWAYS read these files first**:
+   - .gemini/00-project-brief.md - Project scope and constraints
+   - .gemini/01-current-phase.md - Current state and next steps (COMPACT)
+   - .gemini/02-stage[X]-rules.md - Rules for current stage
+
+2. **ALWAYS confirm to user** you've read the context:
+   - State current phase/stage
+   - Summarize what was last done
+   - Ask for clarification if anything is unclear
+
+3. **ONLY THEN** respond to the user's request
+
+**This applies EVEN IF the user's first message is a simple question.**
+Do NOT skip this protocol to "be helpful faster" - reading context IS being helpful.
+
+**Need deep context?** Read `.gemini/01-session-history.md` for full session details.
+
+At END of session:
+- Update .gemini/01-current-phase.md with progress
+- **CRITICAL**: Keep 01-current-phase.md under 150 lines
+
+## 🔄 FEATURE DEVELOPMENT WORKFLOW
+
+For ANY new feature, follow this workflow with explicit gates:
+
+```
+1. CHECK/CREATE → 2. PLAN → 3. APPROVE → 4. IMPLEMENT → 5. TEST → 6. VALIDATE → 7. APPROVE
+```
+
+### Phase 1: PLANNING
+**Output**: `docs/{feature}/architecture.md`
+
+**Steps**:
+1. Check if `docs/{feature}/` exists
+   - If exists: **READ existing documentation first**
+   - If not: Create the directory
+2. Analyze requirements and constraints
+3. Design stage-appropriate architecture
+4. Define testing strategy (unit + integration)
+5. Document in `docs/{feature}/architecture.md`
+
+**Architecture must include**:
+- Context & Requirements
+- Stage Assessment
+- Component Structure
+- Technology Stack with trade-offs
+- Build Order with dependencies
+- **Testing Strategy** (what to test, how)
+- Evolution Triggers
+
+**🚦 GATE**: Present plan to user. **WAIT FOR APPROVAL** before Phase 2.
+
+### Phase 2: IMPLEMENTATION
+**Output**: Code files + `docs/{feature}/implementation.md`
+
+**Steps**:
+1. **READ `architecture.md` FIRST** (mandatory)
+2. Implement components in specified build order
+3. Write unit tests for each component
+4. **Run unit tests - MUST PASS**
+5. Write integration tests (if Stage 2+)
+6. **Run integration tests - MUST PASS**
+7. Track progress in `docs/{feature}/implementation.md`
+
+**Testing Requirements by Stage**:
+| Stage | Unit Tests | Integration Tests |
+|-------|------------|-------------------|
+| 1 (PoC) | Optional | Not required |
+| 2 (Prototype) | Basic coverage | Optional |
+| 3 (Production) | Full coverage | Required |
+| 4 (Scale) | Full + edge cases | Full + performance |
+
+**🚦 GATE**: All tests must **PASS** before Phase 3.
+
+### Phase 3: VALIDATION
+**Output**: `docs/{feature}/qa-report.md`
+
+**Steps**:
+1. Read `architecture.md` and `implementation.md`
+2. Validate implementation matches plan
+3. Verify all tests pass
+4. Check security, correctness, performance
+5. Verify stage-appropriate complexity
+6. Document findings in `docs/{feature}/qa-report.md`
+
+**Recommendation options**:
+- ✅ **APPROVED**: Feature complete
+- ⚠️ **MINOR FIXES**: Small changes needed
+- ❌ **REQUEST CHANGES**: Return to Phase 2
+
+**🚦 GATE**: Present QA report to user. **WAIT FOR FINAL APPROVAL**.
+
+## 📁 DOCUMENTATION STRUCTURE
+
+For each feature, maintain:
+```
+docs/{feature-name}/
+├── architecture.md      # Phase 1: Plan
+├── implementation.md    # Phase 2: Progress
+├── qa-report.md        # Phase 3: Validation
+└── blockers.md         # Issues (optional)
+```
+
+## ⚠️ CRITICAL RULES
+
+### Workflow Compliance
+- **NEVER skip phases** (must go 1 → 2 → 3)
+- **NEVER implement without approved plan**
+- **NEVER skip tests** (except Stage 1 PoC)
+- **NEVER proceed without user approval at gates**
+- **ALWAYS read existing docs before changes**
+
+### Session Management
+- Never implement without reading current context
+- Never skip updating progress at end of session
+- Never assume you remember from previous sessions
+- Always check current stage rules before proposing solutions
+
+### Stage Awareness
+- **Stage 1 (PoC)**: Speed and simplicity, minimal tests
+- **Stage 2 (Prototype)**: Basic structure, basic tests
+- **Stage 3 (Production)**: Full tests, error handling
+- **Stage 4 (Scale)**: Performance tests, edge cases
+
+## 🚫 NEVER
+
+- Skip reading `docs/{feature}/architecture.md` before implementing
+- Implement without user approval on the plan
+- Skip writing tests (Stage 2+)
+- Proceed to validation with failing tests
+- Over-engineer beyond current stage
+- Make undocumented deviations from plan
+
+## 📚 PROJECT RESOURCES
+
+Available in `docs/` folder:
+- **README.md** - Workflow documentation and templates
+- **PROMPT_LIBRARY.md** - Templates for common situations
+- **QUICK_START.md** - Workflow guide
+- **STAGES_COMPARISON.md** - Quick reference table
+
+## 💡 REMEMBER
+
+- **Check → Plan → Approve → Implement → Test → Validate → Approve**
+- Tests are mandatory (Stage 2+)
+- User approval required at gates
+- Simplicity > Completeness
+- When in doubt, check the stage rules
+
+---
+
+*To update these instructions, modify templates/basic/.gemini/CUSTOM_INSTRUCTIONS.md*
