@@ -33,22 +33,19 @@ protected:
 
 TEST_F(MetricsTest, CalculateFileLoc_SimpleFile)
 {
-    auto path = create_file("simple.cpp", R"(
-#include <iostream>
-
-int main() {
-    std::cout << "Hello" << std::endl;
-    return 0;
-}
-)");
+    auto path = create_file("simple.cpp",
+        "int main() {\n"
+        "    return 0;\n"
+        "}\n"
+    );
 
     auto metrics = calculate_file_loc(path);
     ASSERT_TRUE(metrics.has_value());
 
     EXPECT_EQ(metrics->path, path);
-    EXPECT_EQ(metrics->total_lines, 8u);  // Including blank lines
-    EXPECT_GT(metrics->code_lines, 0u);
-    EXPECT_GT(metrics->blank_lines, 0u);
+    EXPECT_EQ(metrics->total_lines, 3u);
+    EXPECT_EQ(metrics->code_lines, 3u);
+    EXPECT_EQ(metrics->blank_lines, 0u);
 }
 
 TEST_F(MetricsTest, CalculateFileLoc_WithComments)

@@ -16,22 +16,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ==============================================================================
-# Compiler Warnings (Strict for quality)
+# Compiler Warnings (applied per-target, not globally)
 # ==============================================================================
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(
-        -Wall
-        -Wextra
-        -Wpedantic
-        -Werror
-        -Wno-unused-parameter
-        -Wshadow
-        -Wconversion
-        -Wsign-conversion
-    )
-elseif(MSVC)
-    add_compile_options(/W4 /WX /permissive-)
-endif()
+# Note: We use target_compile_options instead of add_compile_options
+# to avoid applying strict warnings to third-party dependencies (Google Test)
 
 # ==============================================================================
 # Dependencies via FetchContent
@@ -125,6 +113,16 @@ target_link_libraries(aegis_cpp_lib
         ${LIBCLANG_LIBRARY}
 )
 
+# Apply strict warnings only to our library
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(aegis_cpp_lib PRIVATE
+        -Wall -Wextra -Wpedantic -Werror
+        -Wno-unused-parameter -Wshadow -Wconversion -Wsign-conversion
+    )
+elseif(MSVC)
+    target_compile_options(aegis_cpp_lib PRIVATE /W4 /WX /permissive-)
+endif()
+
 # Platform-specific socket libraries
 if(WIN32)
     target_link_libraries(aegis_cpp_lib PRIVATE ws2_32)
@@ -136,6 +134,16 @@ endif()
 add_executable(static_analysis_motor src/main.cpp)
 
 target_link_libraries(static_analysis_motor PRIVATE aegis_cpp_lib)
+
+# Apply strict warnings to main executable
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(static_analysis_motor PRIVATE
+        -Wall -Wextra -Wpedantic -Werror
+        -Wno-unused-parameter -Wshadow -Wconversion -Wsign-conversion
+    )
+elseif(MSVC)
+    target_compile_options(static_analysis_motor PRIVATE /W4 /WX /permissive-)
+endif()
 
 # ==============================================================================
 # Tests

@@ -65,7 +65,18 @@
       "Bash(timeout 120 .venv/bin/python:*)",
       "Bash(pkill:*)",
       "Bash(timeout 90 .venv/bin/python -m pytest:*)",
-      "Bash(timeout 300 .venv/bin/python:*)"
+      "Bash(timeout 300 .venv/bin/python:*)",
+      "Bash(clang++:*)",
+      "Bash(dpkg:*)",
+      "Bash(g++:*)",
+      "Bash(apt list:*)",
+      "Bash(cmake --version:*)",
+      "Bash(/usr/bin/cmake:*)",
+      "Bash(/snap/bin/cmake:*)",
+      "Bash(ninja:*)",
+      "Bash(cmake:*)",
+      "Bash(./static_analysis_motor:*)",
+      "Bash(ctest:*)"
     ],
     "deny": [],
     "ask": []
