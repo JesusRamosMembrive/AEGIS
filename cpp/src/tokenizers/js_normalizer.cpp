@@ -54,7 +54,7 @@ JavaScriptNormalizer::JavaScriptNormalizer() {
         "&&", "||", "!", "??", "?.", "?:",
         "&", "|", "^", "~", "<<", ">>", ">>>",
         "&=", "|=", "^=", "<<=", ">>=", ">>>=",
-        "&&=", "||=", "??=",
+        "&&=", "||=", "?", "?=",  // Split to avoid trigraph warning
         "++", "--",
         "(", ")", "[", "]", "{", "}",
         ",", ";", ":", ".", "...", "=>", "?"
@@ -187,7 +187,7 @@ TokenizedFile JavaScriptNormalizer::normalize(std::string_view source) {
         state.advance();
     }
 
-    // Handle final line
+    // Handle the final line
     if (current_line > 0) {
         if (line_has_code) code_lines++;
         else if (line_has_comment) comment_lines++;
@@ -204,14 +204,14 @@ TokenizedFile JavaScriptNormalizer::normalize(std::string_view source) {
 }
 
 NormalizedToken JavaScriptNormalizer::parse_string(TokenizerState& state) {
-    NormalizedToken tok;
+    NormalizedToken tok{};
     tok.type = TokenType::STRING_LITERAL;
     tok.line = state.line;
     tok.column = state.column;
 
-    char quote = state.advance();
+    const char quote = state.advance();
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
     while (!state.eof()) {
         char c = state.peek();
@@ -247,18 +247,18 @@ NormalizedToken JavaScriptNormalizer::parse_string(TokenizerState& state) {
 }
 
 NormalizedToken JavaScriptNormalizer::parse_template_literal(TokenizerState& state) {
-    NormalizedToken tok;
+    NormalizedToken tok{};
     tok.type = TokenType::STRING_LITERAL;
     tok.line = state.line;
     tok.column = state.column;
 
     state.advance();  // Skip `
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
     int brace_depth = 0;
 
     while (!state.eof()) {
-        char c = state.peek();
+        const char c = state.peek();
 
         if (c == '`' && brace_depth == 0) {
             state.advance();
@@ -305,19 +305,19 @@ NormalizedToken JavaScriptNormalizer::parse_template_literal(TokenizerState& sta
     return tok;
 }
 
-NormalizedToken JavaScriptNormalizer::parse_number(TokenizerState& state) {
-    NormalizedToken tok;
+NormalizedToken JavaScriptNormalizer::parse_number(TokenizerState& state) const
+{
+    NormalizedToken tok{};
     tok.type = TokenType::NUMBER_LITERAL;
     tok.line = state.line;
     tok.column = state.column;
 
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
     // Check for hex, binary, octal
     if (state.peek() == '0' && !state.eof()) {
-        char next = state.peek_next();
-        if (next == 'x' || next == 'X') {
+        if (const char next = state.peek_next(); next == 'x' || next == 'X') {
             // Hex
             value += state.advance();
             value += state.advance();
@@ -387,13 +387,14 @@ NormalizedToken JavaScriptNormalizer::parse_number(TokenizerState& state) {
     return tok;
 }
 
-NormalizedToken JavaScriptNormalizer::parse_identifier_or_keyword(TokenizerState& state) {
-    NormalizedToken tok;
+NormalizedToken JavaScriptNormalizer::parse_identifier_or_keyword(TokenizerState& state) const
+{
+    NormalizedToken tok{};
     tok.line = state.line;
     tok.column = state.column;
 
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
     while (!state.eof() && is_identifier_char(state.peek())) {
         value += state.advance();
@@ -403,12 +404,12 @@ NormalizedToken JavaScriptNormalizer::parse_identifier_or_keyword(TokenizerState
     tok.original_hash = hash_string(value);
 
     // Check if it's a keyword
-    if (keywords_.count(value) || ts_keywords_.count(value)) {
+    if (keywords_.contains(value) || ts_keywords_.contains(value)) {
         tok.type = TokenType::KEYWORD;
         tok.normalized_hash = tok.original_hash;
     }
     // Check if it's a built-in type
-    else if (builtin_types_.count(value)) {
+    else if (builtin_types_.contains(value)) {
         tok.type = TokenType::TYPE;
         tok.normalized_hash = hash_placeholder(TokenType::TYPE);
     }
@@ -422,18 +423,17 @@ NormalizedToken JavaScriptNormalizer::parse_identifier_or_keyword(TokenizerState
 }
 
 NormalizedToken JavaScriptNormalizer::parse_operator(TokenizerState& state) {
-    NormalizedToken tok;
+    NormalizedToken tok{};
     tok.line = state.line;
     tok.column = state.column;
 
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
-    // Try to match longest operator first
+    // Try to match the longest operator first
     // Check 4-character operators
     if (state.pos + 3 < state.source.size()) {
-        std::string four(state.source.substr(state.pos, 4));
-        if (four == ">>>=") {
+        if (std::string four(state.source.substr(state.pos, 4)); four == ">>>=") {
             value = four;
             for (int i = 0; i < 4; i++) state.advance();
         }
@@ -441,11 +441,10 @@ NormalizedToken JavaScriptNormalizer::parse_operator(TokenizerState& state) {
 
     // Check 3-character operators
     if (value.empty() && state.pos + 2 < state.source.size()) {
-        std::string three(state.source.substr(state.pos, 3));
-        if (three == "===" || three == "!==" || three == ">>>" ||
+        if (const std::string three(state.source.substr(state.pos, 3)); three == "===" || three == "!==" || three == ">>>" ||
             three == "..." || three == "<<=" || three == ">>=" ||
             three == "**=" || three == "&&=" || three == "||=" ||
-            three == "??=") {
+            three == "?" "?=") {  // Split to avoid trigraph warning
             value = three;
             state.advance();
             state.advance();
@@ -455,8 +454,7 @@ NormalizedToken JavaScriptNormalizer::parse_operator(TokenizerState& state) {
 
     // Check 2-character operators
     if (value.empty() && state.pos + 1 < state.source.size()) {
-        std::string two(state.source.substr(state.pos, 2));
-        if (two == "==" || two == "!=" || two == "<=" || two == ">=" ||
+        if (const std::string two(state.source.substr(state.pos, 2)); two == "==" || two == "!=" || two == "<=" || two == ">=" ||
             two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
             two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
             two == "**" || two == "++" || two == "--" || two == "&&" ||
@@ -489,19 +487,20 @@ NormalizedToken JavaScriptNormalizer::parse_operator(TokenizerState& state) {
     return tok;
 }
 
-NormalizedToken JavaScriptNormalizer::parse_regex(TokenizerState& state) {
-    NormalizedToken tok;
+NormalizedToken JavaScriptNormalizer::parse_regex(TokenizerState& state) const
+{
+    NormalizedToken tok{};
     tok.type = TokenType::STRING_LITERAL;  // Treat regex like string for normalization
     tok.line = state.line;
     tok.column = state.column;
 
     state.advance();  // Skip /
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
     bool in_char_class = false;
 
     while (!state.eof()) {
-        char c = state.peek();
+        const char c = state.peek();
 
         if (c == '\n') {
             // Not a regex after all, it was a division
@@ -568,23 +567,26 @@ void JavaScriptNormalizer::skip_multi_line_comment(TokenizerState& state) {
     }
 }
 
-bool JavaScriptNormalizer::is_identifier_start(char c) const {
+bool JavaScriptNormalizer::is_identifier_start(char c)
+{
     return std::isalpha(static_cast<unsigned char>(c)) || c == '_' || c == '$';
 }
 
-bool JavaScriptNormalizer::is_identifier_char(char c) const {
+bool JavaScriptNormalizer::is_identifier_char(char c)
+{
     return std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == '$';
 }
 
-bool JavaScriptNormalizer::is_digit(char c) const {
+bool JavaScriptNormalizer::is_digit(char c)
+{
     return c >= '0' && c <= '9';
 }
 
-bool JavaScriptNormalizer::is_hex_digit(char c) const {
+bool JavaScriptNormalizer::is_hex_digit(char c) {
     return is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-bool JavaScriptNormalizer::is_operator_char(char c) const {
+bool JavaScriptNormalizer::is_operator_char(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
            c == '=' || c == '<' || c == '>' || c == '!' || c == '&' ||
            c == '|' || c == '^' || c == '~' || c == '?' || c == ':' ||
@@ -592,7 +594,7 @@ bool JavaScriptNormalizer::is_operator_char(char c) const {
            c == '}' || c == ',' || c == ';' || c == '.';
 }
 
-bool JavaScriptNormalizer::could_be_regex(TokenType last_type) const {
+bool JavaScriptNormalizer::could_be_regex(const TokenType last_type) {
     // After these token types, / could start a regex
     return last_type == TokenType::OPERATOR ||
            last_type == TokenType::PUNCTUATION ||

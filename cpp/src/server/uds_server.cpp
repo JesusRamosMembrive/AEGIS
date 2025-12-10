@@ -6,7 +6,6 @@
 #include <poll.h>
 #include <cstring>
 #include <iostream>
-#include <sstream>
 #include <filesystem>
 
 namespace aegis::server {
@@ -234,7 +233,7 @@ std::unique_ptr<UDSServer> create_aegis_server(const UDSServer::Config& config) 
         return report.to_json();
     });
 
-    // Register 'file_tree' method
+    // Register the 'file_tree' method
     server->register_method("file_tree", [](const json& params) -> json {
         std::string root = params.value("root", "");
         if (root.empty()) {

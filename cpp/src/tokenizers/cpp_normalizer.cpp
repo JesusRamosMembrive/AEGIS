@@ -185,12 +185,12 @@ TokenizedFile CppNormalizer::normalize(std::string_view source) {
 }
 
 NormalizedToken CppNormalizer::parse_string(TokenizerState& state) {
-    NormalizedToken tok;
+    NormalizedToken tok{};
     tok.type = TokenType::STRING_LITERAL;
     tok.line = state.line;
     tok.column = state.column;
 
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
     // Skip prefix (L, u, U, u8)
     if (state.peek() == 'L' || state.peek() == 'U') {
@@ -239,7 +239,7 @@ NormalizedToken CppNormalizer::parse_string(TokenizerState& state) {
 }
 
 NormalizedToken CppNormalizer::parse_raw_string(TokenizerState& state) {
-    NormalizedToken tok;
+    NormalizedToken tok{};
     tok.type = TokenType::STRING_LITERAL;
     tok.line = state.line;
     tok.column = state.column;
@@ -257,7 +257,7 @@ NormalizedToken CppNormalizer::parse_raw_string(TokenizerState& state) {
     if (!state.eof()) state.advance();  // Skip (
 
     // Build end marker
-    std::string end_marker = ")" + delimiter + "\"";
+    const std::string end_marker = ")" + delimiter + "\"";
 
     std::string value;
     while (!state.eof()) {
@@ -287,12 +287,12 @@ NormalizedToken CppNormalizer::parse_raw_string(TokenizerState& state) {
 }
 
 NormalizedToken CppNormalizer::parse_char(TokenizerState& state) {
-    NormalizedToken tok;
+    NormalizedToken tok{};
     tok.type = TokenType::STRING_LITERAL;  // Treat char like string
     tok.line = state.line;
     tok.column = state.column;
 
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
     // Skip prefix
     if (state.peek() == 'L' || state.peek() == 'U') {
@@ -332,8 +332,9 @@ NormalizedToken CppNormalizer::parse_char(TokenizerState& state) {
     return tok;
 }
 
-NormalizedToken CppNormalizer::parse_number(TokenizerState& state) {
-    NormalizedToken tok;
+NormalizedToken CppNormalizer::parse_number(TokenizerState& state) const
+{
+    NormalizedToken tok{};
     tok.type = TokenType::NUMBER_LITERAL;
     tok.line = state.line;
     tok.column = state.column;
@@ -415,13 +416,14 @@ NormalizedToken CppNormalizer::parse_number(TokenizerState& state) {
     return tok;
 }
 
-NormalizedToken CppNormalizer::parse_identifier_or_keyword(TokenizerState& state) {
-    NormalizedToken tok;
+NormalizedToken CppNormalizer::parse_identifier_or_keyword(TokenizerState& state) const
+{
+    NormalizedToken tok{};
     tok.line = state.line;
     tok.column = state.column;
 
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
     while (!state.eof() && is_identifier_char(state.peek())) {
         value += state.advance();
@@ -431,12 +433,12 @@ NormalizedToken CppNormalizer::parse_identifier_or_keyword(TokenizerState& state
     tok.original_hash = hash_string(value);
 
     // Check if it's a keyword
-    if (keywords_.count(value) || modern_keywords_.count(value)) {
+    if (keywords_.contains(value) || modern_keywords_.contains(value)) {
         tok.type = TokenType::KEYWORD;
         tok.normalized_hash = tok.original_hash;
     }
     // Check if it's a built-in type
-    else if (builtin_types_.count(value)) {
+    else if (builtin_types_.contains(value)) {
         tok.type = TokenType::TYPE;
         tok.normalized_hash = hash_placeholder(TokenType::TYPE);
     }
@@ -450,7 +452,7 @@ NormalizedToken CppNormalizer::parse_identifier_or_keyword(TokenizerState& state
 }
 
 NormalizedToken CppNormalizer::parse_operator(TokenizerState& state) {
-    NormalizedToken tok;
+    NormalizedToken tok{};
     tok.line = state.line;
     tok.column = state.column;
 
@@ -459,8 +461,7 @@ NormalizedToken CppNormalizer::parse_operator(TokenizerState& state) {
 
     // Check 4-character operators
     if (state.pos + 3 < state.source.size()) {
-        std::string four(state.source.substr(state.pos, 4));
-        if (four == ">>>=") {
+        if (std::string four(state.source.substr(state.pos, 4)); four == ">>>=") {
             value = four;
             for (int i = 0; i < 4; i++) state.advance();
         }
@@ -480,8 +481,7 @@ NormalizedToken CppNormalizer::parse_operator(TokenizerState& state) {
 
     // Check 2-character operators
     if (value.empty() && state.pos + 1 < state.source.size()) {
-        std::string two(state.source.substr(state.pos, 2));
-        if (two == "==" || two == "!=" || two == "<=" || two == ">=" ||
+        if (std::string two(state.source.substr(state.pos, 2)); two == "==" || two == "!=" || two == "<=" || two == ">=" ||
             two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
             two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
             two == "++" || two == "--" || two == "&&" || two == "||" ||
@@ -514,8 +514,9 @@ NormalizedToken CppNormalizer::parse_operator(TokenizerState& state) {
     return tok;
 }
 
-NormalizedToken CppNormalizer::parse_preprocessor(TokenizerState& state) {
-    NormalizedToken tok;
+NormalizedToken CppNormalizer::parse_preprocessor(TokenizerState& state) const
+{
+    NormalizedToken tok{};
     tok.type = TokenType::KEYWORD;  // Treat preprocessor as keyword
     tok.line = state.line;
     tok.column = state.column;
@@ -578,23 +579,23 @@ void CppNormalizer::skip_multi_line_comment(TokenizerState& state) {
     }
 }
 
-bool CppNormalizer::is_identifier_start(char c) const {
+bool CppNormalizer::is_identifier_start(char c) {
     return std::isalpha(static_cast<unsigned char>(c)) || c == '_';
 }
 
-bool CppNormalizer::is_identifier_char(char c) const {
+bool CppNormalizer::is_identifier_char(char c) {
     return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
 }
 
-bool CppNormalizer::is_digit(char c) const {
+bool CppNormalizer::is_digit(char c) {
     return c >= '0' && c <= '9';
 }
 
-bool CppNormalizer::is_hex_digit(char c) const {
+bool CppNormalizer::is_hex_digit(char c) {
     return is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-bool CppNormalizer::is_operator_char(char c) const {
+bool CppNormalizer::is_operator_char(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
            c == '=' || c == '<' || c == '>' || c == '!' || c == '&' ||
            c == '|' || c == '^' || c == '~' || c == '?' || c == ':' ||

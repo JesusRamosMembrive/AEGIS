@@ -80,11 +80,11 @@ public:
      * @param f Function to call with each index
      */
     template<typename F>
-    void parallel_for(size_t begin, size_t end, F&& f) {
+    void parallel_for(const size_t begin, const size_t end, F&& f) {
         if (begin >= end) return;
 
-        size_t num_tasks = end - begin;
-        size_t num_workers = std::min(num_tasks, workers_.size());
+        const size_t num_tasks = end - begin;
+        const size_t num_workers = std::min(num_tasks, workers_.size());
 
         if (num_workers <= 1) {
             // Single-threaded execution
@@ -95,7 +95,7 @@ public:
         }
 
         // Divide work among threads
-        size_t chunk_size = (num_tasks + num_workers - 1) / num_workers;
+        const size_t chunk_size = (num_tasks + num_workers - 1) / num_workers;
         std::vector<std::future<void>> futures;
         futures.reserve(num_workers);
 

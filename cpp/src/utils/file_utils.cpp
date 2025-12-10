@@ -52,8 +52,7 @@ std::vector<std::filesystem::path> FileUtils::find_files(
             }
 
             // Check exclusion patterns
-            auto rel_path = relative_path(path, root);
-            if (matches_any_pattern(std::filesystem::path(rel_path), exclude_patterns)) {
+            if (auto rel_path = relative_path(path, root); matches_any_pattern(std::filesystem::path(rel_path), exclude_patterns)) {
                 continue;
             }
 
@@ -65,7 +64,7 @@ std::vector<std::filesystem::path> FileUtils::find_files(
     }
 
     // Sort for deterministic order
-    std::sort(result.begin(), result.end());
+    std::ranges::sort(result);
 
     return result;
 }
@@ -84,9 +83,9 @@ bool FileUtils::matches_any_pattern(
 
 bool FileUtils::matches_pattern(
     const std::filesystem::path& path,
-    std::string_view pattern
+    const std::string_view pattern
 ) {
-    std::string path_str = path.generic_string();
+    const std::string path_str = path.generic_string();
 
     // Convert glob pattern to regex
     std::string regex_str;
@@ -101,7 +100,7 @@ bool FileUtils::matches_pattern(
                 // ** matches any number of directories
                 regex_str += ".*";
                 i += 2;
-                // Skip following /
+                // Skip the following /
                 if (i < pattern.size() && pattern[i] == '/') {
                     i++;
                 }
@@ -127,7 +126,7 @@ bool FileUtils::matches_pattern(
     }
 
     try {
-        std::regex re(regex_str, std::regex::icase);
+        const std::regex re(regex_str, std::regex::icase);
         return std::regex_search(path_str, re);
     } catch (const std::regex_error&) {
         return false;
@@ -149,7 +148,7 @@ bool FileUtils::has_allowed_extension(
     const std::filesystem::path& path,
     const std::vector<std::string>& extensions
 ) {
-    std::string ext = get_extension(path);
+    const std::string ext = get_extension(path);
     if (ext.empty()) {
         return false;
     }

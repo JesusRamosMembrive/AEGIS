@@ -14,7 +14,7 @@ using namespace aegis::similarity;
 
 /**
  * Method handler function type.
- * Takes request params, returns response JSON or throws for errors.
+ * Takes request params, returns response JSON, or throws for errors.
  */
 using MethodHandler = std::function<json(const json& params)>;
 
@@ -45,7 +45,7 @@ public:
     using Config = ServerConfig;
 
     /**
-     * Construct server with configuration.
+     * Construct a server with configuration.
      */
     explicit UDSServer(Config config = {});
 
@@ -98,7 +98,7 @@ private:
     void handle_client(int client_fd);
 
     /**
-     * Process a single request line and return response.
+     * Process a single request line and return a response.
      */
     Response process_request(const std::string& line);
 

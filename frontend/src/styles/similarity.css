@@ -282,6 +282,23 @@
   margin-top: 0.75rem;
 }
 
+/* Two-Column Layout */
+.similarity-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.similarity-layout__legend {
+  position: sticky;
+  top: 1rem;
+}
+
+.similarity-layout__main {
+  min-width: 0; /* Prevent grid blowout */
+}
+
 /* Grid Layout */
 .similarity-grid {
   display: flex;
@@ -295,7 +312,7 @@
 }
 
 .similarity-grid__row--top {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 /* Card Base Styles */
@@ -638,7 +655,77 @@
   color: var(--text-primary, #fff);
 }
 
+/* Legend Card */
+.similarity-legend__content {
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.similarity-legend__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.similarity-legend__section-title {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #aaa);
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.similarity-legend__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.similarity-legend__term {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.similarity-legend__desc {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-secondary, #aaa);
+}
+
+.similarity-legend__desc--secondary {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, #666);
+  font-style: italic;
+}
+
+.similarity-legend__desc strong {
+  color: var(--text-primary, #fff);
+  font-weight: 500;
+}
+
 /* Responsive */
+@media (max-width: 1024px) {
+  .similarity-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .similarity-layout__legend {
+    position: static;
+    order: 2; /* Move legend below main content on mobile */
+  }
+
+  .similarity-layout__main {
+    order: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .similarity-controls__row {
     flex-direction: column;

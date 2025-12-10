@@ -90,6 +90,7 @@ private:
     NormalizedToken parse_identifier_or_keyword(TokenizerState& state);
     NormalizedToken parse_operator(TokenizerState& state);
     void skip_comment(TokenizerState& state);
+    void skip_docstring(TokenizerState& state, char quote);
     std::vector<NormalizedToken> handle_indentation(TokenizerState& state, size_t current_indent);
 
     // Helper methods
@@ -98,6 +99,9 @@ private:
     bool is_digit(char c) const;
     bool is_hex_digit(char c) const;
     bool is_operator_char(char c) const;
+    bool is_docstring_context(const std::vector<NormalizedToken>& tokens) const;
+    bool is_import_statement(const TokenizerState& state) const;
+    void skip_to_end_of_line(TokenizerState& state);
 };
 
 }  // namespace aegis::similarity

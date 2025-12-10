@@ -28,7 +28,7 @@ enum class TokenType : uint8_t {
 /**
  * String representation of token types for debugging/output.
  */
-inline const char* token_type_to_string(TokenType type) {
+inline const char* token_type_to_string(const TokenType type) {
     switch (type) {
         case TokenType::IDENTIFIER:     return "IDENTIFIER";
         case TokenType::STRING_LITERAL: return "STRING_LITERAL";
@@ -56,7 +56,7 @@ struct NormalizedToken {
     uint32_t original_hash;
 
     // Hash of the normalized value (for Type-2 renamed match)
-    // e.g., all identifiers hash to same value
+    // e.g., all identifiers hash to the same value
     uint32_t normalized_hash;
 
     // Source location
@@ -78,7 +78,7 @@ struct NormalizedToken {
  * A location in the source code where a hash was found.
  */
 struct HashLocation {
-    uint32_t file_id;      // Index into file list
+    uint32_t file_id;      // Index into a file list
     uint32_t start_line;
     uint32_t end_line;
     uint16_t start_col;
@@ -87,7 +87,7 @@ struct HashLocation {
     uint32_t token_count;  // Number of tokens in this region
 
     // Check if this location overlaps with another
-    bool overlaps(const HashLocation& other) const {
+    [[nodiscard]] bool overlaps(const HashLocation& other) const {
         if (file_id != other.file_id) return false;
         return !(end_line < other.start_line || start_line > other.end_line);
     }
@@ -122,14 +122,14 @@ struct ClonePair {
     uint64_t shared_hash;      // The hash that matched (for debugging)
 
     // Token count of the cloned region
-    uint32_t token_count() const {
+    [[nodiscard]] uint32_t token_count() const {
         return std::min(location_a.token_count, location_b.token_count);
     }
 
     // Line count of the cloned region
-    uint32_t line_count() const {
-        auto a_lines = location_a.end_line - location_a.start_line + 1;
-        auto b_lines = location_b.end_line - location_b.start_line + 1;
+    [[nodiscard]] uint32_t line_count() const {
+        const auto a_lines = location_a.end_line - location_a.start_line + 1;
+        const auto b_lines = location_b.end_line - location_b.start_line + 1;
         return std::min(a_lines, b_lines);
     }
 };
@@ -193,7 +193,7 @@ struct TokenizedFile {
     uint32_t blank_lines = 0;
     uint32_t comment_lines = 0;
 
-    bool empty() const { return tokens.empty(); }
+    [[nodiscard]] bool empty() const { return tokens.empty(); }
 };
 
 }  // namespace aegis::similarity

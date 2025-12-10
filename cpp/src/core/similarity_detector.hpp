@@ -72,7 +72,7 @@ public:
     /**
      * Clear the token cache.
      */
-    void clear_cache();
+    void clear_cache() const;
 
     /**
      * Get cache statistics.
@@ -139,7 +139,7 @@ private:
     /**
      * Phase 2: Build hash index from tokenized files.
      */
-    void build_index(AnalysisState& state);
+    void build_index(AnalysisState& state) const;
 
     /**
      * Phase 3: Find and filter clone pairs.
@@ -149,9 +149,9 @@ private:
     /**
      * Phase 4: Generate report from clone pairs.
      */
-    SimilarityReport generate_report(
+    static SimilarityReport generate_report(
         const std::vector<ClonePair>& clones,
-        AnalysisState& state,
+        const AnalysisState& state,
         int64_t total_time_ms
     );
 
@@ -161,7 +161,7 @@ private:
     CloneType classify_clone(
         const ClonePair& pair,
         const AnalysisState& state
-    );
+    ) const;
 };
 
 }  // namespace aegis::similarity

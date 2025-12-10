@@ -37,7 +37,7 @@ public:
     explicit RollingHash(size_t window_size);
 
     /**
-     * Reset the rolling hash to initial state.
+     * Reset the rolling hash to the initial state.
      * Call this when starting a new file.
      */
     void reset();

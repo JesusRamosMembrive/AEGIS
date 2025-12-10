@@ -19,7 +19,7 @@ public:
      * Read entire file contents into a string.
      *
      * @param path Path to the file
-     * @return File contents, or nullopt if read fails
+     * @return File contents or nullopt if read fails
      */
     static std::optional<std::string> read_file(const std::filesystem::path& path);
 

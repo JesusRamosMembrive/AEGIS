@@ -1,8 +1,8 @@
 #include "core/hash_index.hpp"
 #include "core/rolling_hash.hpp"
 #include <algorithm>
-#include <set>
 #include <mutex>
+#include <ranges>
 
 namespace aegis::similarity {
 
@@ -18,7 +18,7 @@ uint32_t HashIndex::register_file(const std::string& path) {
         return it->second;
     }
 
-    uint32_t id = static_cast<uint32_t>(file_paths_.size());
+    const auto id = static_cast<uint32_t>(file_paths_.size());
     file_paths_.push_back(path);
     path_to_id_[path] = id;
     return id;
@@ -32,11 +32,11 @@ const std::string& HashIndex::get_file_path(uint32_t file_id) const {
     return file_paths_[file_id];
 }
 
-void HashIndex::add_hash(uint64_t hash, const HashLocation& location) {
+void HashIndex::add_hash(const uint64_t hash, const HashLocation& location) {
     index_[hash].push_back(location);
 }
 
-const std::vector<HashLocation>* HashIndex::get_locations(uint64_t hash) const {
+const std::vector<HashLocation>* HashIndex::get_locations(const uint64_t hash) const {
     auto it = index_.find(hash);
     if (it == index_.end()) {
         return nullptr;
@@ -46,19 +46,18 @@ const std::vector<HashLocation>* HashIndex::get_locations(uint64_t hash) const {
 
 size_t HashIndex::location_count() const {
     size_t count = 0;
-    for (const auto& [hash, locations] : index_) {
+    for (const auto& locations : index_ | std::views::values) {
         count += locations.size();
     }
     return count;
 }
 
-std::vector<ClonePair> HashIndex::find_clone_pairs(size_t min_matches) const {
+std::vector<ClonePair> HashIndex::find_clone_pairs([[maybe_unused]] size_t min_matches) const {
     std::vector<ClonePair> results;
 
     // Limit to prevent combinatorial explosion (N locations = N*(N-1)/2 pairs)
     // 500 locations = 124,750 pairs which is manageable
     // 5000 locations = 12.5M pairs which causes OOM
-    constexpr size_t MAX_LOCATIONS_PER_HASH = 500;
 
     for (const auto& [hash, locations] : index_) {
         // Skip hashes that don't appear multiple times
@@ -68,7 +67,7 @@ std::vector<ClonePair> HashIndex::find_clone_pairs(size_t min_matches) const {
 
         // Skip overly common hashes (likely trivial patterns like 'return', 'if', etc.)
         // These cause O(N^2) explosion and aren't useful for clone detection
-        if (locations.size() > MAX_LOCATIONS_PER_HASH) {
+        if (constexpr size_t MAX_LOCATIONS_PER_HASH = 500; locations.size() > MAX_LOCATIONS_PER_HASH) {
             continue;
         }
 
@@ -83,7 +82,7 @@ std::vector<ClonePair> HashIndex::find_clone_pairs(size_t min_matches) const {
                     continue;
                 }
 
-                ClonePair pair;
+                ClonePair pair{};
                 pair.location_a = loc_a;
                 pair.location_b = loc_b;
                 pair.clone_type = CloneType::TYPE_1;  // Initial classification
@@ -100,11 +99,9 @@ std::vector<ClonePair> HashIndex::find_clone_pairs(size_t min_matches) const {
 
 std::vector<ClonePair> HashIndex::find_clone_pairs_parallel(
     ThreadPool& pool,
-    size_t min_matches
+    const size_t min_matches
 ) const {
     // Limit to prevent combinatorial explosion (same as sequential version)
-    constexpr size_t MAX_LOCATIONS_PER_HASH = 500;
-
     // Collect all hashes with multiple locations into a vector for partitioning
     // Filter out overly common hashes that would cause memory explosion
     std::vector<std::pair<uint64_t, const std::vector<HashLocation>*>> work_items;
@@ -112,7 +109,7 @@ std::vector<ClonePair> HashIndex::find_clone_pairs_parallel(
 
     for (const auto& [hash, locations] : index_) {
         // Only include hashes with 2+ locations but not too many
-        if (locations.size() >= 2 && locations.size() <= MAX_LOCATIONS_PER_HASH) {
+        if (constexpr size_t MAX_LOCATIONS_PER_HASH = 500; locations.size() >= 2 && locations.size() <= MAX_LOCATIONS_PER_HASH) {
             work_items.emplace_back(hash, &locations);
         }
     }
@@ -144,7 +141,7 @@ std::vector<ClonePair> HashIndex::find_clone_pairs_parallel(
                     continue;
                 }
 
-                ClonePair pair;
+                ClonePair pair{};
                 pair.location_a = loc_a;
                 pair.location_b = loc_b;
                 pair.clone_type = CloneType::TYPE_1;
@@ -155,9 +152,9 @@ std::vector<ClonePair> HashIndex::find_clone_pairs_parallel(
             }
         }
 
-        // Merge local results into thread-specific bucket
+        // Merge local results into a thread-specific bucket
         if (!local_results.empty()) {
-            size_t thread_idx = idx % pool.size();
+            const size_t thread_idx = idx % pool.size();
             std::lock_guard<std::mutex> lock(results_mutex);
             auto& bucket = thread_results[thread_idx];
             bucket.insert(bucket.end(), local_results.begin(), local_results.end());
@@ -191,12 +188,12 @@ std::vector<ClonePair> HashIndex::merge_adjacent_clones(
     }
 
     // Sort pairs by file pair and location
-    std::sort(pairs.begin(), pairs.end(), [](const ClonePair& a, const ClonePair& b) {
+    std::ranges::sort(pairs, [](const ClonePair& a, const ClonePair& b) {
         // First by file pair (normalized so smaller file_id is always first)
-        auto a_file_min = std::min(a.location_a.file_id, a.location_b.file_id);
-        auto a_file_max = std::max(a.location_a.file_id, a.location_b.file_id);
-        auto b_file_min = std::min(b.location_a.file_id, b.location_b.file_id);
-        auto b_file_max = std::max(b.location_a.file_id, b.location_b.file_id);
+        const auto a_file_min = std::min(a.location_a.file_id, a.location_b.file_id);
+        const auto a_file_max = std::max(a.location_a.file_id, a.location_b.file_id);
+        const auto b_file_min = std::min(b.location_a.file_id, b.location_b.file_id);
+        const auto b_file_max = std::max(b.location_a.file_id, b.location_b.file_id);
 
         if (a_file_min != b_file_min) return a_file_min < b_file_min;
         if (a_file_max != b_file_max) return a_file_max < b_file_max;
@@ -268,7 +265,7 @@ std::vector<ClonePair> HashIndex::merge_adjacent_clones(
 
 std::vector<ClonePair> HashIndex::filter_by_size(
     const std::vector<ClonePair>& pairs,
-    size_t min_tokens
+    const size_t min_tokens
 ) {
     std::vector<ClonePair> filtered;
     filtered.reserve(pairs.size());
@@ -290,7 +287,7 @@ HashIndex::Stats HashIndex::get_stats() const {
     stats.duplicate_hashes = 0;
     stats.max_locations_per_hash = 0;
 
-    for (const auto& [hash, locations] : index_) {
+    for (const auto& locations : index_ | std::views::values) {
         stats.total_locations += locations.size();
         if (locations.size() > 1) {
             stats.duplicate_hashes++;
@@ -328,7 +325,7 @@ void HashIndexBuilder::add_file(const TokenizedFile& file, bool use_normalized) 
     }
 
     HashIndex& target_index = use_external_ ? *external_index_ : index_;
-    uint32_t file_id = target_index.register_file(file.path);
+    const uint32_t file_id = target_index.register_file(file.path);
 
     // Extract hash values from tokens
     std::vector<uint64_t> token_hashes;
@@ -353,12 +350,10 @@ void HashIndexBuilder::add_file(const TokenizedFile& file, bool use_normalized) 
     // Compute rolling hashes and add to index
     auto window_hashes = HashSequence::compute_all(token_hashes, window_size_);
 
-    // Map token index (excluding structural) back to original token
-    size_t non_structural_idx = 0;
+    // Map token index (excluding structural) back to the original token
     std::vector<size_t> token_mapping;
     for (size_t i = 0; i < file.tokens.size(); ++i) {
-        const auto& token = file.tokens[i];
-        if (token.type != TokenType::NEWLINE &&
+        if (const auto& token = file.tokens[i]; token.type != TokenType::NEWLINE &&
             token.type != TokenType::INDENT &&
             token.type != TokenType::DEDENT) {
             token_mapping.push_back(i);
@@ -367,11 +362,11 @@ void HashIndexBuilder::add_file(const TokenizedFile& file, bool use_normalized) 
 
     for (const auto& [pos, hash] : window_hashes) {
         // Map position back to original token array
-        size_t orig_start = token_mapping[pos];
-        size_t orig_end = token_mapping[std::min(pos + window_size_ - 1,
+        const size_t orig_start = token_mapping[pos];
+        const size_t orig_end = token_mapping[std::min(pos + window_size_ - 1,
                                                   token_mapping.size() - 1)];
 
-        HashLocation loc;
+        HashLocation loc{};
         loc.file_id = file_id;
         loc.start_line = file.tokens[orig_start].line;
         loc.end_line = file.tokens[orig_end].line;

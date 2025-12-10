@@ -5,16 +5,16 @@
 
 namespace aegis::similarity {
 
-CloneExtender::CloneExtender(Config config)
-    : config_(std::move(config))
+CloneExtender::CloneExtender(const Config& config)
+    : config_(config)
 {
 }
 
 float CloneExtender::jaccard_similarity(
     const std::vector<NormalizedToken>& tokens_a,
-    size_t start_a, size_t count_a,
+    const size_t start_a, const size_t count_a,
     const std::vector<NormalizedToken>& tokens_b,
-    size_t start_b, size_t count_b
+    const size_t start_b, const size_t count_b
 ) {
     if (count_a == 0 || count_b == 0) {
         return 0.0f;
@@ -24,8 +24,8 @@ float CloneExtender::jaccard_similarity(
     std::unordered_multiset<uint32_t> set_a;
     std::unordered_multiset<uint32_t> set_b;
 
-    size_t end_a = std::min(start_a + count_a, tokens_a.size());
-    size_t end_b = std::min(start_b + count_b, tokens_b.size());
+    const size_t end_a = std::min(start_a + count_a, tokens_a.size());
+    const size_t end_b = std::min(start_b + count_b, tokens_b.size());
 
     for (size_t i = start_a; i < end_a; ++i) {
         set_a.insert(tokens_a[i].normalized_hash);
@@ -37,18 +37,18 @@ float CloneExtender::jaccard_similarity(
     // Calculate intersection size
     size_t intersection = 0;
     for (const auto& hash : set_a) {
-        if (set_b.count(hash) > 0) {
-            size_t count = std::min(set_a.count(hash), set_b.count(hash));
+        if (set_b.contains(hash)) {
+            const size_t count = std::min(set_a.count(hash), set_b.count(hash));
             intersection += count;
-            // Avoid counting same element multiple times
-            while (set_b.count(hash) > 0) {
+            // Avoid counting the same element multiple times
+            while (set_b.contains(hash)) {
                 set_b.erase(set_b.find(hash));
             }
         }
     }
 
     // Union = |A| + |B| - intersection
-    size_t union_size = (end_a - start_a) + (end_b - start_b) - intersection;
+    const size_t union_size = (end_a - start_a) + (end_b - start_b) - intersection;
 
     if (union_size == 0) {
         return 0.0f;
@@ -59,17 +59,17 @@ float CloneExtender::jaccard_similarity(
 
 float CloneExtender::alignment_similarity(
     const std::vector<NormalizedToken>& tokens_a,
-    size_t start_a, size_t count_a,
+    const size_t start_a, const size_t count_a,
     const std::vector<NormalizedToken>& tokens_b,
-    size_t start_b, size_t count_b,
-    size_t max_gap
+    const size_t start_b, const size_t count_b,
+    const size_t max_gap
 ) {
     if (count_a == 0 || count_b == 0) {
         return 0.0f;
     }
 
-    size_t end_a = std::min(start_a + count_a, tokens_a.size());
-    size_t end_b = std::min(start_b + count_b, tokens_b.size());
+    const size_t end_a = std::min(start_a + count_a, tokens_a.size());
+    const size_t end_b = std::min(start_b + count_b, tokens_b.size());
 
     size_t matches = 0;
     size_t pos_a = start_a;
@@ -111,7 +111,7 @@ float CloneExtender::alignment_similarity(
         }
     }
 
-    size_t total = std::max(count_a, count_b);
+    const size_t total = std::max(count_a, count_b);
     return static_cast<float>(matches) / static_cast<float>(total);
 }
 
@@ -120,16 +120,12 @@ size_t CloneExtender::extend_forward(
     const std::vector<NormalizedToken>& tokens_b, size_t pos_b
 ) const {
     size_t extended = 0;
-    size_t gap_a = 0;
-    size_t gap_b = 0;
 
     while (pos_a < tokens_a.size() && pos_b < tokens_b.size()) {
         if (tokens_a[pos_a].normalized_hash == tokens_b[pos_b].normalized_hash) {
             ++extended;
             ++pos_a;
             ++pos_b;
-            gap_a = 0;
-            gap_b = 0;
         } else {
             // Try to resync
             bool resynced = false;
@@ -157,7 +153,6 @@ size_t CloneExtender::extend_forward(
             }
         }
     }
-
     return extended;
 }
 
@@ -224,23 +219,23 @@ ClonePair CloneExtender::extend(
     start_b -= back_ext;
 
     // Extend forward
-    size_t fwd_ext = extend_forward(tokens_a, end_a, tokens_b, end_b);
+    const size_t fwd_ext = extend_forward(tokens_a, end_a, tokens_b, end_b);
     end_a += fwd_ext;
     end_b += fwd_ext;
 
     // Calculate new similarity
-    float sim = alignment_similarity(
+    const float sim = alignment_similarity(
         tokens_a, start_a, end_a - start_a,
         tokens_b, start_b, end_b - start_b,
         config_.max_gap
     );
 
-    // Only accept extension if similarity is above threshold
+    // Only accept extension if similarity is above a threshold
     if (sim < config_.min_similarity) {
         return pair;  // Return original
     }
 
-    // Create extended pair
+    // Create an extended pair
     ClonePair extended = pair;
     extended.location_a.token_start = static_cast<uint32_t>(start_a);
     extended.location_a.token_count = static_cast<uint32_t>(end_a - start_a);
@@ -262,7 +257,7 @@ ClonePair CloneExtender::extend(
         extended.location_b.end_line = tokens_b[end_b - 1].line;
     }
 
-    // Determine clone type
+    // Determine a clone type
     if (sim >= 1.0f) {
         // Check if it's truly Type-1 or Type-2
         bool all_match = true;

@@ -88,22 +88,22 @@ private:
     };
 
     // Token parsing methods
-    NormalizedToken parse_string(TokenizerState& state);
-    NormalizedToken parse_raw_string(TokenizerState& state);
-    NormalizedToken parse_char(TokenizerState& state);
-    NormalizedToken parse_number(TokenizerState& state);
-    NormalizedToken parse_identifier_or_keyword(TokenizerState& state);
-    NormalizedToken parse_operator(TokenizerState& state);
-    NormalizedToken parse_preprocessor(TokenizerState& state);
-    void skip_single_line_comment(TokenizerState& state);
-    void skip_multi_line_comment(TokenizerState& state);
+    static NormalizedToken parse_string(TokenizerState& state);
+    static NormalizedToken parse_raw_string(TokenizerState& state);
+    static NormalizedToken parse_char(TokenizerState& state);
+    NormalizedToken parse_number(TokenizerState& state) const;
+    NormalizedToken parse_identifier_or_keyword(TokenizerState& state) const;
+    static NormalizedToken parse_operator(TokenizerState& state);
+    NormalizedToken parse_preprocessor(TokenizerState& state) const;
+    static void skip_single_line_comment(TokenizerState& state);
+    static void skip_multi_line_comment(TokenizerState& state);
 
     // Helper methods
-    bool is_identifier_start(char c) const;
-    bool is_identifier_char(char c) const;
-    bool is_digit(char c) const;
-    bool is_hex_digit(char c) const;
-    bool is_operator_char(char c) const;
+    static bool is_identifier_start(char c) ;
+    static bool is_identifier_char(char c) ;
+    static bool is_digit(char c) ;
+    static bool is_hex_digit(char c) ;
+    static bool is_operator_char(char c) ;
 };
 
 }  // namespace aegis::similarity

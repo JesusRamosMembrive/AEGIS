@@ -202,7 +202,7 @@ public:
         size_t current_size = 0;
         size_t capacity = 0;
 
-        float hit_rate() const {
+        [[nodiscard]] float hit_rate() const {
             size_t total = hits + misses;
             return total > 0 ? static_cast<float>(hits) / static_cast<float>(total) : 0.0f;
         }
@@ -224,7 +224,8 @@ public:
     /**
      * Reset statistics counters.
      */
-    void reset_stats() {
+    void reset_stats() const
+    {
         std::lock_guard<std::mutex> lock(mutex_);
         hits_ = 0;
         misses_ = 0;
@@ -302,8 +303,8 @@ public:
         cache_.clear();
     }
 
-    size_t size() const { return cache_.size(); }
-    size_t capacity() const { return cache_.capacity(); }
+    [[nodiscard]] size_t size() const { return cache_.size(); }
+    [[nodiscard]] size_t capacity() const { return cache_.capacity(); }
 
 private:
     LRUCache<std::string, CacheEntry> cache_;

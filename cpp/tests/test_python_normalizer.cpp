@@ -131,7 +131,8 @@ TEST_F(PythonNormalizerTest, ParsesDoubleQuotedStrings) {
 }
 
 TEST_F(PythonNormalizerTest, ParsesTripleQuotedStrings) {
-    auto result = normalizer.normalize("'''multi\nline\nstring'''");
+    // Use assignment context so the triple-quoted string is NOT treated as a docstring
+    auto result = normalizer.normalize("x = '''multi\nline\nstring'''");
 
     auto strings = 0;
     for (const auto& tok : result.tokens) {
@@ -141,7 +142,8 @@ TEST_F(PythonNormalizerTest, ParsesTripleQuotedStrings) {
 }
 
 TEST_F(PythonNormalizerTest, StringsNormalizedToSameHash) {
-    auto result = normalizer.normalize("'short' \"longer string here\" '''triple'''");
+    // Use assignment context so strings are not treated as docstrings
+    auto result = normalizer.normalize("x = 'short'\ny = \"longer string here\"\nz = '''triple'''");
 
     std::vector<NormalizedToken> strings;
     for (const auto& tok : result.tokens) {
@@ -276,6 +278,54 @@ TEST_F(PythonNormalizerTest, CommentOnlyLinesCountedCorrectly) {
 
     EXPECT_EQ(result.comment_lines, 2);
     EXPECT_EQ(result.code_lines, 1);
+}
+
+TEST_F(PythonNormalizerTest, IgnoresModuleDocstring) {
+    // A triple-quoted string at the start of a file is a module docstring
+    auto result = normalizer.normalize("\"\"\"This is a module docstring.\"\"\"\nx = 1");
+
+    // Should have no STRING_LITERAL tokens (docstring is skipped)
+    int strings = 0;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::STRING_LITERAL) strings++;
+    }
+    EXPECT_EQ(strings, 0);
+    EXPECT_GE(result.code_lines, 1);  // x = 1 is code
+}
+
+TEST_F(PythonNormalizerTest, IgnoresFunctionDocstring) {
+    // A triple-quoted string after def name(): is a function docstring
+    auto result = normalizer.normalize("def foo():\n    \"\"\"Function docstring.\"\"\"\n    return 1");
+
+    // Should have no STRING_LITERAL tokens
+    int strings = 0;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::STRING_LITERAL) strings++;
+    }
+    EXPECT_EQ(strings, 0);
+}
+
+TEST_F(PythonNormalizerTest, IgnoresClassDocstring) {
+    // A triple-quoted string after class name: is a class docstring
+    auto result = normalizer.normalize("class Foo:\n    \"\"\"Class docstring.\"\"\"\n    pass");
+
+    // Should have no STRING_LITERAL tokens
+    int strings = 0;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::STRING_LITERAL) strings++;
+    }
+    EXPECT_EQ(strings, 0);
+}
+
+TEST_F(PythonNormalizerTest, KeepsNonDocstringTripleQuotedStrings) {
+    // A triple-quoted string in an assignment is NOT a docstring
+    auto result = normalizer.normalize("x = \"\"\"This is a regular string.\"\"\"");
+
+    int strings = 0;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::STRING_LITERAL) strings++;
+    }
+    EXPECT_EQ(strings, 1);
 }
 
 // =============================================================================
@@ -453,4 +503,115 @@ TEST_F(PythonNormalizerTest, HandlesComplexNumbers) {
         if (tok.type == TokenType::NUMBER_LITERAL) numbers++;
     }
     EXPECT_GE(numbers, 2);
+}
+
+// =============================================================================
+// Import Statement Handling
+// =============================================================================
+
+TEST_F(PythonNormalizerTest, IgnoresSimpleImport) {
+    // "import os" should be skipped entirely
+    // "x = 1" should produce: IDENTIFIER, OPERATOR, NUMBER
+    auto result = normalizer.normalize("import os\nx = 1");
+
+    // Count tokens - should only have tokens from "x = 1"
+    // Without imports: x (ID), = (OP), 1 (NUM) = 3 tokens
+    // We expect around 3 tokens, not 5+ (which would include import/os)
+    EXPECT_LE(result.tokens.size(), 5) << "Should have few tokens without import";
+
+    // Verify we have an identifier and a number (from "x = 1")
+    int identifiers = 0, numbers = 0;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::IDENTIFIER) identifiers++;
+        if (tok.type == TokenType::NUMBER_LITERAL) numbers++;
+    }
+    EXPECT_GE(identifiers, 1) << "Should have identifier x";
+    EXPECT_GE(numbers, 1) << "Should have number 1";
+}
+
+TEST_F(PythonNormalizerTest, IgnoresFromImport) {
+    auto result = normalizer.normalize("from dataclasses import dataclass\ndef foo(): pass");
+
+    // Should have "def" keyword and some tokens from the function
+    bool has_def = false;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::KEYWORD) {
+            has_def = true;  // "def" is a keyword
+            break;
+        }
+    }
+    EXPECT_TRUE(has_def) << "Code after import should be tokenized";
+
+    // Should have very few tokens (just the function definition)
+    // "def foo(): pass" = def, foo, (, ), :, pass ~ 6 tokens max
+    EXPECT_LE(result.tokens.size(), 10) << "Should not have import tokens";
+}
+
+TEST_F(PythonNormalizerTest, IgnoresFutureImport) {
+    auto result = normalizer.normalize("from __future__ import annotations\nx = 1");
+
+    // Should have tokens from "x = 1" only
+    EXPECT_LE(result.tokens.size(), 5) << "Should have few tokens without import";
+}
+
+TEST_F(PythonNormalizerTest, IgnoresMultilineImportWithParentheses) {
+    auto result = normalizer.normalize(
+        "from typing import (\n"
+        "    List,\n"
+        "    Dict,\n"
+        "    Optional\n"
+        ")\n"
+        "x = 1"
+    );
+
+    // Should only have tokens from "x = 1"
+    EXPECT_LE(result.tokens.size(), 5) << "Multi-line import should be skipped";
+
+    // Should have identifier and number
+    int identifiers = 0, numbers = 0;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::IDENTIFIER) identifiers++;
+        if (tok.type == TokenType::NUMBER_LITERAL) numbers++;
+    }
+    EXPECT_GE(identifiers, 1) << "Should have identifier x";
+    EXPECT_GE(numbers, 1) << "Should have number 1";
+}
+
+TEST_F(PythonNormalizerTest, IgnoresMultilineImportWithBackslash) {
+    auto result = normalizer.normalize(
+        "from typing import List, \\\n"
+        "    Dict, Optional\n"
+        "x = 1"
+    );
+
+    // Should only have tokens from "x = 1"
+    EXPECT_LE(result.tokens.size(), 5) << "Backslash-continued import should be skipped";
+
+    // Should have identifier and number
+    int identifiers = 0, numbers = 0;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::IDENTIFIER) identifiers++;
+        if (tok.type == TokenType::NUMBER_LITERAL) numbers++;
+    }
+    EXPECT_GE(identifiers, 1) << "Should have identifier x";
+    EXPECT_GE(numbers, 1) << "Should have number 1";
+}
+
+TEST_F(PythonNormalizerTest, IgnoresMultipleImports) {
+    auto result = normalizer.normalize(
+        "import os\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "def main(): pass"
+    );
+
+    // Should have keywords (def, pass) from the function
+    int keywords = 0;
+    for (const auto& tok : result.tokens) {
+        if (tok.type == TokenType::KEYWORD) keywords++;
+    }
+    EXPECT_GE(keywords, 1) << "Should have keyword 'def' from function";
+
+    // Should have few tokens (just the function definition, no imports)
+    EXPECT_LE(result.tokens.size(), 10) << "All imports should be skipped";
 }

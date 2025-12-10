@@ -3,7 +3,7 @@
 #include "models/clone_types.hpp"
 #include "core/hash_index.hpp"
 #include <vector>
-#include <unordered_set>
+
 
 namespace aegis::similarity {
 
@@ -42,20 +42,20 @@ public:
         {}
     };
 
-    explicit CloneExtender(Config config = Config());
+    explicit CloneExtender(const Config& config = Config());
 
     /**
      * Extend a clone pair to find the maximum similar region.
      *
      * Starting from a seed match, extends forward and backward
-     * while maintaining similarity above threshold.
+     * while maintaining similarity above a threshold.
      *
      * @param pair The seed clone pair
      * @param file_a Tokenized source of location A
      * @param file_b Tokenized source of location B
-     * @return Extended clone pair (may be same if no extension possible)
+     * @return Extended clone pair (maybe same if no extension possible)
      */
-    ClonePair extend(
+    [[nodiscard]] ClonePair extend(
         const ClonePair& pair,
         const TokenizedFile& file_a,
         const TokenizedFile& file_b
@@ -103,9 +103,10 @@ public:
      *
      * @param pairs Clone pairs to extend
      * @param files Map of file_id -> TokenizedFile
+     * @param index
      * @return Extended clone pairs, potentially merged
      */
-    std::vector<ClonePair> extend_all(
+    [[nodiscard]] std::vector<ClonePair> extend_all(
         const std::vector<ClonePair>& pairs,
         const std::vector<TokenizedFile>& files,
         const HashIndex& index
@@ -114,14 +115,14 @@ public:
 private:
     Config config_;
 
-    // Extend forward from current position
-    size_t extend_forward(
+    // Extend forward from the current position
+    [[nodiscard]] size_t extend_forward(
         const std::vector<NormalizedToken>& tokens_a, size_t pos_a,
         const std::vector<NormalizedToken>& tokens_b, size_t pos_b
     ) const;
 
-    // Extend backward from current position
-    size_t extend_backward(
+    // Extend backward from the current position
+    [[nodiscard]] size_t extend_backward(
         const std::vector<NormalizedToken>& tokens_a, size_t pos_a,
         const std::vector<NormalizedToken>& tokens_b, size_t pos_b
     ) const;

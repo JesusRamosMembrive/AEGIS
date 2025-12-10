@@ -73,7 +73,6 @@ TokenizedFile PythonNormalizer::normalize(std::string_view source) {
         // Handle indentation at line start
         if (state.at_line_start && c != '\n' && c != '#') {
             size_t indent = 0;
-            size_t start_pos = state.pos;
             while (!state.eof() && (state.peek() == ' ' || state.peek() == '\t')) {
                 if (state.peek() == '\t') {
                     indent += 8 - (indent % 8);  // Tab stops at 8
@@ -127,8 +126,31 @@ TokenizedFile PythonNormalizer::normalize(std::string_view source) {
             continue;
         }
 
-        // String literals
+        // Import statements - skip entire line (imports are structural, not logic)
+        // This prevents false positives from common import patterns
+        if (!line_has_code && is_import_statement(state)) {
+            skip_to_end_of_line(state);
+            line_has_code = true;  // Count as code line but don't emit tokens
+            continue;
+        }
+
+        // String literals (check for docstrings)
         if (c == '"' || c == '\'') {
+            // Check if this is a potential docstring (triple-quoted at start of logical line)
+            bool is_triple = (state.peek_next() == c);
+            if (is_triple && state.pos + 2 < state.source.size() && state.source[state.pos + 2] == c) {
+                // It's a triple-quoted string - check if it's a docstring
+                // A docstring is a triple-quoted string that appears as the first statement
+                // We detect this by checking if we have no code tokens yet on this line
+                // or if the previous meaningful token was : (after def/class)
+                bool is_docstring = !line_has_code && is_docstring_context(result.tokens);
+                if (is_docstring) {
+                    // Skip the docstring entirely (treat like a comment)
+                    skip_docstring(state, c);
+                    line_has_comment = true;  // Count as comment line
+                    continue;
+                }
+            }
             line_has_code = true;
             result.tokens.push_back(parse_string(state));
             continue;
@@ -459,6 +481,131 @@ NormalizedToken PythonNormalizer::parse_operator(TokenizerState& state) {
 
 void PythonNormalizer::skip_comment(TokenizerState& state) {
     while (!state.eof() && state.peek() != '\n') {
+        state.advance();
+    }
+}
+
+void PythonNormalizer::skip_docstring(TokenizerState& state, char quote) {
+    // Skip the opening triple quotes
+    state.advance();  // First quote
+    state.advance();  // Second quote
+    state.advance();  // Third quote
+
+    // Skip until we find the closing triple quotes
+    while (!state.eof()) {
+        char c = state.peek();
+
+        // Check for closing triple quotes
+        if (c == quote) {
+            if (state.pos + 2 < state.source.size() &&
+                state.source[state.pos + 1] == quote &&
+                state.source[state.pos + 2] == quote) {
+                state.advance();  // First closing quote
+                state.advance();  // Second closing quote
+                state.advance();  // Third closing quote
+                return;
+            }
+        }
+
+        // Handle escape sequences
+        if (c == '\\' && !state.eof()) {
+            state.advance();
+            if (!state.eof()) {
+                state.advance();
+            }
+            continue;
+        }
+
+        state.advance();
+    }
+}
+
+bool PythonNormalizer::is_docstring_context(const std::vector<NormalizedToken>& tokens) const {
+    // A docstring appears in these contexts:
+    // 1. At the very start of a file (module docstring)
+    // 2. Immediately after 'def name(...):' (function docstring)
+    // 3. Immediately after 'class name:' or 'class name(...):' (class docstring)
+
+    if (tokens.empty()) {
+        // Start of file - this is a module docstring
+        return true;
+    }
+
+    // Look backwards through tokens, skipping NEWLINE and INDENT
+    for (auto it = tokens.rbegin(); it != tokens.rend(); ++it) {
+        if (it->type == TokenType::NEWLINE || it->type == TokenType::INDENT) {
+            continue;
+        }
+
+        // If we find a colon, this could be after def/class
+        if (it->type == TokenType::PUNCTUATION) {
+            // Check if the original hash matches ':'
+            if (it->original_hash == hash_string(":")) {
+                return true;  // After a colon = docstring context
+            }
+        }
+
+        // Any other token means this is not a docstring context
+        return false;
+    }
+
+    // Only found NEWLINE/INDENT tokens - start of file effectively
+    return true;
+}
+
+bool PythonNormalizer::is_import_statement(const TokenizerState& state) const {
+    // Check if current position starts with "import " or "from "
+    // This is called at the start of a logical line (after indentation)
+
+    std::string_view remaining = state.source.substr(state.pos);
+
+    // Check for "import "
+    if (remaining.size() >= 7 && remaining.substr(0, 7) == "import ") {
+        return true;
+    }
+
+    // Check for "from "
+    if (remaining.size() >= 5 && remaining.substr(0, 5) == "from ") {
+        return true;
+    }
+
+    return false;
+}
+
+void PythonNormalizer::skip_to_end_of_line(TokenizerState& state) {
+    // Skip everything until newline (handles multi-line imports with backslash)
+    while (!state.eof()) {
+        char c = state.peek();
+
+        if (c == '\n') {
+            // Don't consume the newline - let the main loop handle it
+            return;
+        }
+
+        // Handle line continuation
+        if (c == '\\') {
+            state.advance();
+            if (!state.eof() && state.peek() == '\n') {
+                state.advance();  // Skip the newline after backslash
+                continue;  // Continue reading the next line
+            }
+            continue;
+        }
+
+        // Handle parentheses for multi-line imports: from x import (a, b, c)
+        if (c == '(') {
+            state.advance();
+            // Skip until closing paren
+            int depth = 1;
+            while (!state.eof() && depth > 0) {
+                char inner = state.peek();
+                if (inner == '(') depth++;
+                else if (inner == ')') depth--;
+                state.advance();
+            }
+            continue;
+        }
+
         state.advance();
     }
 }

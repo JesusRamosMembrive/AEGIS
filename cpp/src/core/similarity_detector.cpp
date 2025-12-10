@@ -1,5 +1,4 @@
 #include "core/similarity_detector.hpp"
-#include "core/rolling_hash.hpp"
 #include "core/clone_extender.hpp"
 #include "utils/file_utils.hpp"
 #include "tokenizers/python_normalizer.hpp"
@@ -32,7 +31,8 @@ void SimilarityDetector::ensure_initialized() {
     }
 }
 
-void SimilarityDetector::clear_cache() {
+void SimilarityDetector::clear_cache() const
+{
     if (token_cache_) {
         token_cache_->clear();
     }
@@ -45,7 +45,7 @@ LRUCache<std::string, TokenizedFile>::Stats SimilarityDetector::cache_stats() co
     return {};
 }
 
-TokenNormalizer* SimilarityDetector::get_normalizer(Language lang) {
+TokenNormalizer* SimilarityDetector::get_normalizer(const Language lang) {
     std::lock_guard<std::mutex> lock(normalizer_mutex_);
 
     auto it = normalizers_.find(lang);
@@ -67,8 +67,8 @@ std::optional<TokenizedFile> SimilarityDetector::tokenize_single_file(
     const std::filesystem::path& file_path
 ) {
     // Detect language
-    auto ext = FileUtils::get_extension(file_path);
-    auto lang = detect_language(ext);
+    const auto ext = FileUtils::get_extension(file_path);
+    const auto lang = detect_language(ext);
 
     auto* normalizer = get_normalizer(lang);
     if (!normalizer) {
@@ -76,7 +76,7 @@ std::optional<TokenizedFile> SimilarityDetector::tokenize_single_file(
     }
 
     // Read file
-    auto source = FileUtils::read_file(file_path);
+    const auto source = FileUtils::read_file(file_path);
     if (!source) {
         return std::nullopt;  // Read failed
     }
@@ -89,13 +89,13 @@ std::optional<TokenizedFile> SimilarityDetector::tokenize_single_file(
 }
 
 SimilarityReport SimilarityDetector::analyze(const std::filesystem::path& root) {
-    auto start_time = std::chrono::high_resolution_clock::now();
+    const auto start_time = std::chrono::high_resolution_clock::now();
 
     // Initialize thread pool and cache
     ensure_initialized();
 
     // Find files
-    auto files = FileUtils::find_files(
+    const auto files = FileUtils::find_files(
         root,
         config_.extensions,
         config_.exclude_patterns
@@ -111,10 +111,10 @@ SimilarityReport SimilarityDetector::analyze(const std::filesystem::path& root) 
     AnalysisState state;
     tokenize_files(files, state);
     build_index(state);
-    auto clones = find_clones(state);
+    const auto clones = find_clones(state);
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+    const auto end_time = std::chrono::high_resolution_clock::now();
+    const auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(
         end_time - start_time
     ).count();
 
@@ -122,7 +122,7 @@ SimilarityReport SimilarityDetector::analyze(const std::filesystem::path& root) 
 }
 
 SimilarityReport SimilarityDetector::analyze(const std::vector<std::string>& file_paths) {
-    auto start_time = std::chrono::high_resolution_clock::now();
+    const auto start_time = std::chrono::high_resolution_clock::now();
 
     // Initialize thread pool and cache
     ensure_initialized();
@@ -144,10 +144,10 @@ SimilarityReport SimilarityDetector::analyze(const std::vector<std::string>& fil
     AnalysisState state;
     tokenize_files(files, state);
     build_index(state);
-    auto clones = find_clones(state);
+    const auto clones = find_clones(state);
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+    const auto end_time = std::chrono::high_resolution_clock::now();
+    const auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(
         end_time - start_time
     ).count();
 
@@ -165,10 +165,10 @@ void SimilarityDetector::tokenize_files(
     const std::vector<std::filesystem::path>& files,
     AnalysisState& state
 ) {
-    auto start = std::chrono::high_resolution_clock::now();
+    const auto start = std::chrono::high_resolution_clock::now();
 
     // Track parallel processing info
-    bool use_parallel = files.size() >= 4 && thread_pool_;
+    const bool use_parallel = files.size() >= 4 && thread_pool_;
     state.parallel_enabled = use_parallel;
     state.thread_count = use_parallel ? thread_pool_->size() : 1;
 
@@ -221,13 +221,14 @@ void SimilarityDetector::tokenize_files(
         state.total_tokens += file.tokens.size();
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
+    const auto end = std::chrono::high_resolution_clock::now();
     state.tokenize_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         end - start
     ).count();
 }
 
-void SimilarityDetector::build_index(AnalysisState& state) {
+void SimilarityDetector::build_index(AnalysisState& state) const
+{
     auto start = std::chrono::high_resolution_clock::now();
 
     // Use existing state.index to preserve file_id mappings from tokenize_files
@@ -247,9 +248,9 @@ void SimilarityDetector::build_index(AnalysisState& state) {
 }
 
 std::vector<ClonePair> SimilarityDetector::find_clones(AnalysisState& state) {
-    auto start = std::chrono::high_resolution_clock::now();
+    const auto start = std::chrono::high_resolution_clock::now();
 
-    // Find raw clone pairs - use parallel version for larger workloads
+    // Find raw clone pairs - use a parallel version for larger workloads
     std::vector<ClonePair> pairs;
     if (state.parallel_enabled && thread_pool_) {
         pairs = state.index.find_clone_pairs_parallel(*thread_pool_);
@@ -281,11 +282,11 @@ std::vector<ClonePair> SimilarityDetector::find_clones(AnalysisState& state) {
     }
 
     // Sort by size (largest first)
-    std::sort(pairs.begin(), pairs.end(), [](const auto& a, const auto& b) {
+    std::ranges::sort(pairs, [](const auto& a, const auto& b) {
         return a.token_count() > b.token_count();
     });
 
-    auto end = std::chrono::high_resolution_clock::now();
+    const auto end = std::chrono::high_resolution_clock::now();
     state.match_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         end - start
     ).count();
@@ -295,8 +296,8 @@ std::vector<ClonePair> SimilarityDetector::find_clones(AnalysisState& state) {
 
 SimilarityReport SimilarityDetector::generate_report(
     const std::vector<ClonePair>& clones,
-    AnalysisState& state,
-    int64_t total_time_ms
+    const AnalysisState& state,
+    const int64_t total_time_ms
 ) {
     SimilarityReport report;
 
@@ -306,7 +307,7 @@ SimilarityReport SimilarityDetector::generate_report(
         file_paths.push_back(state.index.get_file_path(static_cast<uint32_t>(i)));
     }
 
-    // Add clones to report
+    // Add clones to the report
     for (const auto& pair : clones) {
         report.add_clone(pair, file_paths, state.sources);
     }
@@ -314,15 +315,14 @@ SimilarityReport SimilarityDetector::generate_report(
     // Calculate metrics by language
     for (const auto& file : state.tokenized_files) {
         auto ext = FileUtils::get_extension(file.path);
-        auto lang = detect_language(ext);
+        const auto lang = detect_language(ext);
         std::string lang_name = language_to_string(lang);
 
         // Count clones involving this file
         for (const auto& clone : clones) {
-            auto file_id_a = clone.location_a.file_id;
-            auto file_id_b = clone.location_b.file_id;
+            const auto file_id_a = clone.location_a.file_id;
 
-            if (state.index.get_file_path(file_id_a) == file.path ||
+            if (auto file_id_b = clone.location_b.file_id; state.index.get_file_path(file_id_a) == file.path ||
                 state.index.get_file_path(file_id_b) == file.path) {
                 report.metrics.by_language[lang_name]++;
             }
@@ -359,7 +359,8 @@ SimilarityReport SimilarityDetector::generate_report(
 CloneType SimilarityDetector::classify_clone(
     const ClonePair& pair,
     const AnalysisState& state
-) {
+) const
+{
     // Type-2 detection: compare ALL original hashes in the cloned regions
     // - Type-1: ALL original hashes match (exact duplicate after whitespace/comment removal)
     // - Type-2: original hashes differ but normalized matched (renamed identifiers/literals)
@@ -387,10 +388,10 @@ CloneType SimilarityDetector::classify_clone(
     }
 
     // Get token ranges
-    size_t start_a = pair.location_a.token_start;
-    size_t count_a = pair.location_a.token_count;
-    size_t start_b = pair.location_b.token_start;
-    size_t count_b = pair.location_b.token_count;
+    const size_t start_a = pair.location_a.token_start;
+    const size_t count_a = pair.location_a.token_count;
+    const size_t start_b = pair.location_b.token_start;
+    const size_t count_b = pair.location_b.token_count;
 
     // Bounds check
     if (start_a + count_a > file_a->tokens.size() ||
@@ -406,21 +407,21 @@ CloneType SimilarityDetector::classify_clone(
     // Compare ALL tokens (not just normalizable ones)
     // Type-1 requires ALL original hashes to match
     bool all_original_match = true;
-    bool has_normalizable = false;
 
     for (size_t i = 0; i < count_a; ++i) {
         const auto& tok_a = file_a->tokens[start_a + i];
-        const auto& tok_b = file_b->tokens[start_b + i];
 
         // Check if original hashes differ
-        if (tok_a.original_hash != tok_b.original_hash) {
+        if (const auto& tok_b = file_b->tokens[start_b + i]; tok_a.original_hash != tok_b.original_hash) {
             all_original_match = false;
-            // Check if this is a normalizable token (potential Type-2)
+            // This is a normalizable token difference (potential Type-2)
+            // We already know normalized hashes match, so this must be
+            // a renamed identifier, string, number, or type
             if (tok_a.type == TokenType::IDENTIFIER ||
                 tok_a.type == TokenType::STRING_LITERAL ||
                 tok_a.type == TokenType::NUMBER_LITERAL ||
                 tok_a.type == TokenType::TYPE) {
-                has_normalizable = true;
+                // Type-2 clone confirmed - different originals but same normalized
             }
         }
     }

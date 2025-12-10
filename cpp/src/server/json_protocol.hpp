@@ -3,7 +3,6 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <optional>
-#include <variant>
 
 namespace aegis::server {
 
@@ -68,7 +67,7 @@ struct Response {
         return resp;
     }
 
-    std::string serialize() const {
+    [[nodiscard]] std::string serialize() const {
         json j;
         j["id"] = id;
         if (result) {

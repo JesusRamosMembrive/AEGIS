@@ -2,7 +2,7 @@
 
 namespace aegis::similarity {
 
-RollingHash::RollingHash(size_t window_size)
+RollingHash::RollingHash(const size_t window_size)
     : window_size_(window_size)
     , base_power_(1)
 {
@@ -17,7 +17,7 @@ void RollingHash::reset() {
     window_.clear();
 }
 
-std::optional<uint64_t> RollingHash::push(uint64_t token_hash) {
+std::optional<uint64_t> RollingHash::push(const uint64_t token_hash) {
     // If window is already full, remove oldest token first
     if (window_.size() >= window_size_) {
         // Remove oldest token from hash
@@ -53,7 +53,7 @@ uint64_t RollingHash::compute_hash(const std::vector<uint64_t>& token_hashes) {
     }
 
     uint64_t hash = 0;
-    for (uint64_t token_hash : token_hashes) {
+    for (const uint64_t token_hash : token_hashes) {
         hash = (hash * BASE + token_hash) % MOD;
     }
     return hash;
@@ -76,7 +76,7 @@ uint64_t RollingHash::power_mod(uint64_t exp) {
 
 std::vector<std::pair<size_t, uint64_t>> HashSequence::compute_all(
     const std::vector<uint64_t>& token_hashes,
-    size_t window_size
+    const size_t window_size
 ) {
     std::vector<std::pair<size_t, uint64_t>> result;
 
@@ -90,14 +90,12 @@ std::vector<std::pair<size_t, uint64_t>> HashSequence::compute_all(
     RollingHash hasher(window_size);
 
     for (size_t i = 0; i < token_hashes.size(); ++i) {
-        auto hash = hasher.push(token_hashes[i]);
-        if (hash.has_value()) {
+        if (auto hash = hasher.push(token_hashes[i]); hash.has_value()) {
             // Position is the start of the window
             size_t start_pos = i - window_size + 1;
             result.emplace_back(start_pos, *hash);
         }
     }
-
     return result;
 }
 

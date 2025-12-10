@@ -5,6 +5,7 @@ import { SummaryCard } from "./SummaryCard";
 import { PerformanceCard } from "./PerformanceCard";
 import { HotspotsCard } from "./HotspotsCard";
 import { ClonesCard } from "./ClonesCard";
+import { LegendCard } from "./LegendCard";
 import "../../styles/similarity.css";
 
 export function SimilarityDashboard(): JSX.Element {
@@ -189,32 +190,42 @@ export function SimilarityDashboard(): JSX.Element {
         </div>
       )}
 
-      {/* Dashboard Grid */}
-      <div className="similarity-grid">
-        {/* Top Row: Summary + Performance */}
-        <div className="similarity-grid__row similarity-grid__row--top">
-          <SummaryCard
-            summary={report?.summary ?? null}
-            isLoading={isLoading || isAnalyzing}
-          />
-          <PerformanceCard
-            performance={report?.performance ?? null}
-            timing={report?.timing ?? null}
-            isLoading={isLoading || isAnalyzing}
-          />
+      {/* Two-Column Layout: Legend + Dashboard */}
+      <div className="similarity-layout">
+        {/* Left Column: Legend */}
+        <aside className="similarity-layout__legend">
+          <LegendCard />
+        </aside>
+
+        {/* Right Column: Dashboard Grid */}
+        <div className="similarity-layout__main">
+          <div className="similarity-grid">
+            {/* Top Row: Summary + Performance */}
+            <div className="similarity-grid__row similarity-grid__row--top">
+              <SummaryCard
+                summary={report?.summary ?? null}
+                isLoading={isLoading || isAnalyzing}
+              />
+              <PerformanceCard
+                performance={report?.performance ?? null}
+                timing={report?.timing ?? null}
+                isLoading={isLoading || isAnalyzing}
+              />
+            </div>
+
+            {/* Hotspots Section */}
+            <HotspotsCard
+              hotspots={report?.hotspots ?? []}
+              isLoading={isLoading || isAnalyzing}
+            />
+
+            {/* Clones Section */}
+            <ClonesCard
+              clones={report?.clones ?? []}
+              isLoading={isLoading || isAnalyzing}
+            />
+          </div>
         </div>
-
-        {/* Hotspots Section */}
-        <HotspotsCard
-          hotspots={report?.hotspots ?? []}
-          isLoading={isLoading || isAnalyzing}
-        />
-
-        {/* Clones Section */}
-        <ClonesCard
-          clones={report?.clones ?? []}
-          isLoading={isLoading || isAnalyzing}
-        />
       </div>
 
       {/* Metrics Summary (if available) */}
