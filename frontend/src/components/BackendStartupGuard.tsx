@@ -24,7 +24,6 @@ export function BackendStartupGuard({
   checkInterval = 1000,
 }: BackendStartupGuardProps): JSX.Element {
   const [state, setState] = useState<StartupState>("checking");
-  const [attempts, setAttempts] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const checkHealth = useCallback(async (): Promise<boolean> => {
@@ -88,7 +87,6 @@ export function BackendStartupGuard({
         setState("connected");
         cleanup();
       } else {
-        setAttempts((prev) => prev + 1);
         setState("waiting");
       }
     };
@@ -172,7 +170,6 @@ export function BackendStartupGuard({
               className="startup-guard__retry-btn"
               onClick={() => {
                 setState("checking");
-                setAttempts(0);
                 setErrorMessage(null);
               }}
             >
@@ -185,7 +182,7 @@ export function BackendStartupGuard({
             <p className="startup-guard__status">
               {state === "checking"
                 ? "Connecting to backend..."
-                : `Waiting for backend to start... (${attempts} ${attempts === 1 ? "attempt" : "attempts"})`}
+                : "Waiting for backend to start..."}
             </p>
             <p className="startup-guard__hint">
               This usually takes a few seconds while the server initializes.
