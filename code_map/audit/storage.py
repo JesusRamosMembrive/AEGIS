@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
 """
 Persistence helpers for auditable pair-programming sessions.
+
+This module provides both sync and async versions of storage functions.
+The async versions are preferred for use in FastAPI endpoints.
 """
 
 from __future__ import annotations
@@ -11,9 +14,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
-from sqlmodel import Session, select, desc, func, or_
+from sqlmodel import select, desc, func, or_
+from sqlalchemy import select as sa_select
 
-from ..database import get_engine, init_db
+from ..database import get_engine, init_db, Session
+from ..database_async import get_async_session, init_async_db
 from ..models import AuditRunDB, AuditEventDB
 
 DEFAULT_EVENTS_LIMIT = 200
@@ -289,6 +294,269 @@ def list_events(
         statement = statement.order_by(AuditEventDB.created_at, AuditEventDB.id).limit(max(1, limit))
         events = session.exec(statement).all()
         
+        return [
+            AuditEvent(
+                id=event.id or 0,
+                run_id=event.run_id,
+                type=event.type,
+                title=event.title,
+                detail=event.detail,
+                actor=event.actor,
+                phase=event.phase,
+                status=event.status,
+                ref=event.ref,
+                payload=_parse_payload(event.payload),
+                created_at=event.created_at,
+            )
+            for event in events
+        ]
+
+
+# ============================================================================
+# Async versions of storage functions (preferred for FastAPI endpoints)
+# ============================================================================
+
+
+async def create_run_async(
+    *,
+    name: Optional[str] = None,
+    root_path: Optional[Path | str] = None,
+    notes: Optional[str] = None,
+) -> AuditRun:
+    """Creates a new audit run entry (async version)."""
+    await init_async_db()
+    normalized_root = _normalize_root(root_path)
+
+    async with get_async_session() as session:
+        run = AuditRunDB(
+            name=name,
+            status="open",
+            root_path=normalized_root,
+            created_at=datetime.now(timezone.utc),
+            notes=notes,
+        )
+        session.add(run)
+        await session.flush()
+        await session.refresh(run)
+
+        run_id = run.id or 0
+
+    # Fetch outside transaction to get event count
+    result = await get_run_async(run_id)
+    if result is None:
+        raise RuntimeError("Failed to create audit run")
+    return result
+
+
+async def close_run_async(
+    run_id: int,
+    *,
+    status: str = "closed",
+    notes: Optional[str] = None,
+) -> Optional[AuditRun]:
+    """Marks a run as finished (async version)."""
+    await init_async_db()
+
+    async with get_async_session() as session:
+        run = await session.get(AuditRunDB, run_id)
+        if not run:
+            return None
+
+        run.status = status
+        run.closed_at = datetime.now(timezone.utc)
+        if notes:
+            run.notes = notes
+
+        session.add(run)
+
+    return await get_run_async(run_id)
+
+
+async def get_run_async(run_id: int) -> Optional[AuditRun]:
+    """Fetches a single run including event count (async version)."""
+    await init_async_db()
+
+    async with get_async_session() as session:
+        run = await session.get(AuditRunDB, run_id)
+        if not run:
+            return None
+
+        # Count events using SQLAlchemy select
+        result = await session.execute(
+            sa_select(func.count(AuditEventDB.id)).where(
+                AuditEventDB.run_id == run_id
+            )
+        )
+        event_count = result.scalar() or 0
+
+        return AuditRun(
+            id=run.id or 0,
+            name=run.name,
+            status=run.status,
+            root_path=run.root_path,
+            created_at=run.created_at,
+            closed_at=run.closed_at,
+            notes=run.notes,
+            event_count=event_count,
+        )
+
+
+async def list_runs_async(
+    *,
+    limit: int = 20,
+    root_path: Optional[Path | str] = None,
+) -> list[AuditRun]:
+    """Lists recent runs, optionally filtered by root (async version)."""
+    await init_async_db()
+    normalized_root = _normalize_root(root_path)
+
+    async with get_async_session() as session:
+        statement = sa_select(AuditRunDB)
+
+        if normalized_root:
+            statement = statement.where(
+                or_(
+                    AuditRunDB.root_path == None,  # type: ignore
+                    AuditRunDB.root_path == normalized_root,
+                )
+            )
+
+        statement = statement.order_by(desc(AuditRunDB.created_at)).limit(
+            max(1, limit)
+        )
+        result = await session.execute(statement)
+        runs = result.scalars().all()
+
+        results = []
+        for run in runs:
+            # Count events for each run
+            count_result = await session.execute(
+                sa_select(func.count(AuditEventDB.id)).where(
+                    AuditEventDB.run_id == run.id
+                )
+            )
+            event_count = count_result.scalar() or 0
+
+            results.append(
+                AuditRun(
+                    id=run.id or 0,
+                    name=run.name,
+                    status=run.status,
+                    root_path=run.root_path,
+                    created_at=run.created_at,
+                    closed_at=run.closed_at,
+                    notes=run.notes,
+                    event_count=event_count,
+                )
+            )
+
+        return results
+
+
+async def append_event_async(
+    run_id: int,
+    *,
+    type: str,
+    title: str,
+    detail: Optional[str] = None,
+    actor: Optional[str] = None,
+    phase: Optional[str] = None,
+    status: Optional[str] = None,
+    ref: Optional[str] = None,
+    payload: Optional[Mapping[str, Any]] = None,
+) -> AuditEvent:
+    """Adds a new event to a run (async version)."""
+    await init_async_db()
+
+    # Check run exists
+    run = await get_run_async(run_id)
+    if run is None:
+        raise LookupError(f"Run {run_id} not found")
+
+    payload_json = (
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        if payload
+        else None
+    )
+
+    async with get_async_session() as session:
+        event = AuditEventDB(
+            run_id=run_id,
+            type=type,
+            title=title,
+            detail=detail,
+            actor=actor,
+            phase=phase,
+            status=status,
+            ref=ref,
+            payload=payload_json,
+            created_at=datetime.now(timezone.utc),
+        )
+        session.add(event)
+        await session.flush()
+        await session.refresh(event)
+
+        event_id = event.id or 0
+
+    result = await get_event_async(run_id, event_id)
+    if result is None:
+        raise RuntimeError("Failed to persist audit event")
+    return result
+
+
+async def get_event_async(run_id: int, event_id: int) -> Optional[AuditEvent]:
+    """Fetches a single event by id (async version)."""
+    await init_async_db()
+
+    async with get_async_session() as session:
+        result = await session.execute(
+            sa_select(AuditEventDB).where(
+                AuditEventDB.id == event_id,
+                AuditEventDB.run_id == run_id,
+            )
+        )
+        event = result.scalar_one_or_none()
+
+        if not event:
+            return None
+
+        return AuditEvent(
+            id=event.id or 0,
+            run_id=event.run_id,
+            type=event.type,
+            title=event.title,
+            detail=event.detail,
+            actor=event.actor,
+            phase=event.phase,
+            status=event.status,
+            ref=event.ref,
+            payload=_parse_payload(event.payload),
+            created_at=event.created_at,
+        )
+
+
+async def list_events_async(
+    run_id: int,
+    *,
+    limit: int = DEFAULT_EVENTS_LIMIT,
+    after_id: Optional[int] = None,
+) -> list[AuditEvent]:
+    """Lists events for a run, ordered chronologically (async version)."""
+    await init_async_db()
+
+    async with get_async_session() as session:
+        statement = sa_select(AuditEventDB).where(AuditEventDB.run_id == run_id)
+
+        if after_id is not None:
+            statement = statement.where(AuditEventDB.id > after_id)
+
+        statement = statement.order_by(
+            AuditEventDB.created_at, AuditEventDB.id
+        ).limit(max(1, limit))
+
+        result = await session.execute(statement)
+        events = result.scalars().all()
+
         return [
             AuditEvent(
                 id=event.id or 0,

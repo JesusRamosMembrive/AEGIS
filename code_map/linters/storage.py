@@ -10,8 +10,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
 from sqlmodel import Session, select, desc, or_
+from sqlalchemy import select as sa_select
 
 from ..database import get_engine, init_db
+from ..database_async import get_async_session, init_async_db
 from ..models import LinterReportDB, NotificationDB
 from .report_schema import (
     CheckStatus,
@@ -301,8 +303,195 @@ def mark_notification_read(
         notif = session.get(NotificationDB, notification_id)
         if not notif:
             return False
-        
+
         notif.read = read
         session.add(notif)
         session.commit()
+        return True
+
+
+# ============================================================================
+# Async versions of storage functions (preferred for FastAPI endpoints)
+# ============================================================================
+
+
+async def record_linters_report_async(
+    report: LintersReport,
+) -> int:
+    """Inserta un nuevo reporte de linters en la base de datos (async)."""
+    await init_async_db()
+    payload = report_to_dict(report)
+    summary = payload.get("summary", {})
+    overall_status = summary.get("overall_status", CheckStatus.PASS.value)
+    issues_total = _coerce_int(summary.get("issues_total", 0), default=0)
+    critical_issues = _coerce_int(summary.get("critical_issues", 0), default=0)
+
+    async with get_async_session() as session:
+        db_report = LinterReportDB(
+            generated_at=datetime.now(timezone.utc),
+            root_path=_normalize_root(payload.get("root_path")) or "",
+            overall_status=overall_status,
+            issues_total=issues_total,
+            critical_issues=critical_issues,
+            payload=json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+        )
+        session.add(db_report)
+        await session.flush()
+        await session.refresh(db_report)
+        return db_report.id or 0
+
+
+async def get_linters_report_async(
+    report_id: int,
+) -> Optional[StoredLintersReport]:
+    """Obtiene un reporte por ID (async)."""
+    await init_async_db()
+
+    async with get_async_session() as session:
+        item = await session.get(LinterReportDB, report_id)
+        if not item:
+            return None
+        return _db_to_report(item)
+
+
+async def get_latest_linters_report_async(
+    *,
+    root_path: Optional[str | Path] = None,
+) -> Optional[StoredLintersReport]:
+    """Obtiene el reporte más reciente (async)."""
+    await init_async_db()
+    normalized_root = _normalize_root(root_path)
+
+    async with get_async_session() as session:
+        statement = sa_select(LinterReportDB).order_by(
+            desc(LinterReportDB.generated_at)
+        ).limit(1)
+        if normalized_root:
+            statement = statement.where(LinterReportDB.root_path == normalized_root)
+
+        result = await session.execute(statement)
+        item = result.scalar_one_or_none()
+
+        if not item:
+            return None
+        return _db_to_report(item)
+
+
+async def list_linters_reports_async(
+    *,
+    limit: int = 20,
+    offset: int = 0,
+    root_path: Optional[str | Path] = None,
+) -> List[StoredLintersReport]:
+    """Lista reportes ordenados por fecha descendente (async)."""
+    await init_async_db()
+    normalized_root = _normalize_root(root_path)
+
+    async with get_async_session() as session:
+        statement = sa_select(LinterReportDB)
+        if normalized_root:
+            statement = statement.where(LinterReportDB.root_path == normalized_root)
+
+        statement = statement.order_by(desc(LinterReportDB.generated_at)).offset(
+            offset
+        ).limit(limit)
+
+        result = await session.execute(statement)
+        items = result.scalars().all()
+
+        return [_db_to_report(item) for item in items]
+
+
+async def record_notification_async(
+    *,
+    channel: str,
+    severity: Severity,
+    title: str,
+    message: str,
+    root_path: Optional[str | Path] = None,
+    payload: Optional[Dict[str, Any]] = None,
+) -> int:
+    """Almacena una notificación (async)."""
+    await init_async_db()
+    serialized_payload = (
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        if payload
+        else None
+    )
+    normalized_root = _normalize_root(root_path)
+
+    async with get_async_session() as session:
+        notif = NotificationDB(
+            created_at=datetime.now(timezone.utc),
+            channel=channel,
+            severity=severity.value,
+            title=title,
+            message=message,
+            payload=serialized_payload,
+            root_path=normalized_root,
+            read=False,
+        )
+        session.add(notif)
+        await session.flush()
+        await session.refresh(notif)
+        return notif.id or 0
+
+
+async def get_notification_async(
+    notification_id: int,
+) -> Optional[StoredNotification]:
+    """Obtiene una notificación por ID (async)."""
+    await init_async_db()
+
+    async with get_async_session() as session:
+        item = await session.get(NotificationDB, notification_id)
+        if not item:
+            return None
+        return _db_to_notification(item)
+
+
+async def list_notifications_async(
+    *,
+    limit: int = 50,
+    unread_only: bool = False,
+    root_path: Optional[str | Path] = None,
+) -> List[StoredNotification]:
+    """Recupera notificaciones ordenadas por fecha descendente (async)."""
+    await init_async_db()
+    normalized_root = _normalize_root(root_path)
+
+    async with get_async_session() as session:
+        statement = sa_select(NotificationDB)
+        if unread_only:
+            statement = statement.where(NotificationDB.read == False)  # type: ignore
+        if normalized_root:
+            statement = statement.where(
+                or_(
+                    NotificationDB.root_path == None,  # type: ignore
+                    NotificationDB.root_path == normalized_root,
+                )
+            )
+
+        statement = statement.order_by(desc(NotificationDB.created_at)).limit(limit)
+
+        result = await session.execute(statement)
+        items = result.scalars().all()
+        return [_db_to_notification(item) for item in items]
+
+
+async def mark_notification_read_async(
+    notification_id: int,
+    *,
+    read: bool = True,
+) -> bool:
+    """Actualiza el estado de leído de una notificación (async)."""
+    await init_async_db()
+
+    async with get_async_session() as session:
+        notif = await session.get(NotificationDB, notification_id)
+        if not notif:
+            return False
+
+        notif.read = read
+        session.add(notif)
         return True
