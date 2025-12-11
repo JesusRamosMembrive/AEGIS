@@ -1,3 +1,5 @@
+import { DESIGN_TOKENS } from "../../theme/designTokens";
+
 export function UmlLegend(): JSX.Element {
     return (
         <section className="uml-legend" aria-label="Relationship legend">
@@ -10,7 +12,7 @@ export function UmlLegend(): JSX.Element {
                             y1="10"
                             x2="40"
                             y2="10"
-                            stroke="#60a5fa"
+                            stroke={DESIGN_TOKENS.colors.relationships.inheritance}
                             strokeWidth="2"
                             markerEnd="url(#arrow-inheritance)"
                         />
@@ -23,7 +25,7 @@ export function UmlLegend(): JSX.Element {
                                 refY="3"
                                 orient="auto"
                             >
-                                <path d="M0,0 L0,6 L9,3 z" fill="#60a5fa" />
+                                <path d="M0,0 L0,6 L9,3 z" fill={DESIGN_TOKENS.colors.relationships.inheritance} />
                             </marker>
                         </defs>
                     </svg>
@@ -36,7 +38,7 @@ export function UmlLegend(): JSX.Element {
                             y1="10"
                             x2="40"
                             y2="10"
-                            stroke="#f97316"
+                            stroke={DESIGN_TOKENS.colors.relationships.association}
                             strokeWidth="2"
                             strokeDasharray="5,3"
                         />
@@ -50,7 +52,7 @@ export function UmlLegend(): JSX.Element {
                             y1="10"
                             x2="40"
                             y2="10"
-                            stroke="#10b981"
+                            stroke={DESIGN_TOKENS.colors.relationships.instantiation}
                             strokeWidth="2"
                             strokeDasharray="5,3"
                         />
@@ -64,7 +66,7 @@ export function UmlLegend(): JSX.Element {
                             y1="10"
                             x2="40"
                             y2="10"
-                            stroke="#a855f7"
+                            stroke={DESIGN_TOKENS.colors.relationships.reference}
                             strokeWidth="1.5"
                             strokeDasharray="2,2"
                         />

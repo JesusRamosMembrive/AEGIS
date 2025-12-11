@@ -1,3 +1,4 @@
+import { DESIGN_TOKENS } from "../../theme/designTokens";
 import { UML_ZOOM_MAX, UML_ZOOM_MIN, UML_ZOOM_STEP } from "./types";
 
 interface UmlControlsProps {
@@ -63,7 +64,7 @@ export function UmlControls({
                             checked={edgeTypes.has("inheritance")}
                             onChange={() => onToggleEdgeType("inheritance")}
                         />
-                        <span style={{ color: "#60a5fa" }}>Inheritance</span>
+                        <span style={{ color: DESIGN_TOKENS.colors.relationships.inheritance }}>Inheritance</span>
                     </label>
                     <label className="control-checkbox">
                         <input
@@ -71,7 +72,7 @@ export function UmlControls({
                             checked={edgeTypes.has("association")}
                             onChange={() => onToggleEdgeType("association")}
                         />
-                        <span style={{ color: "#f97316" }}>Association</span>
+                        <span style={{ color: DESIGN_TOKENS.colors.relationships.association }}>Association</span>
                     </label>
                     <label className="control-checkbox">
                         <input
@@ -79,7 +80,7 @@ export function UmlControls({
                             checked={edgeTypes.has("instantiation")}
                             onChange={() => onToggleEdgeType("instantiation")}
                         />
-                        <span style={{ color: "#10b981" }}>Instantiation</span>
+                        <span style={{ color: DESIGN_TOKENS.colors.relationships.instantiation }}>Instantiation</span>
                     </label>
                     <label className="control-checkbox">
                         <input
@@ -87,7 +88,7 @@ export function UmlControls({
                             checked={edgeTypes.has("reference")}
                             onChange={() => onToggleEdgeType("reference")}
                         />
-                        <span style={{ color: "#a855f7" }}>References</span>
+                        <span style={{ color: DESIGN_TOKENS.colors.relationships.reference }}>References</span>
                     </label>
                 </div>
             </div>

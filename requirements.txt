@@ -1,6 +1,7 @@
 # Core backend dependencies
 fastapi>=0.110,<0.120
 pydantic>=2.7,<3
+sqlmodel>=0.0.16,<1
 uvicorn[standard]>=0.29,<0.32
 watchdog>=3.0,<5
 

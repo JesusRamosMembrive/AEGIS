@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useClassUmlQuery, buildGraphvizSignature } from "../hooks/useClassUmlQuery";
+import { DESIGN_TOKENS } from "../theme/designTokens";
 import { GraphvizSidebar } from "./uml/GraphvizSidebar";
 import { UmlCanvas } from "./uml/UmlCanvas";
 import { UmlControls } from "./uml/UmlControls";
@@ -170,25 +171,37 @@ export function ClassUMLView(): JSX.Element {
             </div>
             <div className="uml-stat">
               <span className="uml-stat-label">Inheritance</span>
-              <strong className="uml-stat-value" style={{ color: "#60a5fa" }}>
+              <strong
+                className="uml-stat-value"
+                style={{ color: DESIGN_TOKENS.colors.relationships.inheritance }}
+              >
                 {stats.inheritance_edges ?? 0}
               </strong>
             </div>
             <div className="uml-stat">
               <span className="uml-stat-label">Associations</span>
-              <strong className="uml-stat-value" style={{ color: "#f97316" }}>
+              <strong
+                className="uml-stat-value"
+                style={{ color: DESIGN_TOKENS.colors.relationships.association }}
+              >
                 {stats.association_edges ?? 0}
               </strong>
             </div>
             <div className="uml-stat">
               <span className="uml-stat-label">Instantiations</span>
-              <strong className="uml-stat-value" style={{ color: "#10b981" }}>
+              <strong
+                className="uml-stat-value"
+                style={{ color: DESIGN_TOKENS.colors.relationships.instantiation }}
+              >
                 {stats.instantiation_edges ?? 0}
               </strong>
             </div>
             <div className="uml-stat">
               <span className="uml-stat-label">References</span>
-              <strong className="uml-stat-value" style={{ color: "#a855f7" }}>
+              <strong
+                className="uml-stat-value"
+                style={{ color: DESIGN_TOKENS.colors.relationships.reference }}
+              >
                 {stats.reference_edges ?? 0}
               </strong>
             </div>
