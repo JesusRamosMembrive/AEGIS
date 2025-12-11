@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
-from sqlmodel import Session, select, desc
+from sqlmodel import Session, select, desc, or_
 
 from ..database import get_engine, init_db
 from ..models import LinterReportDB, NotificationDB
@@ -26,6 +26,15 @@ def _normalize_root(root: Optional[str | Path]) -> Optional[str]:
     if root is None:
         return None
     return str(Path(root).expanduser().resolve())
+
+
+def _normalize_path_map(env: Optional[Mapping[str, str]]) -> Optional[Path]:
+    """Convert env mapping to database path if ENV_DB_PATH is present."""
+    if not env:
+        return None
+    from ..database import ENV_DB_PATH
+    p = env.get(ENV_DB_PATH)
+    return Path(p) if p else None
 
 
 def _parse_datetime(value: str) -> datetime:
@@ -109,7 +118,7 @@ def record_linters_report(
 
     with Session(engine) as session:
         db_report = LinterReportDB(
-            generated_at=datetime.now(timezone.utc), # report.generated_at string? handle coercion
+            generated_at=datetime.now(timezone.utc),
             root_path=_normalize_root(payload.get("root_path")) or "",
             overall_status=overall_status,
             issues_total=issues_total,
@@ -201,7 +210,6 @@ def record_notification(
     env: Optional[Mapping[str, str]] = None,
 ) -> int:
     """Almacena una notificación vinculada al ecosistema de linters."""
-    created_at = datetime.now(timezone.utc).isoformat()
     serialized_payload = (
         json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         if payload
@@ -250,18 +258,12 @@ def get_notification(
     env: Optional[Mapping[str, str]] = None,
 ) -> Optional[StoredNotification]:
     """Obtiene una notificación por ID."""
-    with open_database(env) as connection:
-        row = connection.execute(
-            """
-            SELECT id, created_at, channel, severity, title, message, payload, root_path, read
-            FROM notifications
-            WHERE id = ?
-            """,
-            (notification_id,),
-        ).fetchone()
-    if row is None:
-        return None
-    return _row_to_notification(row)
+    engine = get_engine(_normalize_path_map(env))
+    with Session(engine) as session:
+        item = session.get(NotificationDB, notification_id)
+        if not item:
+            return None
+        return _db_to_notification(item)
 
 
 def list_notifications(
@@ -280,8 +282,7 @@ def list_notifications(
         if unread_only:
             statement = statement.where(NotificationDB.read == False)
         if normalized_root:
-            from sqlmodel import or_
-            statement = statement.where(or_(NotificationDB.root_path == None, NotificationDB.root_path == normalized_root)) # type: ignore
+            statement = statement.where(or_(NotificationDB.root_path == None, NotificationDB.root_path == normalized_root))  # type: ignore
         
         statement = statement.order_by(desc(NotificationDB.created_at)).limit(limit)
         results = session.exec(statement).all()

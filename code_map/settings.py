@@ -12,11 +12,11 @@ from pathlib import Path
 from typing import Iterable, Mapping, Optional, Tuple
 import logging
 
-from sqlmodel import select
+from sqlmodel import Session
 
 from .constants import META_DIR_NAME
 from .scanner import DEFAULT_EXCLUDED_DIRS
-from .database import get_engine, init_db
+from .database import get_engine, init_db, get_db_path
 from .models import AppSettingsDB
 
 ENV_ROOT_PATH = "CODE_MAP_ROOT"

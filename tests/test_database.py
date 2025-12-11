@@ -28,13 +28,10 @@ def test_init_db(engine):
     """Test that tables are expectedly created."""
     # Check if tables exist by querying sqlite_master
     with engine.connect() as conn:
-        result = conn.execute(
-            select(SQLModel).from_statement(
-                select(1).where(1==0) # Dummy SQLModel select essentially
-            )
-        )
-        # Better check: direct sqlite query
-        tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+        # Direct SQL query to check tables
+        from sqlalchemy import text
+        result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table';"))
+        tables = result.fetchall()
         table_names = {t[0] for t in tables}
         assert "app_settings" in table_names
         assert "linter_reports" in table_names

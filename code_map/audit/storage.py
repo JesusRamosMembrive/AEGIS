@@ -11,7 +11,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
-from ..settings import open_database
+from sqlmodel import Session, select, desc, func, or_
+
+from ..database import get_engine, init_db
+from ..models import AuditRunDB, AuditEventDB
 
 DEFAULT_EVENTS_LIMIT = 200
 
@@ -47,68 +50,10 @@ class AuditEvent:
     created_at: datetime
 
 
-def _ensure_tables() -> None:
-    with open_database() as connection:
-        connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS audit_runs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT,
-                status TEXT NOT NULL,
-                root_path TEXT,
-                created_at TEXT NOT NULL,
-                closed_at TEXT,
-                notes TEXT
-            )
-            """
-        )
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS audit_events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                run_id INTEGER NOT NULL,
-                type TEXT NOT NULL,
-                title TEXT NOT NULL,
-                detail TEXT,
-                actor TEXT,
-                phase TEXT,
-                status TEXT,
-                ref TEXT,
-                payload TEXT,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY(run_id) REFERENCES audit_runs(id) ON DELETE CASCADE
-            )
-            """
-        )
-        connection.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_audit_runs_created_at
-            ON audit_runs(created_at DESC)
-            """
-        )
-        connection.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_audit_events_run_id_created_at
-            ON audit_events(run_id, created_at)
-            """
-        )
-        connection.commit()
-
-
 def _normalize_root(root: Optional[Path | str]) -> Optional[str]:
     if root is None:
         return None
     return Path(root).expanduser().resolve().as_posix()
-
-
-def _parse_timestamp(raw: str | None) -> Optional[datetime]:
-    if not raw:
-        return None
-    try:
-        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except ValueError:
-        return None
 
 
 def _parse_payload(raw: str | None) -> Optional[dict[str, Any]]:
@@ -121,37 +66,6 @@ def _parse_payload(raw: str | None) -> Optional[dict[str, Any]]:
     return data if isinstance(data, dict) else None
 
 
-def _row_to_run(row: Mapping[str, Any]) -> AuditRun:
-    return AuditRun(
-        id=int(row["id"]),
-        name=row["name"],
-        status=row["status"],
-        root_path=row["root_path"],
-        created_at=_parse_timestamp(row["created_at"]) or datetime.now(timezone.utc),
-        closed_at=(
-            _parse_timestamp(row["closed_at"]) if "closed_at" in row.keys() else None
-        ),
-        notes=row["notes"] if "notes" in row.keys() else None,
-        event_count=int(row["event_count"]) if "event_count" in row.keys() else 0,
-    )
-
-
-def _row_to_event(row: Mapping[str, Any]) -> AuditEvent:
-    return AuditEvent(
-        id=int(row["id"]),
-        run_id=int(row["run_id"]),
-        type=row["type"],
-        title=row["title"],
-        detail=row["detail"] if "detail" in row.keys() else None,
-        actor=row["actor"] if "actor" in row.keys() else None,
-        phase=row["phase"] if "phase" in row.keys() else None,
-        status=row["status"] if "status" in row.keys() else None,
-        ref=row["ref"] if "ref" in row.keys() else None,
-        payload=_parse_payload(row["payload"]) if "payload" in row.keys() else None,
-        created_at=_parse_timestamp(row["created_at"]) or datetime.now(timezone.utc),
-    )
-
-
 def create_run(
     *,
     name: Optional[str] = None,
@@ -159,25 +73,27 @@ def create_run(
     notes: Optional[str] = None,
 ) -> AuditRun:
     """Creates a new audit run entry."""
-    _ensure_tables()
-    created_at = datetime.now(timezone.utc).isoformat()
+    engine = get_engine()
+    init_db(engine)
+    
     normalized_root = _normalize_root(root_path)
 
-    with open_database() as connection:
-        cursor = connection.execute(
-            """
-            INSERT INTO audit_runs (name, status, root_path, created_at, notes)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (name, "open", normalized_root, created_at, notes),
+    with Session(engine) as session:
+        run = AuditRunDB(
+            name=name,
+            status="open",
+            root_path=normalized_root,
+            created_at=datetime.now(timezone.utc),
+            notes=notes
         )
-        connection.commit()
-        run_id = cursor.lastrowid or 0
-
-    run = get_run(int(run_id))
-    if run is None:
-        raise RuntimeError("Failed to create audit run")
-    return run
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+        
+        result = get_run(run.id or 0)
+        if result is None:
+            raise RuntimeError("Failed to create audit run")
+        return result
 
 
 def close_run(
@@ -187,47 +103,50 @@ def close_run(
     notes: Optional[str] = None,
 ) -> Optional[AuditRun]:
     """Marks a run as finished."""
-    _ensure_tables()
-    closed_at = datetime.now(timezone.utc).isoformat()
-    with open_database() as connection:
-        connection.execute(
-            """
-            UPDATE audit_runs
-            SET status = ?, closed_at = ?, notes = COALESCE(?, notes)
-            WHERE id = ?
-            """,
-            (status, closed_at, notes, run_id),
-        )
-        connection.commit()
+    engine = get_engine()
+    init_db(engine)
+    
+    with Session(engine) as session:
+        run = session.get(AuditRunDB, run_id)
+        if not run:
+            return None
+        
+        run.status = status
+        run.closed_at = datetime.now(timezone.utc)
+        if notes:
+            run.notes = notes
+        
+        session.add(run)
+        session.commit()
+    
     return get_run(run_id)
 
 
 def get_run(run_id: int) -> Optional[AuditRun]:
     """Fetches a single run including event count."""
-    _ensure_tables()
-    with open_database() as connection:
-        row = connection.execute(
-            """
-            SELECT
-                r.id,
-                r.name,
-                r.status,
-                r.root_path,
-                r.created_at,
-                r.closed_at,
-                r.notes,
-                COUNT(e.id) AS event_count
-            FROM audit_runs r
-            LEFT JOIN audit_events e ON e.run_id = r.id
-            WHERE r.id = ?
-            GROUP BY r.id
-            """,
-            (run_id,),
-        ).fetchone()
-
-    if row is None:
-        return None
-    return _row_to_run(row)
+    engine = get_engine()
+    init_db(engine)
+    
+    with Session(engine) as session:
+        run = session.get(AuditRunDB, run_id)
+        if not run:
+            return None
+        
+        # Count events
+        event_count = session.exec(
+            select(func.count(AuditEventDB.id)).where(AuditEventDB.run_id == run_id)
+        ).one()
+        
+        return AuditRun(
+            id=run.id or 0,
+            name=run.name,
+            status=run.status,
+            root_path=run.root_path,
+            created_at=run.created_at,
+            closed_at=run.closed_at,
+            notes=run.notes,
+            event_count=event_count or 0,
+        )
 
 
 def list_runs(
@@ -236,43 +155,40 @@ def list_runs(
     root_path: Optional[Path | str] = None,
 ) -> list[AuditRun]:
     """Lists recent runs, optionally filtered by root."""
-    _ensure_tables()
+    engine = get_engine()
+    init_db(engine)
+    
     normalized_root = _normalize_root(root_path)
-    params: list[object] = []
-    clauses: list[str] = []
 
-    if normalized_root:
-        clauses.append("(r.root_path IS NULL OR r.root_path = ?)")
-        params.append(normalized_root)
-
-    query_parts = [
-        """
-        SELECT
-            r.id,
-            r.name,
-            r.status,
-            r.root_path,
-            r.created_at,
-            r.closed_at,
-            r.notes,
-            COUNT(e.id) AS event_count
-        FROM audit_runs r
-        LEFT JOIN audit_events e ON e.run_id = r.id
-        """
-    ]
-    if clauses:
-        query_parts.append("WHERE " + " AND ".join(clauses))
-    query_parts.append("GROUP BY r.id")
-    query_parts.append("ORDER BY r.created_at DESC")
-    query_parts.append("LIMIT ?")
-    params.append(max(1, limit))
-
-    sql = "\n".join(query_parts)
-
-    with open_database() as connection:
-        rows = connection.execute(sql, params).fetchall()
-
-    return [_row_to_run(row) for row in rows]
+    with Session(engine) as session:
+        statement = select(AuditRunDB)
+        
+        if normalized_root:
+            statement = statement.where(
+                or_(AuditRunDB.root_path == None, AuditRunDB.root_path == normalized_root)  # type: ignore
+            )
+        
+        statement = statement.order_by(desc(AuditRunDB.created_at)).limit(max(1, limit))
+        runs = session.exec(statement).all()
+        
+        results = []
+        for run in runs:
+            event_count = session.exec(
+                select(func.count(AuditEventDB.id)).where(AuditEventDB.run_id == run.id)
+            ).one()
+            
+            results.append(AuditRun(
+                id=run.id or 0,
+                name=run.name,
+                status=run.status,
+                root_path=run.root_path,
+                created_at=run.created_at,
+                closed_at=run.closed_at,
+                notes=run.notes,
+                event_count=event_count or 0,
+            ))
+        
+        return results
 
 
 def append_event(
@@ -288,64 +204,70 @@ def append_event(
     payload: Optional[Mapping[str, Any]] = None,
 ) -> AuditEvent:
     """Adds a new event to a run."""
-    _ensure_tables()
+    engine = get_engine()
+    init_db(engine)
+    
     if get_run(run_id) is None:
         raise LookupError(f"Run {run_id} not found")
 
-    created_at = datetime.now(timezone.utc).isoformat()
     payload_json = (
         json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         if payload
         else None
     )
 
-    with open_database() as connection:
-        cursor = connection.execute(
-            """
-            INSERT INTO audit_events (
-                run_id, type, title, detail, actor, phase, status, ref, payload, created_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                run_id,
-                type,
-                title,
-                detail,
-                actor,
-                phase,
-                status,
-                ref,
-                payload_json,
-                created_at,
-            ),
+    with Session(engine) as session:
+        event = AuditEventDB(
+            run_id=run_id,
+            type=type,
+            title=title,
+            detail=detail,
+            actor=actor,
+            phase=phase,
+            status=status,
+            ref=ref,
+            payload=payload_json,
+            created_at=datetime.now(timezone.utc)
         )
-        connection.commit()
-        event_id = cursor.lastrowid or 0
-
-    event = get_event(run_id, int(event_id))
-    if event is None:
-        raise RuntimeError("Failed to persist audit event")
-    return event
+        session.add(event)
+        session.commit()
+        session.refresh(event)
+        
+        result = get_event(run_id, event.id or 0)
+        if result is None:
+            raise RuntimeError("Failed to persist audit event")
+        return result
 
 
 def get_event(run_id: int, event_id: int) -> Optional[AuditEvent]:
     """Fetches a single event by id."""
-    _ensure_tables()
-    with open_database() as connection:
-        row = connection.execute(
-            """
-            SELECT
-                id, run_id, type, title, detail, actor, phase, status, ref, payload, created_at
-            FROM audit_events
-            WHERE id = ? AND run_id = ?
-            """,
-            (event_id, run_id),
-        ).fetchone()
-
-    if row is None:
-        return None
-    return _row_to_event(row)
+    engine = get_engine()
+    init_db(engine)
+    
+    with Session(engine) as session:
+        event = session.exec(
+            select(AuditEventDB).where(
+                AuditEventDB.id == event_id,
+                AuditEventDB.run_id == run_id
+            )
+        ).first()
+        
+        if not event:
+            return None
+        
+        return AuditEvent(
+            id=event.id or 0,
+            run_id=event.run_id,
+            type=event.type,
+            title=event.title,
+            detail=event.detail,
+            actor=event.actor,
+            phase=event.phase,
+            status=event.status,
+            ref=event.ref,
+            payload=_parse_payload(event.payload),
+            created_at=event.created_at,
+        )
 
 
 def list_events(
@@ -355,31 +277,31 @@ def list_events(
     after_id: Optional[int] = None,
 ) -> list[AuditEvent]:
     """Lists events for a run, ordered chronologically."""
-    _ensure_tables()
-    params: list[object] = [run_id]
-    clauses: list[str] = ["run_id = ?"]
+    engine = get_engine()
+    init_db(engine)
 
-    if after_id is not None:
-        clauses.append("id > ?")
-        params.append(after_id)
-
-    sql = "\n".join(
-        [
-            """
-            SELECT
-                id, run_id, type, title, detail, actor, phase, status, ref, payload, created_at
-            FROM audit_events
-            WHERE {where}
-            ORDER BY created_at ASC, id ASC
-            LIMIT ?
-            """.format(
-                where=" AND ".join(clauses)
+    with Session(engine) as session:
+        statement = select(AuditEventDB).where(AuditEventDB.run_id == run_id)
+        
+        if after_id is not None:
+            statement = statement.where(AuditEventDB.id > after_id)
+        
+        statement = statement.order_by(AuditEventDB.created_at, AuditEventDB.id).limit(max(1, limit))
+        events = session.exec(statement).all()
+        
+        return [
+            AuditEvent(
+                id=event.id or 0,
+                run_id=event.run_id,
+                type=event.type,
+                title=event.title,
+                detail=event.detail,
+                actor=event.actor,
+                phase=event.phase,
+                status=event.status,
+                ref=event.ref,
+                payload=_parse_payload(event.payload),
+                created_at=event.created_at,
             )
+            for event in events
         ]
-    )
-    params.append(max(1, limit))
-
-    with open_database() as connection:
-        rows = connection.execute(sql, params).fetchall()
-
-    return [_row_to_event(row) for row in rows]
