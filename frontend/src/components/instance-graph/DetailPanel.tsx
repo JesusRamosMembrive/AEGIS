@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useDiscoverContracts } from "../../hooks/useDiscoverContracts";
+import type { ContractResponse, ThreadSafety, EvidencePolicy } from "../../api/types";
 
 interface DetailPanelProps {
   node: {
@@ -39,6 +41,351 @@ interface DetailPanelProps {
 }
 
 type TabType = "instance" | "type";
+
+// ─────────────────────────────────────────────────────────────
+// Contract Section Component
+// ─────────────────────────────────────────────────────────────
+
+interface ContractSectionProps {
+  filePath?: string;
+  symbolLine?: number;
+}
+
+function ContractSection({ filePath, symbolLine }: ContractSectionProps): JSX.Element {
+  const { data, isLoading, error } = useDiscoverContracts({
+    filePath: filePath ?? "",
+    symbolLine: symbolLine ?? 0,
+    enabled: !!filePath && !!symbolLine,
+  });
+
+  // No location available
+  if (!filePath || !symbolLine) {
+    return (
+      <div
+        style={{
+          marginTop: "16px",
+          padding: "16px",
+          backgroundColor: "#0f172a",
+          borderRadius: "6px",
+          border: "1px dashed #334155",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: "13px", color: "#64748b", fontStyle: "italic" }}>
+          No type location available
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          marginTop: "16px",
+          padding: "16px",
+          backgroundColor: "#0f172a",
+          borderRadius: "6px",
+          border: "1px solid #334155",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: "13px", color: "#94a3b8" }}>
+          Discovering contracts...
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        style={{
+          marginTop: "16px",
+          padding: "16px",
+          backgroundColor: "#0f172a",
+          borderRadius: "6px",
+          border: "1px solid #ef4444",
+        }}
+      >
+        <div style={{ fontSize: "13px", color: "#ef4444" }}>
+          Failed to load contracts
+        </div>
+        <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>
+          {error instanceof Error ? error.message : "Unknown error"}
+        </div>
+      </div>
+    );
+  }
+
+  // No contracts found
+  const contracts = data?.contracts ?? [];
+  if (contracts.length === 0) {
+    return (
+      <div
+        style={{
+          marginTop: "16px",
+          padding: "16px",
+          backgroundColor: "#0f172a",
+          borderRadius: "6px",
+          border: "1px dashed #334155",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: "13px", color: "#64748b", fontStyle: "italic" }}>
+          No contracts found
+        </div>
+        <div style={{ fontSize: "11px", color: "#475569", marginTop: "4px" }}>
+          Add @aegis-contract block to define contracts
+        </div>
+      </div>
+    );
+  }
+
+  // Display contracts
+  const contract = contracts[0]; // Show first contract
+  return (
+    <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+      {/* Contract Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          marginBottom: "4px",
+        }}
+      >
+        <div style={{ fontSize: "11px", color: "#64748b" }}>CONTRACT</div>
+        <ContractConfidenceBadge
+          confidence={contract.confidence}
+          sourceLevel={contract.source_level}
+          needsReview={contract.needs_review}
+        />
+      </div>
+
+      {/* Thread Safety */}
+      {contract.thread_safety && (
+        <ContractField label="THREAD SAFETY">
+          <ThreadSafetyBadge safety={contract.thread_safety} />
+        </ContractField>
+      )}
+
+      {/* Lifecycle */}
+      {contract.lifecycle && (
+        <ContractField label="LIFECYCLE">
+          <code style={{ fontSize: "12px", color: "#f1f5f9", fontFamily: "monospace" }}>
+            {contract.lifecycle}
+          </code>
+        </ContractField>
+      )}
+
+      {/* Invariants */}
+      {(contract.invariants?.length ?? 0) > 0 && (
+        <ContractField label="INVARIANTS">
+          <ContractList items={contract.invariants!} />
+        </ContractField>
+      )}
+
+      {/* Preconditions */}
+      {(contract.preconditions?.length ?? 0) > 0 && (
+        <ContractField label="PRECONDITIONS">
+          <ContractList items={contract.preconditions!} />
+        </ContractField>
+      )}
+
+      {/* Postconditions */}
+      {(contract.postconditions?.length ?? 0) > 0 && (
+        <ContractField label="POSTCONDITIONS">
+          <ContractList items={contract.postconditions!} />
+        </ContractField>
+      )}
+
+      {/* Errors */}
+      {(contract.errors?.length ?? 0) > 0 && (
+        <ContractField label="ERRORS">
+          <ContractList items={contract.errors!} color="#ef4444" />
+        </ContractField>
+      )}
+
+      {/* Evidence */}
+      {(contract.evidence?.length ?? 0) > 0 && (
+        <ContractField label="EVIDENCE">
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            {contract.evidence!.map((ev, idx) => (
+              <EvidenceItemBadge key={idx} type={ev.type} reference={ev.reference} policy={ev.policy} />
+            ))}
+          </div>
+        </ContractField>
+      )}
+
+      {/* Dependencies */}
+      {(contract.dependencies?.length ?? 0) > 0 && (
+        <ContractField label="DEPENDENCIES">
+          <ContractList items={contract.dependencies!} color="#3b82f6" />
+        </ContractField>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Contract UI Components
+// ─────────────────────────────────────────────────────────────
+
+function ContractField({ label, children }: { label: string; children: React.ReactNode }): JSX.Element {
+  return (
+    <div>
+      <div style={{ fontSize: "10px", color: "#64748b", marginBottom: "4px", letterSpacing: "0.5px" }}>
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ContractList({ items, color = "#94a3b8" }: { items: string[]; color?: string }): JSX.Element {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+      {items.map((item, idx) => (
+        <div
+          key={idx}
+          style={{
+            fontSize: "12px",
+            fontFamily: "monospace",
+            color,
+            padding: "4px 8px",
+            backgroundColor: "#0f172a",
+            borderRadius: "4px",
+            border: "1px solid #334155",
+          }}
+        >
+          {item}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ThreadSafetyBadge({ safety }: { safety: ThreadSafety }): JSX.Element {
+  const config: Record<ThreadSafety, { label: string; color: string }> = {
+    safe: { label: "Thread Safe", color: "#10b981" },
+    immutable: { label: "Immutable", color: "#06b6d4" },
+    safe_after_start: { label: "Safe After Start", color: "#f59e0b" },
+    not_safe: { label: "Not Thread Safe", color: "#ef4444" },
+    unknown: { label: "Unknown", color: "#94a3b8" },
+  };
+
+  const { label, color } = config[safety] ?? config.unknown;
+
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "4px 8px",
+        borderRadius: "4px",
+        fontSize: "11px",
+        fontWeight: 600,
+        backgroundColor: `${color}20`,
+        color,
+        border: `1px solid ${color}`,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function ContractConfidenceBadge({
+  confidence,
+  sourceLevel,
+  needsReview,
+}: {
+  confidence: number;
+  sourceLevel: number;
+  needsReview: boolean;
+}): JSX.Element {
+  const pct = Math.round(confidence * 100);
+  const color = needsReview ? "#f59e0b" : confidence >= 0.8 ? "#10b981" : "#94a3b8";
+  const levelLabel = sourceLevel === 1 ? "L1" : sourceLevel === 2 ? "L2" : sourceLevel === 3 ? "L3" : `L${sourceLevel}`;
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        padding: "2px 6px",
+        borderRadius: "4px",
+        fontSize: "10px",
+        fontWeight: 500,
+        backgroundColor: `${color}20`,
+        color,
+        border: `1px solid ${color}`,
+      }}
+      title={`Source: Level ${sourceLevel}, Confidence: ${pct}%${needsReview ? " (needs review)" : ""}`}
+    >
+      {levelLabel} {pct}%
+      {needsReview && " ⚠"}
+    </span>
+  );
+}
+
+function EvidenceItemBadge({
+  type,
+  reference,
+  policy,
+}: {
+  type: string;
+  reference: string;
+  policy: EvidencePolicy;
+}): JSX.Element {
+  const policyColors: Record<EvidencePolicy, string> = {
+    required: "#ef4444",
+    warning: "#f59e0b",
+    optional: "#94a3b8",
+  };
+
+  const typeIcons: Record<string, string> = {
+    test: "🧪",
+    lint: "🔍",
+    typecheck: "📝",
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "6px 8px",
+        backgroundColor: "#0f172a",
+        borderRadius: "4px",
+        border: "1px solid #334155",
+      }}
+    >
+      <span style={{ fontSize: "12px" }}>{typeIcons[type] ?? "📋"}</span>
+      <span style={{ fontSize: "11px", fontFamily: "monospace", color: "#f1f5f9", flex: 1 }}>
+        {reference}
+      </span>
+      <span
+        style={{
+          fontSize: "9px",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          color: policyColors[policy],
+        }}
+      >
+        {policy}
+      </span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────
 
 export function DetailPanel({ node, edge, onClose }: DetailPanelProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabType>("instance");
@@ -362,24 +709,11 @@ export function DetailPanel({ node, edge, onClose }: DetailPanelProps): JSX.Elem
               {getRoleBadge(node.data.role)}
             </div>
 
-            {/* Placeholder for Phase 5 */}
-            <div
-              style={{
-                marginTop: "16px",
-                padding: "16px",
-                backgroundColor: "#0f172a",
-                borderRadius: "6px",
-                border: "1px dashed #334155",
-                textAlign: "center",
-              }}
-            >
-              <div style={{ fontSize: "13px", color: "#64748b", fontStyle: "italic" }}>
-                Contract information will appear here
-              </div>
-              <div style={{ fontSize: "11px", color: "#475569", marginTop: "4px" }}>
-                (Phase 5)
-              </div>
-            </div>
+            {/* Contract Information (Phase 5) */}
+            <ContractSection
+              filePath={node.data.type_location?.file_path}
+              symbolLine={node.data.type_location?.line}
+            />
           </div>
         )}
 

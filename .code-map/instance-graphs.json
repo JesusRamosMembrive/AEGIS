@@ -1,0 +1,169 @@
+{
+  "version": "1.0",
+  "project_path": "/home/jesusramos/Workspace/AEGIS",
+  "updated_at": "2025-12-15T20:48:10.247376+00:00",
+  "graphs": [
+    {
+      "id": "b00197f91c01353a",
+      "project_path": "/home/jesusramos/Workspace/AEGIS",
+      "source_file": "/home/jesusramos/Workspace/Actia Prueba Tecnica/main.cpp",
+      "function_name": "main",
+      "analyzed_at": "2025-12-15T20:48:10.247346+00:00",
+      "source_modified_at": "2025-12-12T12:20:52.473548+00:00",
+      "node_count": 4,
+      "edge_count": 2,
+      "graph_data": {
+        "nodes": [
+          {
+            "id": "448ada29-af1c-4d14-a30b-fd138073af68",
+            "name": "m1",
+            "type_symbol": "GeneratorModule",
+            "role": "source",
+            "location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/main.cpp",
+              "line": 22,
+              "column": 4,
+              "end_line": null,
+              "end_column": null
+            },
+            "args": [],
+            "config": {
+              "creation_pattern": "factory",
+              "factory_name": "createGeneratorModule",
+              "is_pointer": true,
+              "pointer_type": "unique_ptr"
+            },
+            "type_location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/GeneratorModule.h",
+              "line": 17,
+              "column": 0,
+              "end_line": null,
+              "end_column": null
+            },
+            "contract": null
+          },
+          {
+            "id": "96fb7b21-a2fe-4023-b0a6-405c431d2eba",
+            "name": "m2",
+            "type_symbol": "FilterModule",
+            "role": "processing",
+            "location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/main.cpp",
+              "line": 23,
+              "column": 4,
+              "end_line": null,
+              "end_column": null
+            },
+            "args": [
+              "{0x00, 0x01, 0x02}"
+            ],
+            "config": {
+              "creation_pattern": "factory",
+              "factory_name": "createFilterModule",
+              "is_pointer": true,
+              "pointer_type": "unique_ptr"
+            },
+            "type_location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/FilterModule.h",
+              "line": 12,
+              "column": 0,
+              "end_line": null,
+              "end_column": null
+            },
+            "contract": null
+          },
+          {
+            "id": "e7a529d9-ac52-4267-ad33-ea06f5bd5f15",
+            "name": "m3",
+            "type_symbol": "PrinterModule",
+            "role": "sink",
+            "location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/main.cpp",
+              "line": 24,
+              "column": 4,
+              "end_line": null,
+              "end_column": null
+            },
+            "args": [],
+            "config": {
+              "creation_pattern": "factory",
+              "factory_name": "createPrinterModule",
+              "is_pointer": true,
+              "pointer_type": "unique_ptr"
+            },
+            "type_location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/PrinterModule.h",
+              "line": 13,
+              "column": 0,
+              "end_line": null,
+              "end_column": null
+            },
+            "contract": null
+          },
+          {
+            "id": "4a30ed33-c1aa-4d25-8483-0bc6caa2b2e7",
+            "name": "timeToRunSeconds",
+            "type_symbol": "int",
+            "role": "unknown",
+            "location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/main.cpp",
+              "line": 37,
+              "column": 4,
+              "end_line": null,
+              "end_column": null
+            },
+            "args": [],
+            "config": {
+              "creation_pattern": "unknown",
+              "factory_name": null,
+              "is_pointer": false,
+              "pointer_type": null
+            },
+            "type_location": null,
+            "contract": null
+          }
+        ],
+        "edges": [
+          {
+            "id": "56dfab8f-c959-4e1c-a51b-c389b771bc4d",
+            "source_id": "448ada29-af1c-4d14-a30b-fd138073af68",
+            "target_id": "96fb7b21-a2fe-4023-b0a6-405c431d2eba",
+            "method": "setNext",
+            "location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/main.cpp",
+              "line": 27,
+              "column": 4,
+              "end_line": null,
+              "end_column": null
+            },
+            "channel": null,
+            "metadata": {}
+          },
+          {
+            "id": "7a7debca-4023-4205-af30-9766e30b017e",
+            "source_id": "96fb7b21-a2fe-4023-b0a6-405c431d2eba",
+            "target_id": "e7a529d9-ac52-4267-ad33-ea06f5bd5f15",
+            "method": "setNext",
+            "location": {
+              "file_path": "/home/jesusramos/Workspace/Actia Prueba Tecnica/main.cpp",
+              "line": 29,
+              "column": 4,
+              "end_line": null,
+              "end_column": null
+            },
+            "channel": null,
+            "metadata": {}
+          }
+        ],
+        "source_file": "/home/jesusramos/Workspace/Actia Prueba Tecnica/main.cpp",
+        "function_name": "main",
+        "stats": {
+          "node_count": 4,
+          "edge_count": 2,
+          "source_count": 2,
+          "sink_count": 2
+        }
+      }
+    }
+  ]
+}

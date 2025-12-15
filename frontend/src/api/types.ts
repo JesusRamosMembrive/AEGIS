@@ -524,3 +524,46 @@ export interface AuditEventCreatePayload {
   ref?: string | null;
   payload?: Record<string, unknown> | null;
 }
+
+// =============================================================================
+// Contracts API (Phase 5 - AEGIS v2)
+// =============================================================================
+
+export type ThreadSafety = "not_safe" | "safe" | "safe_after_start" | "immutable" | "unknown";
+export type EvidencePolicy = "required" | "optional" | "warning";
+
+export interface EvidenceItemResponse {
+  type: string;
+  reference: string;
+  policy: EvidencePolicy;
+}
+
+export interface ContractResponse {
+  thread_safety?: ThreadSafety | null;
+  lifecycle?: string | null;
+  invariants: string[];
+  preconditions: string[];
+  postconditions: string[];
+  errors: string[];
+  dependencies: string[];
+  evidence: EvidenceItemResponse[];
+  confidence: number;
+  source_level: number;
+  needs_review: boolean;
+  inferred: boolean;
+  confidence_notes?: string | null;
+  file_path?: string | null;
+  start_line?: number | null;
+  end_line?: number | null;
+}
+
+export interface DiscoverContractsRequest {
+  file_path: string;
+  symbol_line?: number | null;
+  levels?: number[] | null;
+}
+
+export interface DiscoverContractsResponse {
+  contracts: ContractResponse[];
+  stats: Record<string, number>;
+}

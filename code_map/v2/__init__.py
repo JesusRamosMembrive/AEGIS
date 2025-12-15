@@ -22,6 +22,8 @@ from .models import (
     WiringInfo,
 )
 from .builder import GraphBuilder
+from .storage import InstanceGraphStore, StoredInstanceGraph
+from .service import InstanceGraphService
 
 __all__ = [
     # Enums
@@ -40,4 +42,8 @@ __all__ = [
     "InstanceGraph",
     # Builder (Phase 2)
     "GraphBuilder",
+    # Storage & Service (Phase 5)
+    "StoredInstanceGraph",
+    "InstanceGraphStore",
+    "InstanceGraphService",
 ]

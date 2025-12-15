@@ -35,6 +35,8 @@ import type {
   AuditEvent,
   AuditEventListResponse,
   AuditEventCreatePayload,
+  DiscoverContractsRequest,
+  DiscoverContractsResponse,
 } from "./types";
 import type {
   SimilarityReport,
@@ -828,4 +830,31 @@ export async function getInstanceGraph(projectPath: string): Promise<import('./i
     throw new Error(`Failed to fetch instance graph: ${response.statusText}`);
   }
   return response.json();
+}
+
+// =============================================================================
+// Contracts API (Phase 5 - AEGIS v2)
+// =============================================================================
+
+/**
+ * Discover contracts for a symbol in a file.
+ *
+ * Args:
+ *     request: Discovery request with file path and optional symbol line
+ *
+ * Returns:
+ *     Promise with discovered contracts and stats
+ *
+ * Notes:
+ *     - Endpoint: POST /api/contracts/discover
+ *     - Runs multi-level discovery pipeline (L1: @aegis-contract, L2: patterns, etc.)
+ *     - Requires symbol_line to be specified
+ */
+export function discoverContracts(
+  request: DiscoverContractsRequest
+): Promise<DiscoverContractsResponse> {
+  return fetchJson<DiscoverContractsResponse>("/contracts/discover", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
 }

@@ -85,6 +85,17 @@ class Location:
             "end_column": self.end_column,
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Location":
+        """Deserialize from dictionary."""
+        return cls(
+            file_path=Path(data["file_path"]),
+            line=data["line"],
+            column=data.get("column", 0),
+            end_line=data.get("end_line"),
+            end_column=data.get("end_column"),
+        )
+
 
 @dataclass(slots=True)
 class InstanceInfo:
@@ -222,6 +233,25 @@ class InstanceNode:
             "contract": self.contract,
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "InstanceNode":
+        """Deserialize from dictionary."""
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            type_symbol=data["type_symbol"],
+            role=InstanceRole(data["role"]),
+            location=Location.from_dict(data["location"]),
+            args=data.get("args", []),
+            config=data.get("config", {}),
+            type_location=(
+                Location.from_dict(data["type_location"])
+                if data.get("type_location")
+                else None
+            ),
+            contract=data.get("contract"),
+        )
+
 
 @dataclass(slots=True)
 class WiringEdge:
@@ -264,6 +294,19 @@ class WiringEdge:
             "channel": self.channel,
             "metadata": self.metadata,
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "WiringEdge":
+        """Deserialize from dictionary."""
+        return cls(
+            id=data["id"],
+            source_id=data["source_id"],
+            target_id=data["target_id"],
+            method=data["method"],
+            location=Location.from_dict(data["location"]),
+            channel=data.get("channel"),
+            metadata=data.get("metadata", {}),
+        )
 
 
 @dataclass
@@ -454,6 +497,34 @@ class InstanceGraph:
                 "sink_count": len(self.find_sinks()),
             },
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "InstanceGraph":
+        """
+        Deserialize from dictionary.
+
+        Args:
+            data: Dictionary with nodes, edges, source_file, function_name
+
+        Returns:
+            Reconstructed InstanceGraph with all indexes rebuilt
+        """
+        graph = cls(
+            source_file=Path(data["source_file"]) if data.get("source_file") else None,
+            function_name=data.get("function_name"),
+        )
+
+        # Add nodes first
+        for node_data in data.get("nodes", []):
+            node = InstanceNode.from_dict(node_data)
+            graph.add_node(node)
+
+        # Add edges (requires nodes to exist for adjacency lists)
+        for edge_data in data.get("edges", []):
+            edge = WiringEdge.from_dict(edge_data)
+            graph.add_edge(edge)
+
+        return graph
 
     def to_react_flow(self) -> Dict[str, Any]:
         """

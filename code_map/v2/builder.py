@@ -7,11 +7,15 @@ This module implements Phase 2 of the AEGIS v2 architecture:
 - Generates UUIDs for nodes and edges
 - Builds index maps for efficient lookups
 - Infers roles based on graph topology
+- Resolves type locations for jump-to-definition
 """
 
 from __future__ import annotations
 
-from typing import Dict, Set
+import logging
+import re
+from pathlib import Path
+from typing import Dict, Optional, Set
 from uuid import uuid4
 
 from .models import (
@@ -20,9 +24,122 @@ from .models import (
     InstanceInfo,
     InstanceNode,
     InstanceRole,
+    Location,
     WiringEdge,
     WiringInfo,
 )
+
+logger = logging.getLogger(__name__)
+
+# C++ header extensions to search for type definitions
+HEADER_EXTENSIONS: Set[str] = {".h", ".hpp", ".hxx", ".hh"}
+
+# Patterns to match class/struct definitions
+CLASS_PATTERN = re.compile(r"^\s*(?:class|struct)\s+(\w+)", re.MULTILINE)
+
+
+class TypeLocationResolver:
+    """
+    Resolves type names to their definition locations.
+
+    Searches through project header files to find class/struct definitions.
+    Uses simple regex matching for performance (no tree-sitter dependency).
+    """
+
+    def __init__(self, project_root: Path) -> None:
+        """
+        Initialize the resolver.
+
+        Args:
+            project_root: Root directory of the C++ project
+        """
+        self.project_root = project_root
+        # Cache: type_name -> Location
+        self._cache: Dict[str, Optional[Location]] = {}
+        # Index: type_name -> file_path (built on first use)
+        self._type_index: Optional[Dict[str, Path]] = None
+
+    def resolve(self, type_name: str) -> Optional[Location]:
+        """
+        Find the definition location for a type.
+
+        Args:
+            type_name: Name of the class/struct (e.g., "GeneratorModule")
+
+        Returns:
+            Location of the type definition, or None if not found
+        """
+        # Check cache first
+        if type_name in self._cache:
+            return self._cache[type_name]
+
+        # Build index if not yet done
+        if self._type_index is None:
+            self._build_index()
+
+        # Look up in index
+        file_path = self._type_index.get(type_name)
+        if file_path is None:
+            self._cache[type_name] = None
+            return None
+
+        # Find exact line number
+        location = self._find_definition_line(file_path, type_name)
+        self._cache[type_name] = location
+        return location
+
+    def _build_index(self) -> None:
+        """Build an index of type names to files."""
+        self._type_index = {}
+
+        # Find all header files
+        for ext in HEADER_EXTENSIONS:
+            for header_file in self.project_root.rglob(f"*{ext}"):
+                # Skip build directories and hidden folders
+                if any(
+                    part.startswith(".") or part in ("build", "cmake-build", "out")
+                    for part in header_file.parts
+                ):
+                    continue
+
+                try:
+                    content = header_file.read_text(encoding="utf-8", errors="ignore")
+                    for match in CLASS_PATTERN.finditer(content):
+                        type_name = match.group(1)
+                        # Don't overwrite existing entries (prefer first found)
+                        if type_name not in self._type_index:
+                            self._type_index[type_name] = header_file
+                except OSError:
+                    # Skip files we can't read
+                    pass
+
+        logger.debug(
+            "Built type index with %d entries from %s",
+            len(self._type_index),
+            self.project_root,
+        )
+
+    def _find_definition_line(
+        self,
+        file_path: Path,
+        type_name: str,
+    ) -> Optional[Location]:
+        """Find the line number of a type definition in a file."""
+        try:
+            lines = file_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+            pattern = re.compile(rf"^\s*(?:class|struct)\s+{re.escape(type_name)}\b")
+
+            for i, line in enumerate(lines, start=1):
+                if pattern.match(line):
+                    return Location(
+                        file_path=file_path.resolve(),
+                        line=i,
+                        column=0,
+                    )
+        except OSError:
+            pass
+
+        return None
 
 
 class GraphBuilder:
@@ -38,7 +155,20 @@ class GraphBuilder:
        - SINK: No outgoing edges (consumes data)
        - PROCESSING: Both incoming and outgoing edges
        - UNKNOWN: No edges (isolated node)
+    5. Resolves type_location for jump-to-definition support
     """
+
+    def __init__(self, project_root: Optional[Path] = None) -> None:
+        """
+        Initialize the builder.
+
+        Args:
+            project_root: Root directory for type resolution. If None,
+                         type_location will not be resolved.
+        """
+        self._type_resolver: Optional[TypeLocationResolver] = None
+        if project_root:
+            self._type_resolver = TypeLocationResolver(project_root)
 
     def build(self, composition_root: CompositionRoot) -> InstanceGraph:
         """
@@ -88,12 +218,18 @@ class GraphBuilder:
             elif factory.startswith("make"):
                 type_symbol = factory[4:]  # Remove "make" prefix
 
+        # Resolve type location for jump-to-definition
+        type_location: Optional[Location] = None
+        if self._type_resolver and type_symbol and type_symbol != "auto":
+            type_location = self._type_resolver.resolve(type_symbol)
+
         return InstanceNode(
             id=str(uuid4()),
             name=instance.name,
             type_symbol=type_symbol,
             role=InstanceRole.UNKNOWN,  # Will be inferred later
             location=instance.location,
+            type_location=type_location,
             args=instance.constructor_args,
             config={
                 "creation_pattern": instance.creation_pattern.value,
