@@ -802,3 +802,30 @@ export function getSimilarityDefaultPatterns(): Promise<string[]> {
     (res) => res.patterns
   );
 }
+
+// =============================================================================
+// Instance Graph API (React Flow Visualization)
+// =============================================================================
+
+/**
+ * Get the instance graph for React Flow visualization.
+ *
+ * Args:
+ *     projectPath: Path to the project to analyze
+ *
+ * Returns:
+ *     Promise with nodes, edges, and metadata for React Flow
+ *
+ * Notes:
+ *     - Endpoint: GET /api/instance-graph/{projectPath}
+ *     - Analyzes module instantiation patterns
+ *     - Returns nodes with role classification (source/processing/sink)
+ */
+export async function getInstanceGraph(projectPath: string): Promise<import('./instanceGraphTypes').InstanceGraphResponse> {
+  const url = buildUrl(`/instance-graph/${encodeURIComponent(projectPath)}`);
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch instance graph: ${response.statusText}`);
+  }
+  return response.json();
+}

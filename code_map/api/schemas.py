@@ -689,6 +689,91 @@ class UMLDiagramResponse(BaseModel):
     stats: Dict[str, int]
 
 
+# -----------------------------------------------------------------------------
+# Instance Graph Schemas (AEGIS v2 - React Flow visualization)
+# -----------------------------------------------------------------------------
+
+
+class InstanceGraphNodeSchema(BaseModel):
+    """
+    Node in the instance graph formatted for React Flow.
+
+    Attributes:
+        id: Unique node identifier (UUID)
+        type: React Flow node type (input, output, default)
+        data: Node data including label, type, role, location
+        position: Node position coordinates {x, y}
+    """
+
+    id: str
+    type: str = Field(description="React Flow node type: input, output, or default")
+    data: Dict[str, Any] = Field(
+        description="Node data with label, type, role, and location"
+    )
+    position: Dict[str, float] = Field(description="Position coordinates {x, y}")
+
+
+class InstanceGraphEdgeSchema(BaseModel):
+    """
+    Edge in the instance graph formatted for React Flow.
+
+    Attributes:
+        id: Unique edge identifier (UUID)
+        source: Source node ID
+        target: Target node ID
+        label: Edge label (method name used for wiring)
+        type: React Flow edge type (e.g., smoothstep)
+        animated: Whether the edge should be animated
+    """
+
+    id: str
+    source: str
+    target: str
+    label: Optional[str] = None
+    type: str = Field(default="smoothstep", description="React Flow edge type")
+    animated: bool = Field(default=True, description="Whether edge is animated")
+
+
+class InstanceGraphMetadataSchema(BaseModel):
+    """
+    Metadata about the extracted instance graph.
+
+    Attributes:
+        source_file: Path to the analyzed source file
+        function_name: Name of the composition root function
+        node_count: Number of nodes in the graph
+        edge_count: Number of edges in the graph
+    """
+
+    source_file: str
+    function_name: str
+    node_count: int
+    edge_count: int
+
+
+class InstanceGraphResponse(BaseModel):
+    """
+    Complete instance graph response for React Flow visualization.
+
+    Attributes:
+        nodes: List of nodes formatted for React Flow
+        edges: List of edges formatted for React Flow
+        metadata: Graph metadata including source file and counts
+    """
+
+    nodes: List[InstanceGraphNodeSchema] = Field(default_factory=list)
+    edges: List[InstanceGraphEdgeSchema] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Graph metadata: source_file, function_name, node_count, edge_count",
+    )
+
+
+# -----------------------------------------------------------------------------
+# Audit Schemas
+# -----------------------------------------------------------------------------
+
+
 class AuditRunSchema(BaseModel):
     """Metadata for an auditable agent session."""
 

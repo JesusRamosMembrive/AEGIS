@@ -9,6 +9,7 @@ from fastapi import APIRouter
 
 from .analysis import router as analysis_router
 from .graph import router as graph_router
+from .instance_graph import router as instance_graph_router
 from .linters import router as linters_router
 from .integrations import router as integrations_router
 from .preview import router as preview_router
@@ -23,6 +24,7 @@ from .similarity import router as similarity_router
 router = APIRouter()
 router.include_router(analysis_router)
 router.include_router(graph_router)
+router.include_router(instance_graph_router)
 router.include_router(linters_router)
 router.include_router(settings_router)
 router.include_router(preview_router)
