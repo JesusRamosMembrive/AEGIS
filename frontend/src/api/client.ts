@@ -37,6 +37,9 @@ import type {
   AuditEventCreatePayload,
   DiscoverContractsRequest,
   DiscoverContractsResponse,
+  SymbolDetailsResponse,
+  SymbolSearchResponse,
+  SymbolSearchResult,
 } from "./types";
 import type {
   SimilarityReport,
@@ -857,4 +860,68 @@ export function discoverContracts(
     method: "POST",
     body: JSON.stringify(request),
   });
+}
+
+// =============================================================================
+// Symbols API (Phase 7.5 - Instance Graph Integration)
+// =============================================================================
+
+/**
+ * Get detailed symbol information at a specific file:line location.
+ *
+ * Args:
+ *     filePath: Path to the source file (relative or absolute)
+ *     line: Line number where the symbol is defined (1-indexed)
+ *
+ * Returns:
+ *     Promise with symbol details including name, kind, members, etc.
+ *
+ * Notes:
+ *     - Endpoint: GET /api/symbols/at-location
+ *     - Returns class members if symbol is a class
+ *     - Returns parent class name if symbol is a method
+ */
+export function getSymbolAtLocation(
+  filePath: string,
+  line: number
+): Promise<SymbolDetailsResponse> {
+  const params = new URLSearchParams({
+    file_path: filePath,
+    line: String(line),
+  });
+  return fetchJson<SymbolDetailsResponse>(`/symbols/at-location?${params.toString()}`);
+}
+
+/**
+ * Search for symbols by name across the project.
+ *
+ * Args:
+ *     query: Search term (minimum 1 character)
+ *     limit: Maximum number of results (default 50)
+ *
+ * Returns:
+ *     Promise with matching symbols and total count
+ */
+export function searchSymbolsByName(
+  query: string,
+  limit = 50
+): Promise<SymbolSearchResponse> {
+  const params = new URLSearchParams({
+    query,
+    limit: String(limit),
+  });
+  return fetchJson<SymbolSearchResponse>(`/symbols/search?${params.toString()}`);
+}
+
+/**
+ * Get all symbols defined in a specific file.
+ *
+ * Args:
+ *     filePath: Path to the source file (relative or absolute)
+ *
+ * Returns:
+ *     Promise with list of symbols sorted by line number
+ */
+export function getSymbolsInFile(filePath: string): Promise<SymbolSearchResult[]> {
+  return fetchJson<SymbolSearchResult[]>(`/symbols/file/${encodeURIComponent(filePath)}`);
 }

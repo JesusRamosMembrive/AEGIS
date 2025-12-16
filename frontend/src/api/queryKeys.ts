@@ -45,4 +45,11 @@ export const queryKeys = {
   // Contracts API (AEGIS v2 Phase 5)
   contracts: (filePath: string, symbolLine: number, levels?: number[]) =>
     ["contracts", "discover", filePath, symbolLine, levels?.join(",") ?? "default"] as const,
+  // Symbols API (Phase 7.5 - Instance Graph Integration)
+  symbolDetails: (filePath: string, line: number) =>
+    ["symbols", "at-location", filePath, line] as const,
+  symbolSearch: (query: string) =>
+    ["symbols", "search", query] as const,
+  symbolsInFile: (filePath: string) =>
+    ["symbols", "file", filePath] as const,
 };

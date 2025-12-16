@@ -2,7 +2,8 @@
 """
 API endpoints for instance graph visualization.
 
-Provides React Flow compatible graph data from C++ composition roots.
+Provides React Flow compatible graph data from composition roots.
+Supports C++, Python, and TypeScript projects.
 Uses InstanceGraphService for caching and persistence.
 """
 
@@ -10,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -22,6 +23,52 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/instance-graph", tags=["instance-graph"])
 
+# Entry point patterns by language, in order of priority
+# Each pattern is (relative_path, function_name)
+ENTRY_POINT_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
+    "cpp": [
+        ("main.cpp", "main"),
+        ("src/main.cpp", "main"),
+    ],
+    "python": [
+        ("main.py", "main"),
+        ("src/main.py", "main"),
+        ("app.py", "main"),
+        ("__main__.py", "main"),
+    ],
+    "typescript": [
+        ("src/index.ts", "main"),
+        ("index.ts", "main"),
+        ("src/main.ts", "main"),
+        ("main.ts", "main"),
+        ("src/app.ts", "main"),
+        ("app.ts", "main"),
+    ],
+}
+
+
+def _find_entry_point(project_dir: Path) -> Optional[Tuple[Path, str, str]]:
+    """
+    Find the composition root entry point in a project directory.
+
+    Searches for common entry point patterns across supported languages.
+
+    Args:
+        project_dir: Path to the project directory
+
+    Returns:
+        Tuple of (entry_file_path, function_name, language) or None if not found
+    """
+    # Check each language's patterns
+    for language, patterns in ENTRY_POINT_PATTERNS.items():
+        for rel_path, func_name in patterns:
+            entry_file = project_dir / rel_path
+            if entry_file.exists():
+                logger.debug("Found entry point: %s (%s)", entry_file, language)
+                return (entry_file, func_name, language)
+
+    return None
+
 
 @router.get("/{project_path:path}", response_model=InstanceGraphResponse)
 async def get_instance_graph(
@@ -29,12 +76,15 @@ async def get_instance_graph(
     state: AppState = Depends(get_app_state),
 ) -> InstanceGraphResponse:
     """
-    Extract instance graph from a C++ project's main.cpp.
+    Extract instance graph from a project's composition root.
+
+    Automatically detects the project language and finds the entry point.
+    Supports C++ (main.cpp), Python (main.py), and TypeScript (index.ts).
 
     Uses cached graph if available and source hasn't changed.
 
     Args:
-        project_path: Path to directory containing main.cpp
+        project_path: Path to project directory
 
     Returns:
         React Flow compatible graph with nodes, edges, and metadata
@@ -56,32 +106,38 @@ async def get_instance_graph(
             detail=f"Path is not a directory: {project_dir}",
         )
 
-    # Look for main.cpp in the project directory
-    main_cpp = project_dir / "main.cpp"
-    if not main_cpp.exists():
-        # Try src/main.cpp as fallback
-        main_cpp = project_dir / "src" / "main.cpp"
-        if not main_cpp.exists():
-            raise HTTPException(
-                status_code=404,
-                detail=f"main.cpp not found in {project_dir} or {project_dir}/src/",
-            )
+    # Find entry point (multi-language support)
+    entry_point = _find_entry_point(project_dir)
+    if entry_point is None:
+        # List what we searched for
+        searched = []
+        for lang, patterns in ENTRY_POINT_PATTERNS.items():
+            for rel_path, _ in patterns:
+                searched.append(f"{rel_path} ({lang})")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No composition root found in {project_dir}. Searched for: {', '.join(searched[:6])}...",
+        )
 
-    # Check if tree-sitter is available via the service
-    if not state.instance_graph.extractor.is_available():
+    entry_file, func_name, language = entry_point
+    logger.info("Using entry point: %s::%s (%s)", entry_file, func_name, language)
+
+    # Check if tree-sitter is available for this language
+    extractor = state.instance_graph._get_extractor(entry_file)
+    if extractor is None or not extractor.is_available():
         raise HTTPException(
             status_code=503,
-            detail="tree-sitter is not available. Install tree_sitter and tree_sitter_languages packages.",
+            detail=f"tree-sitter not available for {language}. Install tree_sitter and tree_sitter_languages packages.",
         )
 
     # Get graph from service (uses cache if valid)
-    logger.info("[DEBUG] API: Calling get_graph for %s", main_cpp)
-    graph = await state.instance_graph.get_graph(main_cpp, "main")
+    logger.info("[DEBUG] API: Calling get_graph for %s", entry_file)
+    graph = await state.instance_graph.get_graph(entry_file, func_name)
     logger.info("[DEBUG] API: get_graph returned graph=%s", graph is not None)
     if graph is None:
         raise HTTPException(
             status_code=422,
-            detail=f"Failed to extract composition root from {main_cpp}. Check that main() function exists.",
+            detail=f"Failed to extract composition root from {entry_file}. Check that {func_name}() function exists.",
         )
 
     # Log node type_locations for debugging
@@ -95,8 +151,9 @@ async def get_instance_graph(
         nodes=react_flow_data["nodes"],
         edges=react_flow_data["edges"],
         metadata={
-            "source_file": str(main_cpp),
-            "function_name": graph.function_name or "main",
+            "source_file": str(entry_file),
+            "function_name": graph.function_name or func_name,
+            "language": language,
             "node_count": len(graph.nodes),
             "edge_count": len(graph.edges),
         },
@@ -114,7 +171,7 @@ async def refresh_instance_graph(
     This endpoint re-parses the source file, bypassing the cache.
 
     Args:
-        project_path: Path to directory containing main.cpp
+        project_path: Path to project directory
 
     Returns:
         React Flow compatible graph with nodes, edges, and metadata
@@ -136,29 +193,35 @@ async def refresh_instance_graph(
             detail=f"Path is not a directory: {project_dir}",
         )
 
-    # Look for main.cpp in the project directory
-    main_cpp = project_dir / "main.cpp"
-    if not main_cpp.exists():
-        main_cpp = project_dir / "src" / "main.cpp"
-        if not main_cpp.exists():
-            raise HTTPException(
-                status_code=404,
-                detail=f"main.cpp not found in {project_dir} or {project_dir}/src/",
-            )
+    # Find entry point (multi-language support)
+    entry_point = _find_entry_point(project_dir)
+    if entry_point is None:
+        searched = []
+        for lang, patterns in ENTRY_POINT_PATTERNS.items():
+            for rel_path, _ in patterns:
+                searched.append(f"{rel_path} ({lang})")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No composition root found in {project_dir}. Searched for: {', '.join(searched[:6])}...",
+        )
+
+    entry_file, func_name, language = entry_point
+    logger.info("Force refresh for: %s::%s (%s)", entry_file, func_name, language)
 
     # Check if tree-sitter is available
-    if not state.instance_graph.extractor.is_available():
+    extractor = state.instance_graph._get_extractor(entry_file)
+    if extractor is None or not extractor.is_available():
         raise HTTPException(
             status_code=503,
-            detail="tree-sitter is not available. Install tree_sitter and tree_sitter_languages packages.",
+            detail=f"tree-sitter not available for {language}. Install tree_sitter and tree_sitter_languages packages.",
         )
 
     # Force refresh by bypassing cache
-    graph = await state.instance_graph.get_graph(main_cpp, "main", force_refresh=True)
+    graph = await state.instance_graph.get_graph(entry_file, func_name, force_refresh=True)
     if graph is None:
         raise HTTPException(
             status_code=422,
-            detail=f"Failed to extract composition root from {main_cpp}. Check that main() function exists.",
+            detail=f"Failed to extract composition root from {entry_file}. Check that {func_name}() function exists.",
         )
 
     # Convert to React Flow format
@@ -168,8 +231,9 @@ async def refresh_instance_graph(
         nodes=react_flow_data["nodes"],
         edges=react_flow_data["edges"],
         metadata={
-            "source_file": str(main_cpp),
-            "function_name": graph.function_name or "main",
+            "source_file": str(entry_file),
+            "function_name": graph.function_name or func_name,
+            "language": language,
             "node_count": len(graph.nodes),
             "edge_count": len(graph.edges),
         },

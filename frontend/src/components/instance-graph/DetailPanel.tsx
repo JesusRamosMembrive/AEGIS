@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useDiscoverContracts } from "../../hooks/useDiscoverContracts";
+import { SymbolDetailsSection } from "./SymbolDetailsSection";
 import type { ContractResponse, ThreadSafety, EvidencePolicy, DocumentationType } from "../../api/types";
 
 interface DetailPanelProps {
@@ -887,11 +888,27 @@ export function DetailPanel({ node, edge, onClose }: DetailPanelProps): JSX.Elem
               {getRoleBadge(node.data.role)}
             </div>
 
+            {/* Symbol Details (Phase 7.5) */}
+            <div style={{ marginTop: "16px" }}>
+              <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "8px", letterSpacing: "0.5px" }}>
+                SYMBOL DETAILS
+              </div>
+              <SymbolDetailsSection
+                filePath={node.data.type_location?.file_path}
+                line={node.data.type_location?.line}
+              />
+            </div>
+
             {/* Contract Information (Phase 5) */}
-            <ContractSection
-              filePath={node.data.type_location?.file_path}
-              symbolLine={node.data.type_location?.line}
-            />
+            <div style={{ marginTop: "16px" }}>
+              <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "8px", letterSpacing: "0.5px" }}>
+                CONTRACT
+              </div>
+              <ContractSection
+                filePath={node.data.type_location?.file_path}
+                symbolLine={node.data.type_location?.line}
+              />
+            </div>
           </div>
         )}
 

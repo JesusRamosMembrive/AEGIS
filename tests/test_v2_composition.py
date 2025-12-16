@@ -258,5 +258,399 @@ class TestModels:
         assert str(loc) == "/test.cpp:42"
 
 
+# =============================================================================
+# Python Composition Extractor Tests
+# =============================================================================
+
+# Python test project path
+PYTHON_PIPELINE = Path(__file__).parent.parent / "test_projects" / "python_pipeline"
+
+
+class TestPythonCompositionExtractor:
+    """Test suite for Python composition root extraction."""
+
+    @pytest.fixture
+    def extractor(self):
+        """Create extractor instance."""
+        from code_map.v2.composition import PythonCompositionExtractor
+
+        ext = PythonCompositionExtractor()
+        if not ext.is_available():
+            pytest.skip("tree-sitter not available for Python")
+        return ext
+
+    def test_extractor_available(self, extractor):
+        """Verify tree-sitter is available."""
+        assert extractor.is_available()
+
+    def test_language_id(self, extractor):
+        """Test language identifier."""
+        assert extractor.language_id == "python"
+
+    def test_file_extensions(self, extractor):
+        """Test supported file extensions."""
+        assert ".py" in extractor.file_extensions
+
+    def test_find_composition_roots(self, extractor):
+        """Test finding main() as composition root."""
+        main_py = PYTHON_PIPELINE / "main.py"
+        if not main_py.exists():
+            pytest.skip("Python test project not found")
+
+        roots = extractor.find_composition_roots(main_py)
+        assert "main" in roots, f"main not in {roots}"
+
+    def test_extract_instances(self, extractor):
+        """Test extracting instances from Python pipeline."""
+        main_py = PYTHON_PIPELINE / "main.py"
+        if not main_py.exists():
+            pytest.skip("Python test project not found")
+
+        root = extractor.extract(main_py)
+        assert root is not None
+        assert root.function_name == "main"
+
+        # Check we extracted all three instances
+        instance_names = {i.name for i in root.instances}
+        assert "gen" in instance_names, f"gen not found in {instance_names}"
+        assert "proc" in instance_names, f"proc not found in {instance_names}"
+        assert "out" in instance_names, f"out not found in {instance_names}"
+
+    def test_instances_have_location(self, extractor):
+        """Test that instances have exact locations."""
+        main_py = PYTHON_PIPELINE / "main.py"
+        if not main_py.exists():
+            pytest.skip("Python test project not found")
+
+        root = extractor.extract(main_py)
+        assert root is not None
+
+        for instance in root.instances:
+            assert instance.location is not None
+            assert instance.location.line > 0
+            assert instance.location.file_path == main_py.resolve()
+
+    def test_instances_type_detection(self, extractor):
+        """Test type detection for direct instantiation."""
+        main_py = PYTHON_PIPELINE / "main.py"
+        if not main_py.exists():
+            pytest.skip("Python test project not found")
+
+        root = extractor.extract(main_py)
+        assert root is not None
+
+        gen = root.get_instance("gen")
+        assert gen is not None
+        assert gen.actual_type == "Generator"
+
+        proc = root.get_instance("proc")
+        assert proc is not None
+        assert proc.actual_type == "Processor"
+
+        out = root.get_instance("out")
+        assert out is not None
+        assert out.actual_type == "Output"
+
+    def test_extract_wiring(self, extractor):
+        """Test wiring detection: gen->proc, proc->out."""
+        main_py = PYTHON_PIPELINE / "main.py"
+        if not main_py.exists():
+            pytest.skip("Python test project not found")
+
+        root = extractor.extract(main_py)
+        assert root is not None
+
+        # Should have exactly 2 wiring connections
+        assert len(root.wiring) >= 2, f"Expected >= 2 wiring, got {len(root.wiring)}"
+
+        # Check gen -> proc wiring
+        gen_to_proc = None
+        proc_to_out = None
+
+        for w in root.wiring:
+            if w.source == "gen" and w.target == "proc":
+                gen_to_proc = w
+            elif w.source == "proc" and w.target == "out":
+                proc_to_out = w
+
+        assert gen_to_proc is not None, "Wiring gen->proc not found"
+        assert gen_to_proc.method == "set_next"
+
+        assert proc_to_out is not None, "Wiring proc->out not found"
+        assert proc_to_out.method == "set_next"
+
+    def test_wiring_has_location(self, extractor):
+        """Test that wiring has exact call-site locations."""
+        main_py = PYTHON_PIPELINE / "main.py"
+        if not main_py.exists():
+            pytest.skip("Python test project not found")
+
+        root = extractor.extract(main_py)
+        assert root is not None
+
+        for wiring in root.wiring:
+            assert wiring.location is not None
+            assert wiring.location.line > 0
+            assert wiring.location.file_path == main_py.resolve()
+
+    def test_extract_lifecycle(self, extractor):
+        """Test lifecycle method extraction (start/stop)."""
+        main_py = PYTHON_PIPELINE / "main.py"
+        if not main_py.exists():
+            pytest.skip("Python test project not found")
+
+        root = extractor.extract(main_py)
+        assert root is not None
+
+        # Check we extracted lifecycle calls
+        start_calls = [lc for lc in root.lifecycle if lc.method.value == "start"]
+        stop_calls = [lc for lc in root.lifecycle if lc.method.value == "stop"]
+
+        assert len(start_calls) >= 1, f"Expected >= 1 start calls, got {len(start_calls)}"
+        assert len(stop_calls) >= 1, f"Expected >= 1 stop calls, got {len(stop_calls)}"
+
+    def test_to_dict_serialization(self, extractor):
+        """Test JSON serialization of composition root."""
+        main_py = PYTHON_PIPELINE / "main.py"
+        if not main_py.exists():
+            pytest.skip("Python test project not found")
+
+        root = extractor.extract(main_py)
+        assert root is not None
+
+        data = root.to_dict()
+        assert "instances" in data
+        assert "wiring" in data
+        assert "lifecycle" in data
+        assert len(data["instances"]) >= 3
+
+
+# =============================================================================
+# TypeScript Composition Extractor Tests
+# =============================================================================
+
+# TypeScript test project path
+TS_PIPELINE = Path(__file__).parent.parent / "test_projects" / "ts_pipeline"
+
+
+class TestTypeScriptCompositionExtractor:
+    """Test suite for TypeScript composition root extraction."""
+
+    @pytest.fixture
+    def extractor(self):
+        """Create extractor instance."""
+        from code_map.v2.composition import TypeScriptCompositionExtractor
+
+        ext = TypeScriptCompositionExtractor()
+        if not ext.is_available():
+            pytest.skip("tree-sitter not available for TypeScript")
+        return ext
+
+    def test_extractor_available(self, extractor):
+        """Verify tree-sitter is available."""
+        assert extractor.is_available()
+
+    def test_language_id(self, extractor):
+        """Test language identifier."""
+        assert extractor.language_id == "typescript"
+
+    def test_file_extensions(self, extractor):
+        """Test supported file extensions."""
+        exts = extractor.file_extensions
+        assert ".ts" in exts
+        assert ".tsx" in exts
+        assert ".js" in exts
+        assert ".jsx" in exts
+
+    def test_find_composition_roots(self, extractor):
+        """Test finding main() as composition root."""
+        index_ts = TS_PIPELINE / "src" / "index.ts"
+        if not index_ts.exists():
+            pytest.skip("TypeScript test project not found")
+
+        roots = extractor.find_composition_roots(index_ts)
+        assert "main" in roots, f"main not in {roots}"
+
+    def test_extract_instances(self, extractor):
+        """Test extracting instances from TypeScript pipeline."""
+        index_ts = TS_PIPELINE / "src" / "index.ts"
+        if not index_ts.exists():
+            pytest.skip("TypeScript test project not found")
+
+        root = extractor.extract(index_ts)
+        assert root is not None
+        assert root.function_name == "main"
+
+        # Check we extracted all three instances
+        instance_names = {i.name for i in root.instances}
+        assert "gen" in instance_names, f"gen not found in {instance_names}"
+        assert "proc" in instance_names, f"proc not found in {instance_names}"
+        assert "out" in instance_names, f"out not found in {instance_names}"
+
+    def test_instances_have_location(self, extractor):
+        """Test that instances have exact locations."""
+        index_ts = TS_PIPELINE / "src" / "index.ts"
+        if not index_ts.exists():
+            pytest.skip("TypeScript test project not found")
+
+        root = extractor.extract(index_ts)
+        assert root is not None
+
+        for instance in root.instances:
+            assert instance.location is not None
+            assert instance.location.line > 0
+            assert instance.location.file_path == index_ts.resolve()
+
+    def test_instances_type_detection(self, extractor):
+        """Test type detection for new keyword instantiation."""
+        index_ts = TS_PIPELINE / "src" / "index.ts"
+        if not index_ts.exists():
+            pytest.skip("TypeScript test project not found")
+
+        root = extractor.extract(index_ts)
+        assert root is not None
+
+        gen = root.get_instance("gen")
+        assert gen is not None
+        assert gen.actual_type == "Generator"
+
+        proc = root.get_instance("proc")
+        assert proc is not None
+        assert proc.actual_type == "Processor"
+
+        out = root.get_instance("out")
+        assert out is not None
+        assert out.actual_type == "Output"
+
+    def test_extract_wiring(self, extractor):
+        """Test wiring detection: gen->proc, proc->out."""
+        index_ts = TS_PIPELINE / "src" / "index.ts"
+        if not index_ts.exists():
+            pytest.skip("TypeScript test project not found")
+
+        root = extractor.extract(index_ts)
+        assert root is not None
+
+        # Should have exactly 2 wiring connections
+        assert len(root.wiring) >= 2, f"Expected >= 2 wiring, got {len(root.wiring)}"
+
+        # Check gen -> proc wiring
+        gen_to_proc = None
+        proc_to_out = None
+
+        for w in root.wiring:
+            if w.source == "gen" and w.target == "proc":
+                gen_to_proc = w
+            elif w.source == "proc" and w.target == "out":
+                proc_to_out = w
+
+        assert gen_to_proc is not None, "Wiring gen->proc not found"
+        assert gen_to_proc.method == "setNext"
+
+        assert proc_to_out is not None, "Wiring proc->out not found"
+        assert proc_to_out.method == "setNext"
+
+    def test_wiring_has_location(self, extractor):
+        """Test that wiring has exact call-site locations."""
+        index_ts = TS_PIPELINE / "src" / "index.ts"
+        if not index_ts.exists():
+            pytest.skip("TypeScript test project not found")
+
+        root = extractor.extract(index_ts)
+        assert root is not None
+
+        for wiring in root.wiring:
+            assert wiring.location is not None
+            assert wiring.location.line > 0
+            assert wiring.location.file_path == index_ts.resolve()
+
+    def test_extract_lifecycle(self, extractor):
+        """Test lifecycle method extraction (start/stop)."""
+        index_ts = TS_PIPELINE / "src" / "index.ts"
+        if not index_ts.exists():
+            pytest.skip("TypeScript test project not found")
+
+        root = extractor.extract(index_ts)
+        assert root is not None
+
+        # Check we extracted lifecycle calls
+        start_calls = [lc for lc in root.lifecycle if lc.method.value == "start"]
+        stop_calls = [lc for lc in root.lifecycle if lc.method.value == "stop"]
+
+        assert len(start_calls) >= 1, f"Expected >= 1 start calls, got {len(start_calls)}"
+        assert len(stop_calls) >= 1, f"Expected >= 1 stop calls, got {len(stop_calls)}"
+
+    def test_to_dict_serialization(self, extractor):
+        """Test JSON serialization of composition root."""
+        index_ts = TS_PIPELINE / "src" / "index.ts"
+        if not index_ts.exists():
+            pytest.skip("TypeScript test project not found")
+
+        root = extractor.extract(index_ts)
+        assert root is not None
+
+        data = root.to_dict()
+        assert "instances" in data
+        assert "wiring" in data
+        assert "lifecycle" in data
+        assert len(data["instances"]) >= 3
+
+
+# =============================================================================
+# Service Language Router Tests
+# =============================================================================
+
+
+class TestInstanceGraphServiceRouter:
+    """Test the language router in InstanceGraphService."""
+
+    @pytest.fixture
+    def service(self):
+        """Create service instance."""
+        from code_map.v2.service import InstanceGraphService
+
+        return InstanceGraphService(Path("/tmp"))
+
+    def test_get_extractor_python(self, service):
+        """Test Python extractor selection."""
+        extractor = service._get_extractor(Path("test.py"))
+        assert extractor is not None
+        assert extractor.language_id == "python"
+
+    def test_get_extractor_typescript(self, service):
+        """Test TypeScript extractor selection."""
+        for ext in (".ts", ".tsx", ".js", ".jsx", ".mjs", ".mts"):
+            extractor = service._get_extractor(Path(f"test{ext}"))
+            assert extractor is not None, f"No extractor for {ext}"
+            assert extractor.language_id == "typescript", f"Wrong extractor for {ext}"
+
+    def test_get_extractor_cpp(self, service):
+        """Test C++ extractor selection."""
+        for ext in (".cpp", ".hpp", ".cc", ".h", ".cxx", ".hxx"):
+            extractor = service._get_extractor(Path(f"test{ext}"))
+            assert extractor is not None, f"No extractor for {ext}"
+            assert extractor.language_id == "cpp", f"Wrong extractor for {ext}"
+
+    def test_get_extractor_unsupported(self, service):
+        """Test unsupported extension returns None."""
+        extractor = service._get_extractor(Path("test.rs"))
+        assert extractor is None
+
+    def test_supported_extensions(self, service):
+        """Test all supported extensions are returned."""
+        exts = service.get_supported_extensions()
+        # Python
+        assert ".py" in exts
+        # TypeScript/JavaScript
+        assert ".ts" in exts
+        assert ".tsx" in exts
+        assert ".js" in exts
+        assert ".jsx" in exts
+        # C++
+        assert ".cpp" in exts
+        assert ".hpp" in exts
+        assert ".h" in exts
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -22,6 +22,7 @@ from .tracer import router as tracer_router
 from .audit import router as audit_router
 from .terminal import router as terminal_router
 from .similarity import router as similarity_router
+from .symbols import router as symbols_router
 
 router = APIRouter()
 router.include_router(analysis_router)
@@ -39,3 +40,4 @@ router.include_router(tracer_router)
 router.include_router(audit_router)
 router.include_router(terminal_router)
 router.include_router(similarity_router)
+router.include_router(symbols_router)

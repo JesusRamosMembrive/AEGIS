@@ -8,8 +8,12 @@ from composition roots (main functions, factories, etc.).
 
 from .base import CompositionExtractor
 from .cpp import CppCompositionExtractor
+from .python import PythonCompositionExtractor
+from .typescript import TypeScriptCompositionExtractor
 
 __all__ = [
     "CompositionExtractor",
     "CppCompositionExtractor",
+    "PythonCompositionExtractor",
+    "TypeScriptCompositionExtractor",
 ]

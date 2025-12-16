@@ -15,7 +15,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from .builder import GraphBuilder
+from .composition.base import CompositionExtractor
 from .composition.cpp import CppCompositionExtractor
+from .composition.python import PythonCompositionExtractor
+from .composition.typescript import TypeScriptCompositionExtractor
 from .models import InstanceGraph
 from .storage import InstanceGraphStore, StoredInstanceGraph
 
@@ -23,6 +26,9 @@ logger = logging.getLogger(__name__)
 
 # File extensions that trigger instance graph invalidation
 CPP_EXTENSIONS: Set[str] = {".cpp", ".hpp", ".h", ".cc", ".cxx", ".hxx"}
+PYTHON_EXTENSIONS: Set[str] = {".py"}
+TYPESCRIPT_EXTENSIONS: Set[str] = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".mts"}
+ALL_SUPPORTED_EXTENSIONS: Set[str] = CPP_EXTENSIONS | PYTHON_EXTENSIONS | TYPESCRIPT_EXTENSIONS
 
 
 def _generate_graph_id(project_path: str, source_file: str, function_name: str) -> str:
@@ -72,9 +78,19 @@ class InstanceGraphService:
         """
         self.root = Path(root).expanduser().resolve()
         self.store = InstanceGraphStore(root, cache_dir=cache_dir)
-        self.extractor = CppCompositionExtractor()
+
+        # Language-specific extractors
+        self._extractors: Dict[str, CompositionExtractor] = {
+            "cpp": CppCompositionExtractor(),
+            "python": PythonCompositionExtractor(),
+            "typescript": TypeScriptCompositionExtractor(),
+        }
+
         # Note: We create a new GraphBuilder per request to resolve types
         # from the correct project directory (not self.root)
+
+        # Legacy alias for backwards compatibility
+        self.extractor = self._extractors["cpp"]
 
         # In-memory cache: graph_id -> (InstanceGraph, source_mtime)
         self._cache: Dict[str, tuple[InstanceGraph, datetime]] = {}
@@ -131,6 +147,32 @@ class InstanceGraphService:
             len(self._cache),
         )
         self._started = True
+
+    def _get_extractor(self, file_path: Path) -> Optional[CompositionExtractor]:
+        """
+        Get the appropriate extractor for a file based on its extension.
+
+        Args:
+            file_path: Path to the source file
+
+        Returns:
+            CompositionExtractor for the file's language, or None if unsupported
+        """
+        ext = file_path.suffix.lower()
+
+        if ext in PYTHON_EXTENSIONS:
+            return self._extractors["python"]
+        elif ext in TYPESCRIPT_EXTENSIONS:
+            return self._extractors["typescript"]
+        elif ext in CPP_EXTENSIONS:
+            return self._extractors["cpp"]
+
+        logger.warning("No extractor available for extension: %s", ext)
+        return None
+
+    def get_supported_extensions(self) -> Set[str]:
+        """Return all supported file extensions."""
+        return ALL_SUPPORTED_EXTENSIONS
 
     async def shutdown(self) -> None:
         """
@@ -201,8 +243,17 @@ class InstanceGraphService:
         # Extract and build fresh graph
         logger.info("Extracting graph from %s::%s", source_file, function_name)
 
-        if not self.extractor.is_available():
-            logger.warning("C++ extractor not available (tree-sitter not installed)")
+        # Select appropriate extractor based on file extension
+        extractor = self._get_extractor(source_file)
+        if extractor is None:
+            logger.warning("No extractor available for %s", source_file)
+            return None
+
+        if not extractor.is_available():
+            logger.warning(
+                "%s extractor not available (tree-sitter not installed)",
+                extractor.language_id.upper(),
+            )
             return None
 
         if not source_file.exists():
@@ -211,8 +262,12 @@ class InstanceGraphService:
 
         try:
             # Phase 1: Extract composition root
-            logger.info("[DEBUG] Phase 1: Extracting composition root from %s", source_file)
-            composition_root = self.extractor.extract(source_file, function_name)
+            logger.info(
+                "[DEBUG] Phase 1: Extracting composition root from %s (lang=%s)",
+                source_file,
+                extractor.language_id,
+            )
+            composition_root = extractor.extract(source_file, function_name)
             if composition_root is None:
                 logger.warning(
                     "No composition root found in %s::%s",
@@ -269,8 +324,8 @@ class InstanceGraphService:
         file_path = file_path.resolve()
         invalidated: List[str] = []
 
-        # Check if this is a C++ file
-        if file_path.suffix.lower() not in CPP_EXTENSIONS:
+        # Check if this is a supported file type
+        if file_path.suffix.lower() not in ALL_SUPPORTED_EXTENSIONS:
             return invalidated
 
         # Find graphs that depend on this file
@@ -315,6 +370,14 @@ class InstanceGraphService:
             "cpp_files_changed": len([
                 f for f in changed_files
                 if f.suffix.lower() in CPP_EXTENSIONS
+            ]),
+            "python_files_changed": len([
+                f for f in changed_files
+                if f.suffix.lower() in PYTHON_EXTENSIONS
+            ]),
+            "typescript_files_changed": len([
+                f for f in changed_files
+                if f.suffix.lower() in TYPESCRIPT_EXTENSIONS
             ]),
         }
 

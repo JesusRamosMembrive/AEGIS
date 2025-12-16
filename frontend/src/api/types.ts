@@ -573,3 +573,38 @@ export interface DiscoverContractsResponse {
   warning?: string | null;  // "no_documentation_found", etc.
   llm_available: boolean;
 }
+
+// =============================================================================
+// Symbols API (Phase 7.5 - Instance Graph Integration)
+// =============================================================================
+
+export interface SymbolMember {
+  name: string;
+  kind: string;  // "method" | "function" | "class"
+  lineno: number;
+  docstring?: string | null;
+}
+
+export interface SymbolDetailsResponse {
+  name: string;
+  kind: string;  // "class" | "function" | "method" | "unknown"
+  lineno: number;
+  file_path: string;
+  docstring?: string | null;
+  parent?: string | null;
+  members: SymbolMember[];
+  metrics?: Record<string, any> | null;
+}
+
+export interface SymbolSearchResult {
+  name: string;
+  kind: string;
+  lineno: number;
+  file_path: string;
+  parent?: string | null;
+}
+
+export interface SymbolSearchResponse {
+  results: SymbolSearchResult[];
+  total: number;
+}
