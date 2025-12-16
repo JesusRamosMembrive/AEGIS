@@ -3,12 +3,14 @@
 Level 4: Static analysis for contract inference.
 
 Orchestrates multiple analyzers to extract implied contracts:
-- Ownership from smart pointers
+- Ownership from smart pointers (C++), field assignments (Python), readonly fields (TS)
 - Dependencies from constructors/setters
 - Lifecycle from method names
 - Thread safety from sync primitives
 - Preconditions from asserts
 - Errors from throw/raise
+
+Supports: C++, Python, TypeScript/JavaScript
 """
 
 import logging
@@ -69,17 +71,21 @@ class StaticAnalyzer:
         (re.compile(r"raise\s+(\w+)(?:\s*\()?"), "python"),
     ]
 
-    # C++ file extensions
+    # File extensions by language
     CPP_EXTENSIONS = (".cpp", ".hpp", ".h", ".cc", ".c", ".cxx", ".hxx")
+    PYTHON_EXTENSIONS = (".py", ".pyi")
+    TS_EXTENSIONS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".mts")
 
     def __init__(self):
         """Initialize the analyzer with all sub-analyzers."""
-        self._analyzers = []
+        self._cpp_analyzers = []
+        self._python_analyzers = []
+        self._ts_analyzers = []
         self._tree_sitter_ready = False
 
         if TREE_SITTER_AVAILABLE:
             try:
-                # Initialize analyzers lazily
+                # Initialize C++ analyzers
                 from .analyzers import (
                     DependencyAnalyzer,
                     LifecycleAnalyzer,
@@ -87,14 +93,45 @@ class StaticAnalyzer:
                     ThreadSafetyAnalyzer,
                 )
 
-                self._analyzers = [
+                self._cpp_analyzers = [
                     OwnershipAnalyzer(),
                     DependencyAnalyzer(),
                     LifecycleAnalyzer(),
                     ThreadSafetyAnalyzer(),
                 ]
+
+                # Initialize Python analyzers
+                from .analyzers import (
+                    PythonDependencyAnalyzer,
+                    PythonLifecycleAnalyzer,
+                    PythonOwnershipAnalyzer,
+                    PythonThreadSafetyAnalyzer,
+                )
+
+                self._python_analyzers = [
+                    PythonOwnershipAnalyzer(),
+                    PythonDependencyAnalyzer(),
+                    PythonLifecycleAnalyzer(),
+                    PythonThreadSafetyAnalyzer(),
+                ]
+
+                # Initialize TypeScript/JavaScript analyzers
+                from .analyzers import (
+                    TypeScriptDependencyAnalyzer,
+                    TypeScriptLifecycleAnalyzer,
+                    TypeScriptOwnershipAnalyzer,
+                    TypeScriptThreadSafetyAnalyzer,
+                )
+
+                self._ts_analyzers = [
+                    TypeScriptOwnershipAnalyzer(),
+                    TypeScriptDependencyAnalyzer(),
+                    TypeScriptLifecycleAnalyzer(),
+                    TypeScriptThreadSafetyAnalyzer(),
+                ]
+
                 self._tree_sitter_ready = True
-                logger.debug("L4 analyzers initialized with tree-sitter support")
+                logger.debug("L4 analyzers initialized with tree-sitter support (C++, Python, TS)")
             except Exception as e:
                 logger.warning(f"Failed to initialize L4 analyzers: {e}")
 
@@ -102,9 +139,8 @@ class StaticAnalyzer:
         """
         Analyze source code for implied contracts.
 
-        For C++ files with tree-sitter available, uses AST-based analyzers.
-        Falls back to regex patterns for other languages or when tree-sitter
-        is unavailable.
+        Uses AST-based analyzers for C++, Python, and TypeScript when tree-sitter
+        is available. Falls back to regex patterns otherwise.
 
         Args:
             source: Source code content
@@ -114,38 +150,54 @@ class StaticAnalyzer:
             ContractData with inferred contracts
         """
         ext = file_path.suffix.lower()
-        is_cpp = ext in self.CPP_EXTENSIONS
+        lang = self._detect_language(ext)
 
-        # Try AST-based analysis for C++ if available
-        if is_cpp and self._tree_sitter_ready:
+        # Try AST-based analysis if available
+        if self._tree_sitter_ready and lang in ("cpp", "python", "typescript"):
             try:
-                return self._analyze_with_ast(source, file_path)
+                return self._analyze_with_ast(source, file_path, lang)
             except Exception as e:
-                logger.warning(f"AST analysis failed, falling back to regex: {e}")
+                logger.warning(f"AST analysis failed for {lang}, falling back to regex: {e}")
 
         # Fallback to legacy regex analysis
         return self._analyze_with_regex(source, file_path)
 
-    def _analyze_with_ast(self, source: str, file_path: Path) -> ContractData:
+    def _detect_language(self, ext: str) -> str:
+        """Detect language from file extension."""
+        if ext in self.CPP_EXTENSIONS:
+            return "cpp"
+        elif ext in self.PYTHON_EXTENSIONS:
+            return "python"
+        elif ext in self.TS_EXTENSIONS:
+            return "typescript"
+        return "unknown"
+
+    def _analyze_with_ast(
+        self, source: str, file_path: Path, lang: str
+    ) -> ContractData:
         """
-        Analyze C++ source using tree-sitter AST.
+        Analyze source using tree-sitter AST.
 
         Args:
             source: Source code content
             file_path: File path for metadata
+            lang: Language identifier ("cpp", "python", "typescript")
 
         Returns:
             ContractData with merged findings from all analyzers
         """
+        # Get parser and analyzers for language
+        parser_lang, analyzers = self._get_parser_and_analyzers(lang)
+
         # Parse with tree-sitter
-        parser = tree_sitter_languages.get_parser("cpp")
+        parser = tree_sitter_languages.get_parser(parser_lang)
         tree = parser.parse(source.encode("utf-8"))
         ast = tree.root_node
 
         # Run all analyzers and collect findings
         all_findings: List[L4Finding] = []
 
-        for analyzer in self._analyzers:
+        for analyzer in analyzers:
             try:
                 findings = analyzer.analyze(ast, source)
                 all_findings.extend(findings)
@@ -158,6 +210,17 @@ class StaticAnalyzer:
 
         # Merge everything into final contract
         return self._merge_findings(all_findings, legacy_contract, file_path)
+
+    def _get_parser_and_analyzers(self, lang: str) -> tuple[str, list]:
+        """Get the tree-sitter parser name and analyzers for a language."""
+        if lang == "cpp":
+            return "cpp", self._cpp_analyzers
+        elif lang == "python":
+            return "python", self._python_analyzers
+        elif lang == "typescript":
+            # tree-sitter uses "typescript" for both .ts and .tsx
+            return "typescript", self._ts_analyzers
+        return "cpp", []  # Fallback
 
     def _analyze_with_regex(self, source: str, file_path: Path) -> ContractData:
         """
@@ -345,16 +408,19 @@ class StaticAnalyzer:
             return []
 
         ext = file_path.suffix.lower()
-        if ext not in self.CPP_EXTENSIONS:
+        lang = self._detect_language(ext)
+
+        if lang == "unknown":
             return []
 
         try:
-            parser = tree_sitter_languages.get_parser("cpp")
+            parser_lang, analyzers = self._get_parser_and_analyzers(lang)
+            parser = tree_sitter_languages.get_parser(parser_lang)
             tree = parser.parse(source.encode("utf-8"))
             ast = tree.root_node
 
             all_findings = []
-            for analyzer in self._analyzers:
+            for analyzer in analyzers:
                 findings = analyzer.analyze(ast, source)
                 all_findings.extend(findings)
 
