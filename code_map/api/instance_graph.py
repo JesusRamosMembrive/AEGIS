@@ -10,6 +10,7 @@ Uses InstanceGraphService for caching and persistence.
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -47,11 +48,44 @@ ENTRY_POINT_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
 }
 
 
+def _detect_python_entry_point(file_path: Path) -> Optional[str]:
+    """
+    Detect the composition root pattern in a Python file.
+
+    Checks for:
+    1. def main() function (preferred)
+    2. if __name__ == "__main__": block (fallback)
+
+    Args:
+        file_path: Path to the Python file
+
+    Returns:
+        "main" if def main() exists
+        "__main__" if if __name__ == "__main__": exists
+        None if neither found
+    """
+    try:
+        content = file_path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+    # Check for def main(): (preferred)
+    if re.search(r"^def main\s*\(", content, re.MULTILINE):
+        return "main"
+
+    # Check for if __name__ == "__main__": (fallback)
+    if re.search(r'if\s+__name__\s*==\s*["\']__main__["\']', content):
+        return "__main__"
+
+    return None
+
+
 def _find_entry_point(project_dir: Path) -> Optional[Tuple[Path, str, str]]:
     """
     Find the composition root entry point in a project directory.
 
     Searches for common entry point patterns across supported languages.
+    For Python files, auto-detects whether to use def main() or __main__ block.
 
     Args:
         project_dir: Path to the project directory
@@ -61,11 +95,26 @@ def _find_entry_point(project_dir: Path) -> Optional[Tuple[Path, str, str]]:
     """
     # Check each language's patterns
     for language, patterns in ENTRY_POINT_PATTERNS.items():
-        for rel_path, func_name in patterns:
+        for rel_path, default_func in patterns:
             entry_file = project_dir / rel_path
             if entry_file.exists():
-                logger.debug("Found entry point: %s (%s)", entry_file, language)
-                return (entry_file, func_name, language)
+                # For Python, auto-detect the actual entry point pattern
+                if language == "python":
+                    func_name = _detect_python_entry_point(entry_file)
+                    if func_name:
+                        logger.debug(
+                            "Found Python entry point: %s::%s", entry_file, func_name
+                        )
+                        return (entry_file, func_name, language)
+                    # Python file exists but has no valid entry point
+                    logger.debug(
+                        "Python file %s has no main() or __main__ block", entry_file
+                    )
+                    continue
+                else:
+                    # Non-Python: use default function name
+                    logger.debug("Found entry point: %s (%s)", entry_file, language)
+                    return (entry_file, default_func, language)
 
     return None
 
