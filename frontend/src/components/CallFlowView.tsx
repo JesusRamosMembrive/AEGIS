@@ -192,7 +192,7 @@ export function CallFlowView(): JSX.Element {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="/path/to/file.py or .cpp"
+            placeholder="/path/to/file.py, .ts, .cpp, etc."
             style={{
               flex: 1,
               padding: "8px 12px",
@@ -746,7 +746,7 @@ export function CallFlowView(): JSX.Element {
       <FileBrowserModal
         isOpen={isBrowseModalOpen}
         currentPath={inputValue || "/home"}
-        extensions=".py,.cpp,.hpp,.c,.h"
+        extensions=".py,.cpp,.hpp,.c,.h,.ts,.tsx,.js,.jsx"
         onClose={() => setIsBrowseModalOpen(false)}
         onSelect={handleBrowseSelect}
       />

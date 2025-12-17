@@ -17,6 +17,7 @@ from fastapi.responses import PlainTextResponse
 
 from ..v2.call_flow.extractor import PythonCallFlowExtractor
 from ..v2.call_flow.cpp_extractor import CppCallFlowExtractor
+from ..v2.call_flow.ts_extractor import TsCallFlowExtractor
 from .schemas import (
     CallFlowEntryPointSchema,
     CallFlowEntryPointsResponse,
@@ -32,11 +33,15 @@ router = APIRouter(prefix="/call-flow", tags=["call-flow"])
 # Singleton extractor instances
 _python_extractor: Optional[PythonCallFlowExtractor] = None
 _cpp_extractor: Optional[CppCallFlowExtractor] = None
+_ts_extractor: Optional[TsCallFlowExtractor] = None
 
 # Supported file extensions by language
 PYTHON_EXTENSIONS = {".py"}
 CPP_EXTENSIONS = {".cpp", ".c", ".hpp", ".h", ".cc", ".cxx", ".hxx"}
-SUPPORTED_EXTENSIONS = PYTHON_EXTENSIONS | CPP_EXTENSIONS
+TS_EXTENSIONS = {".ts", ".tsx", ".mts", ".cts"}
+JS_EXTENSIONS = {".js", ".jsx", ".mjs", ".cjs"}
+TSJS_EXTENSIONS = TS_EXTENSIONS | JS_EXTENSIONS
+SUPPORTED_EXTENSIONS = PYTHON_EXTENSIONS | CPP_EXTENSIONS | TSJS_EXTENSIONS
 
 
 def _get_python_extractor() -> PythonCallFlowExtractor:
@@ -53,6 +58,14 @@ def _get_cpp_extractor() -> CppCallFlowExtractor:
     if _cpp_extractor is None:
         _cpp_extractor = CppCallFlowExtractor()
     return _cpp_extractor
+
+
+def _get_ts_extractor() -> TsCallFlowExtractor:
+    """Get or create the TypeScript/JavaScript extractor singleton."""
+    global _ts_extractor
+    if _ts_extractor is None:
+        _ts_extractor = TsCallFlowExtractor()
+    return _ts_extractor
 
 
 def _get_extractor() -> PythonCallFlowExtractor:
@@ -173,10 +186,10 @@ async def list_entry_points(
     List available entry points (functions/methods) in a file.
 
     These can be used as starting points for call flow analysis.
-    Supports Python (.py) and C++ (.cpp, .c, .hpp, .h) files.
+    Supports Python (.py), C++ (.cpp, .c, .hpp, .h), and TypeScript/JavaScript files.
 
     Args:
-        file_path: Path to source file (Python or C++)
+        file_path: Path to source file (Python, C++, TypeScript, or JavaScript)
 
     Returns:
         List of entry points with name, qualified_name, line, and kind
@@ -210,9 +223,12 @@ async def list_entry_points(
     if suffix in PYTHON_EXTENSIONS:
         extractor = _get_python_extractor()
         lang_name = "Python"
-    else:
+    elif suffix in CPP_EXTENSIONS:
         extractor = _get_cpp_extractor()
         lang_name = "C++"
+    else:
+        extractor = _get_ts_extractor()
+        lang_name = "TypeScript/JavaScript"
 
     if not extractor.is_available():
         raise HTTPException(
@@ -252,10 +268,10 @@ async def get_call_flow(
     Returns a React Flow compatible graph showing all function calls
     reachable from the entry point up to max_depth levels.
 
-    Supports both Python (.py) and C++ (.cpp, .c, .hpp, .h) files.
+    Supports Python (.py), C++ (.cpp, .c, .hpp, .h), and TypeScript/JavaScript files.
 
     Args:
-        file_path: Path to source file (Python or C++)
+        file_path: Path to source file (Python, C++, TypeScript, or JavaScript)
         function: Name of function/method to analyze
         max_depth: Maximum depth to follow calls (default: 5)
         class_name: Class name if analyzing a method (optional)
@@ -293,9 +309,12 @@ async def get_call_flow(
     if suffix in PYTHON_EXTENSIONS:
         extractor = _get_python_extractor()
         lang_name = "Python"
-    else:
+    elif suffix in CPP_EXTENSIONS:
         extractor = _get_cpp_extractor()
         lang_name = "C++"
+    else:
+        extractor = _get_ts_extractor()
+        lang_name = "TypeScript/JavaScript"
 
     if not extractor.is_available():
         raise HTTPException(
