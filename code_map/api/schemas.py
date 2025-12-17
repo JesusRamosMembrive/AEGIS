@@ -770,6 +770,112 @@ class InstanceGraphResponse(BaseModel):
 
 
 # -----------------------------------------------------------------------------
+# Call Flow Schemas
+# -----------------------------------------------------------------------------
+
+
+class CallFlowNodeSchema(BaseModel):
+    """
+    A node in the call flow graph representing a function or method.
+
+    Attributes:
+        id: Unique node identifier
+        name: Function/method name
+        qualified_name: Full name including class (e.g., "MainWindow.on_click")
+        file_path: Path to source file
+        line: Line number of definition
+        kind: Type: function, method, external, builtin
+        is_entry_point: True if this is the starting node
+        depth: Distance from entry point
+        docstring: First line of docstring
+    """
+
+    id: str
+    name: str
+    qualified_name: str
+    file_path: Optional[str] = None
+    line: int = 0
+    kind: str = "function"
+    is_entry_point: bool = False
+    depth: int = 0
+    docstring: Optional[str] = None
+
+
+class CallFlowEdgeSchema(BaseModel):
+    """
+    An edge representing a function call.
+
+    Attributes:
+        id: Unique edge identifier
+        source: Source node ID (caller)
+        target: Target node ID (callee)
+        call_site_line: Line where the call occurs
+        call_type: Type of call: direct, method, super, static
+    """
+
+    id: str
+    source: str
+    target: str
+    call_site_line: int
+    call_type: str = "direct"
+
+
+class CallFlowReactFlowNodeSchema(BaseModel):
+    """React Flow formatted node for call flow visualization."""
+
+    id: str
+    type: str = "callNode"
+    position: Dict[str, float]
+    data: Dict[str, Any]
+
+
+class CallFlowReactFlowEdgeSchema(BaseModel):
+    """React Flow formatted edge for call flow visualization."""
+
+    id: str
+    source: str
+    target: str
+    type: str = "smoothstep"
+    animated: bool = False
+    data: Optional[Dict[str, Any]] = None
+
+
+class CallFlowResponse(BaseModel):
+    """
+    Complete call flow graph response for React Flow visualization.
+
+    Attributes:
+        nodes: List of nodes formatted for React Flow
+        edges: List of edges formatted for React Flow
+        metadata: Graph metadata
+    """
+
+    nodes: List[CallFlowReactFlowNodeSchema] = Field(default_factory=list)
+    edges: List[CallFlowReactFlowEdgeSchema] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Graph metadata: entry_point, max_depth, external_calls",
+    )
+
+
+class CallFlowEntryPointSchema(BaseModel):
+    """An entry point (function/method) that can be used as call flow start."""
+
+    name: str
+    qualified_name: str
+    line: int
+    kind: str  # function, method, class
+    class_name: Optional[str] = None
+
+
+class CallFlowEntryPointsResponse(BaseModel):
+    """List of available entry points in a file."""
+
+    file_path: str
+    entry_points: List[CallFlowEntryPointSchema] = Field(default_factory=list)
+
+
+# -----------------------------------------------------------------------------
 # Audit Schemas
 # -----------------------------------------------------------------------------
 
