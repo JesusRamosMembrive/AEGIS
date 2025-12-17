@@ -13,8 +13,10 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import PlainTextResponse
 
 from ..v2.call_flow.extractor import PythonCallFlowExtractor
+from ..v2.call_flow.cpp_extractor import CppCallFlowExtractor
 from .schemas import (
     CallFlowEntryPointSchema,
     CallFlowEntryPointsResponse,
@@ -27,16 +29,140 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/call-flow", tags=["call-flow"])
 
-# Singleton extractor instance
-_extractor: Optional[PythonCallFlowExtractor] = None
+# Singleton extractor instances
+_python_extractor: Optional[PythonCallFlowExtractor] = None
+_cpp_extractor: Optional[CppCallFlowExtractor] = None
+
+# Supported file extensions by language
+PYTHON_EXTENSIONS = {".py"}
+CPP_EXTENSIONS = {".cpp", ".c", ".hpp", ".h", ".cc", ".cxx", ".hxx"}
+SUPPORTED_EXTENSIONS = PYTHON_EXTENSIONS | CPP_EXTENSIONS
+
+
+def _get_python_extractor() -> PythonCallFlowExtractor:
+    """Get or create the Python extractor singleton."""
+    global _python_extractor
+    if _python_extractor is None:
+        _python_extractor = PythonCallFlowExtractor()
+    return _python_extractor
+
+
+def _get_cpp_extractor() -> CppCallFlowExtractor:
+    """Get or create the C++ extractor singleton."""
+    global _cpp_extractor
+    if _cpp_extractor is None:
+        _cpp_extractor = CppCallFlowExtractor()
+    return _cpp_extractor
 
 
 def _get_extractor() -> PythonCallFlowExtractor:
-    """Get or create the extractor singleton."""
-    global _extractor
-    if _extractor is None:
-        _extractor = PythonCallFlowExtractor()
-    return _extractor
+    """Get or create the Python extractor singleton (for backward compatibility)."""
+    return _get_python_extractor()
+
+
+# Maximum file size for source code preview (512 KB)
+MAX_SOURCE_BYTES = 512 * 1024
+
+# Allowed file extensions for source code viewing
+ALLOWED_SOURCE_EXTENSIONS = {".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".c", ".cpp", ".h", ".hpp", ".go", ".rs"}
+
+
+@router.get("/source/{file_path:path}", response_class=PlainTextResponse)
+async def get_source_code(
+    file_path: str,
+    start_line: int = Query(default=1, ge=1, description="Start line number (1-indexed)"),
+    end_line: Optional[int] = Query(default=None, ge=1, description="End line number (optional)"),
+) -> str:
+    """
+    Get source code from a file for call flow node details.
+
+    This endpoint allows reading source files that may be outside the
+    configured AEGIS root, since Call Flow can analyze external projects.
+
+    Security:
+    - Only allows reading files with code extensions (.py, .js, etc.)
+    - File size limited to 512 KB
+    - Read-only operation
+
+    Args:
+        file_path: Absolute path to the source file
+        start_line: Start line number (1-indexed, default: 1)
+        end_line: End line number (optional, reads to end if not specified)
+
+    Returns:
+        Plain text source code content
+    """
+    path = Path(file_path)
+
+    if not path.is_absolute():
+        path = Path("/") / path
+
+    # Security: Only allow code file extensions
+    if path.suffix.lower() not in ALLOWED_SOURCE_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type not allowed for source viewing: {path.suffix}. "
+            f"Allowed: {', '.join(sorted(ALLOWED_SOURCE_EXTENSIONS))}",
+        )
+
+    if not path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"File not found: {path}",
+        )
+
+    if not path.is_file():
+        raise HTTPException(
+            status_code=400,
+            detail=f"Path is not a file: {path}",
+        )
+
+    # Security: Check file size
+    try:
+        file_size = path.stat().st_size
+        if file_size > MAX_SOURCE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large: {file_size} bytes (max: {MAX_SOURCE_BYTES} bytes)",
+            )
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to read file stats: {exc}",
+        )
+
+    # Read file content
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except UnicodeDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="File is not valid UTF-8 text",
+        )
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to read file: {exc}",
+        )
+
+    # Extract requested line range
+    total_lines = len(lines)
+    start_idx = start_line - 1  # Convert to 0-indexed
+
+    if start_idx >= total_lines:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Start line {start_line} exceeds file length ({total_lines} lines)",
+        )
+
+    if end_line is not None:
+        end_idx = min(end_line, total_lines)
+        selected_lines = lines[start_idx:end_idx]
+    else:
+        selected_lines = lines[start_idx:]
+
+    return "".join(selected_lines)
 
 
 @router.get("/entry-points/{file_path:path}", response_model=CallFlowEntryPointsResponse)
@@ -47,9 +173,10 @@ async def list_entry_points(
     List available entry points (functions/methods) in a file.
 
     These can be used as starting points for call flow analysis.
+    Supports Python (.py) and C++ (.cpp, .c, .hpp, .h) files.
 
     Args:
-        file_path: Path to Python file
+        file_path: Path to source file (Python or C++)
 
     Returns:
         List of entry points with name, qualified_name, line, and kind
@@ -71,18 +198,27 @@ async def list_entry_points(
             detail=f"Path is not a file: {path}",
         )
 
-    if path.suffix != ".py":
+    suffix = path.suffix.lower()
+    if suffix not in SUPPORTED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Only Python files are supported. Got: {path.suffix}",
+            detail=f"Unsupported file type: {path.suffix}. "
+            f"Supported: {', '.join(sorted(SUPPORTED_EXTENSIONS))}",
         )
 
-    extractor = _get_extractor()
+    # Select appropriate extractor based on file type
+    if suffix in PYTHON_EXTENSIONS:
+        extractor = _get_python_extractor()
+        lang_name = "Python"
+    else:
+        extractor = _get_cpp_extractor()
+        lang_name = "C++"
 
     if not extractor.is_available():
         raise HTTPException(
             status_code=503,
-            detail="tree-sitter not available. Install tree_sitter and tree_sitter_languages packages.",
+            detail=f"tree-sitter for {lang_name} not available. "
+            "Install tree_sitter and tree_sitter_languages packages.",
         )
 
     entry_points = extractor.list_entry_points(path)
@@ -115,8 +251,12 @@ async def get_call_flow(
     Returns a React Flow compatible graph showing all function calls
     reachable from the entry point up to max_depth levels.
 
+    Currently supports full call flow analysis for Python files.
+    C++ files are listed in entry-points but full call flow analysis
+    is not yet implemented.
+
     Args:
-        file_path: Path to Python file
+        file_path: Path to source file (Python supported, C++ entry-points only)
         function: Name of function/method to analyze
         max_depth: Maximum depth to follow calls (default: 5)
         class_name: Class name if analyzing a method (optional)
@@ -141,10 +281,21 @@ async def get_call_flow(
             detail=f"Path is not a file: {path}",
         )
 
-    if path.suffix != ".py":
+    suffix = path.suffix.lower()
+
+    # C++ call flow analysis is not yet implemented
+    if suffix in CPP_EXTENSIONS:
+        raise HTTPException(
+            status_code=501,
+            detail=f"Full call flow analysis for C++ files is not yet implemented. "
+            f"Use /entry-points/ endpoint to list functions in C++ files.",
+        )
+
+    if suffix not in PYTHON_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Only Python files are supported. Got: {path.suffix}",
+            detail=f"Unsupported file type: {path.suffix}. "
+            f"Call flow analysis currently supports: {', '.join(sorted(PYTHON_EXTENSIONS))}",
         )
 
     extractor = _get_extractor()

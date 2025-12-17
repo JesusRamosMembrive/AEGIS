@@ -18,8 +18,19 @@ export function FileBrowserModal({
   onSelect,
 }: FileBrowserModalProps): JSX.Element | null {
   const getInitialPath = (path: string | undefined): string => {
-    if (path && path.length > 1) return path;
-    return "/home";
+    if (!path || path.length <= 1) return "/home";
+
+    // If path looks like a file (has an extension), extract parent directory
+    const lastSlashIdx = path.lastIndexOf("/");
+    const filename = lastSlashIdx >= 0 ? path.slice(lastSlashIdx + 1) : path;
+
+    // Check if it looks like a file (contains a dot after the last slash)
+    if (filename.includes(".")) {
+      // Return parent directory
+      return lastSlashIdx > 0 ? path.slice(0, lastSlashIdx) : "/";
+    }
+
+    return path;
   };
 
   const initialPath = getInitialPath(currentPath);
@@ -57,11 +68,19 @@ export function FileBrowserModal({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const getFileIcon = (extension: string): string => {
+    const ext = extension.toLowerCase();
+    if (ext === ".py") return "🐍";
+    if ([".cpp", ".c", ".hpp", ".h"].includes(ext)) return "⚙️";
+    if ([".js", ".jsx", ".ts", ".tsx"].includes(ext)) return "📜";
+    return "📄";
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "600px" }}>
         <div className="modal-header">
-          <h2>Select Python File</h2>
+          <h2>Select Source File</h2>
           <button className="modal-close-btn" onClick={onClose} aria-label="Close">
             &times;
           </button>
@@ -124,7 +143,7 @@ export function FileBrowserModal({
                           marginBottom: "2px",
                         }}
                       >
-                        <span className="directory-icon">🐍</span>
+                        <span className="directory-icon">{getFileIcon(file.extension)}</span>
                         <span className="directory-name" style={{ flex: 1 }}>{file.name}</span>
                         <span style={{ fontSize: "11px", color: "#64748b", marginLeft: "8px" }}>
                           {formatSize(file.size_bytes)}
@@ -137,7 +156,7 @@ export function FileBrowserModal({
                 {data.directories.length === 0 && data.files.length === 0 && (
                   <div className="directory-empty">
                     <span>📂</span>
-                    <span>No Python files found in this directory</span>
+                    <span>No source files found in this directory</span>
                   </div>
                 )}
               </div>

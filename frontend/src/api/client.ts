@@ -975,3 +975,43 @@ export function getCallFlow(
     `/call-flow/${encodeURIComponent(filePath)}?${params.toString()}`
   );
 }
+
+/**
+ * Get source code from a file for call flow node details.
+ *
+ * This endpoint allows reading files outside the AEGIS root since
+ * Call Flow can analyze external projects.
+ *
+ * Args:
+ *     filePath: Absolute path to the source file
+ *     startLine: Start line number (1-indexed, default: 1)
+ *     endLine: End line number (optional)
+ *
+ * Returns:
+ *     Promise with plain text source code content
+ *
+ * Notes:
+ *     - Endpoint: GET /api/call-flow/source/{filePath}
+ *     - Only allows code file extensions (.py, .js, .ts, etc.)
+ *     - File size limited to 512 KB
+ */
+export async function getCallFlowSource(
+  filePath: string,
+  startLine = 1,
+  endLine?: number
+): Promise<string> {
+  const params = new URLSearchParams({
+    start_line: String(startLine),
+  });
+  if (endLine !== undefined) {
+    params.set("end_line", String(endLine));
+  }
+  const response = await fetch(
+    buildUrl(`/call-flow/source/${encodeURIComponent(filePath)}?${params.toString()}`)
+  );
+  if (!response.ok) {
+    const detail = await response.text().catch(() => response.statusText);
+    throw new Error(`Source code request failed (${response.status}): ${detail || "Unknown error"}`);
+  }
+  return response.text();
+}

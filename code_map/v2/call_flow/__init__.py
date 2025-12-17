@@ -2,7 +2,7 @@
 """
 Call Flow Graph extraction and visualization (v2).
 
-Extracts function call chains from Python source code to visualize
+Extracts function call chains from Python and C++ source code to visualize
 execution flows in GUI applications and event-driven systems.
 
 Key features in v2:
@@ -11,6 +11,7 @@ Key features in v2:
 - Proper classification of external calls (builtin vs stdlib vs third-party)
 - Per-branch cycle detection
 - Type inference for obj.method() resolution
+- Multi-language support (Python, C++)
 """
 
 from .models import (
@@ -21,6 +22,7 @@ from .models import (
     ResolutionStatus,
 )
 from .type_resolver import TypeResolver, TypeInfo, ScopeInfo
+from .cpp_extractor import CppCallFlowExtractor
 
 __all__ = [
     "CallNode",
@@ -31,4 +33,5 @@ __all__ = [
     "TypeResolver",
     "TypeInfo",
     "ScopeInfo",
+    "CppCallFlowExtractor",
 ]

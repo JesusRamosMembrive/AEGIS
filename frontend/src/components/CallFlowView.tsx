@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import { useCallFlowEntryPointsQuery, useCallFlowQuery } from "../hooks/useCallFlowQuery";
 import { CallFlowGraph } from "./call-flow/CallFlowGraph";
 import { FileBrowserModal } from "./settings/FileBrowserModal";
+import { getCallFlowSource } from "../api/client";
 import type { CallFlowEntryPoint } from "../api/types";
 
 export function CallFlowView(): JSX.Element {
@@ -13,6 +14,9 @@ export function CallFlowView(): JSX.Element {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [isBrowseModalOpen, setIsBrowseModalOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [nodeSourceCode, setNodeSourceCode] = useState<string | null>(null);
+  const [sourceCodeLoading, setSourceCodeLoading] = useState(false);
 
   // Query entry points when file is selected
   const entryPointsQuery = useCallFlowEntryPointsQuery({
@@ -74,6 +78,68 @@ export function CallFlowView(): JSX.Element {
     return { functions, methods };
   }, [entryPoints]);
 
+  // Load source code when a node is selected
+  useEffect(() => {
+    const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+    const nodeFilePath = selectedNode?.data.filePath;
+    const nodeLine = selectedNode?.data.line;
+
+    if (!nodeFilePath || !nodeLine) {
+      setNodeSourceCode(null);
+      return;
+    }
+
+    const loadSourceCode = async () => {
+      setSourceCodeLoading(true);
+      try {
+        // First, get a chunk of code starting from the function line
+        const startLine = nodeLine;
+        const maxLinesToFetch = 60; // Fetch extra to determine function boundaries
+
+        const content = await getCallFlowSource(
+          nodeFilePath,
+          startLine,
+          startLine + maxLinesToFetch
+        );
+
+        const lines = content.split("\n");
+
+        // Find the function end by looking for the next function/class definition
+        // or end of file
+        let endIdx = lines.length;
+        const indent = lines[0]?.match(/^(\s*)/)?.[1]?.length ?? 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line) continue;
+
+          // Check if we hit a new definition at same or lower indent level
+          const lineIndent = line.match(/^(\s*)/)?.[1]?.length ?? 0;
+          const isDefinition = /^\s*(def |class |async def )/.test(line);
+
+          if (isDefinition && lineIndent <= indent) {
+            endIdx = i;
+            break;
+          }
+        }
+
+        // Limit to 40 lines max for display
+        const maxDisplayLines = 40;
+        const actualEndIdx = Math.min(endIdx, maxDisplayLines);
+        const codeLines = lines.slice(0, actualEndIdx);
+
+        setNodeSourceCode(codeLines.join("\n"));
+      } catch (err) {
+        console.error("Failed to load source code:", err);
+        setNodeSourceCode(null);
+      } finally {
+        setSourceCodeLoading(false);
+      }
+    };
+
+    loadSourceCode();
+  }, [selectedNodeId, nodes]);
+
   return (
     <div
       style={{
@@ -95,14 +161,14 @@ export function CallFlowView(): JSX.Element {
       >
         <form onSubmit={handleFileSubmit} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <label htmlFor="file-path" style={{ fontSize: "14px", fontWeight: 500 }}>
-            Python File:
+            Source File:
           </label>
           <input
             id="file-path"
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="/path/to/file.py"
+            placeholder="/path/to/file.py or .cpp"
             style={{
               flex: 1,
               padding: "8px 12px",
@@ -234,21 +300,55 @@ export function CallFlowView(): JSX.Element {
         {filePath && entryPoints.length > 0 && (
           <div
             style={{
-              width: "280px",
+              width: sidebarCollapsed ? "48px" : "280px",
               borderRight: "1px solid #334155",
               backgroundColor: "#1e293b",
               overflow: "auto",
+              transition: "width 0.2s ease-in-out",
+              flexShrink: 0,
             }}
           >
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #334155" }}>
-              <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600 }}>Entry Points</h3>
-              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#94a3b8" }}>
-                Select a function to visualize
-              </p>
+            <div style={{
+              padding: sidebarCollapsed ? "12px 8px" : "12px 16px",
+              borderBottom: "1px solid #334155",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: sidebarCollapsed ? "center" : "space-between",
+              gap: "8px",
+            }}>
+              {!sidebarCollapsed && (
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600 }}>Entry Points</h3>
+                  <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#94a3b8" }}>
+                    Select a function to visualize
+                  </p>
+                </div>
+              )}
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "#94a3b8",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  padding: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "4px",
+                  transition: "background-color 0.15s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#334155")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
+                {sidebarCollapsed ? "»" : "«"}
+              </button>
             </div>
 
-            {/* Functions */}
-            {groupedEntryPoints.functions.length > 0 && (
+            {/* Functions - hidden when collapsed */}
+            {!sidebarCollapsed && groupedEntryPoints.functions.length > 0 && (
               <div style={{ padding: "8px 0" }}>
                 <div style={{ padding: "4px 16px", fontSize: "11px", color: "#64748b", textTransform: "uppercase" }}>
                   Functions
@@ -276,8 +376,8 @@ export function CallFlowView(): JSX.Element {
               </div>
             )}
 
-            {/* Methods by class */}
-            {Array.from(groupedEntryPoints.methods.entries()).map(([className, methods]) => (
+            {/* Methods by class - hidden when collapsed */}
+            {!sidebarCollapsed && Array.from(groupedEntryPoints.methods.entries()).map(([className, methods]) => (
               <div key={className} style={{ padding: "8px 0" }}>
                 <div style={{ padding: "4px 16px", fontSize: "11px", color: "#a855f7", textTransform: "uppercase" }}>
                   {className}
@@ -304,6 +404,22 @@ export function CallFlowView(): JSX.Element {
                 ))}
               </div>
             ))}
+
+            {/* Collapsed indicator - shows entry point count */}
+            {sidebarCollapsed && (
+              <div
+                style={{
+                  padding: "12px 8px",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontSize: "11px",
+                }}
+                title={`${entryPoints.length} entry points`}
+              >
+                <div style={{ fontSize: "16px", marginBottom: "4px" }}>📋</div>
+                <div>{entryPoints.length}</div>
+              </div>
+            )}
           </div>
         )}
 
@@ -372,10 +488,10 @@ export function CallFlowView(): JSX.Element {
             >
               <div style={{ fontSize: "24px" }}>🔄</div>
               <div style={{ fontSize: "16px", color: "#94a3b8" }}>
-                Enter a Python file path to analyze call flows
+                Enter a source file path to analyze call flows
               </div>
               <div style={{ fontSize: "14px", color: "#64748b" }}>
-                Select an entry point to see the function call chain
+                Supports Python (.py) and C++ (.cpp, .hpp, .c, .h) files
               </div>
             </div>
           )}
@@ -413,7 +529,7 @@ export function CallFlowView(): JSX.Element {
                 No functions found in this file
               </div>
               <div style={{ fontSize: "14px", color: "#94a3b8" }}>
-                Make sure the file contains Python function definitions
+                Make sure the file contains function definitions (Python or C++)
               </div>
             </div>
           )}
@@ -434,7 +550,7 @@ export function CallFlowView(): JSX.Element {
         {selectedNodeId && nodes.length > 0 && (
           <div
             style={{
-              width: "300px",
+              width: "400px",
               borderLeft: "1px solid #334155",
               backgroundColor: "#1e293b",
               padding: "16px",
@@ -489,6 +605,53 @@ export function CallFlowView(): JSX.Element {
                       </div>
                     </div>
                   )}
+
+                  {/* Source Code Section */}
+                  {node.data.filePath && (
+                    <div style={{ marginTop: "8px" }}>
+                      <div style={{
+                        fontSize: "11px",
+                        color: "#64748b",
+                        textTransform: "uppercase",
+                        marginBottom: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}>
+                        Source Code
+                        {sourceCodeLoading && (
+                          <span style={{ color: "#94a3b8", fontWeight: "normal", textTransform: "none" }}>
+                            Loading...
+                          </span>
+                        )}
+                      </div>
+                      {nodeSourceCode && !sourceCodeLoading && (
+                        <pre
+                          style={{
+                            margin: 0,
+                            padding: "12px",
+                            backgroundColor: "#0f172a",
+                            borderRadius: "6px",
+                            border: "1px solid #334155",
+                            fontSize: "11px",
+                            fontFamily: "'Fira Code', 'Consolas', monospace",
+                            lineHeight: "1.5",
+                            overflow: "auto",
+                            maxHeight: "300px",
+                            whiteSpace: "pre",
+                            color: "#e2e8f0",
+                          }}
+                        >
+                          <code>{nodeSourceCode}</code>
+                        </pre>
+                      )}
+                      {!nodeSourceCode && !sourceCodeLoading && (
+                        <div style={{ fontSize: "12px", color: "#64748b", fontStyle: "italic" }}>
+                          Could not load source code
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -500,7 +663,7 @@ export function CallFlowView(): JSX.Element {
       <FileBrowserModal
         isOpen={isBrowseModalOpen}
         currentPath={inputValue || "/home"}
-        extensions=".py"
+        extensions=".py,.cpp,.hpp,.c,.h"
         onClose={() => setIsBrowseModalOpen(false)}
         onSelect={handleBrowseSelect}
       />
