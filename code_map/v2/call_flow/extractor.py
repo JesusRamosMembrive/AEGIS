@@ -1145,6 +1145,22 @@ class PythonCallFlowExtractor:
 
         return None
 
+    def _count_calls_in_node(self, node: Any) -> int:
+        """
+        Count function/method calls within an AST node.
+
+        Args:
+            node: AST node (typically a function_definition)
+
+        Returns:
+            Number of call expressions found in the node
+        """
+        count = 0
+        for child in self._walk_tree(node):
+            if child.type == "call":
+                count += 1
+        return count
+
     def list_entry_points(self, file_path: Path) -> List[Dict[str, Any]]:
         """
         List all functions and methods in a file that could be entry points.
@@ -1153,7 +1169,7 @@ class PythonCallFlowExtractor:
             file_path: Path to Python file
 
         Returns:
-            List of entry point info with name, qualified_name, line, kind
+            List of entry point info with name, qualified_name, line, kind, node_count
         """
         if not self._ensure_parser():
             return []
@@ -1186,24 +1202,38 @@ class PythonCallFlowExtractor:
                         qualified_name = func_name
                         kind = "function"
 
+                    # Count calls within this function
+                    call_count = self._count_calls_in_node(node)
+
                     entry_points.append({
                         "name": func_name,
                         "qualified_name": qualified_name,
                         "line": node.start_point[0] + 1,
                         "kind": kind,
                         "class_name": class_name,
+                        "node_count": call_count,
                     })
 
             elif node.type == "class_definition":
                 # Include class itself as potential entry point
                 class_name = self._get_class_name(node)
                 if class_name and not class_name.startswith("_"):
+                    # Count calls in __init__ method if present
+                    init_calls = 0
+                    for child in self._walk_tree(node):
+                        if child.type == "function_definition":
+                            init_name = self._get_function_name(child)
+                            if init_name == "__init__":
+                                init_calls = self._count_calls_in_node(child)
+                                break
+
                     entry_points.append({
                         "name": class_name,
                         "qualified_name": class_name,
                         "line": node.start_point[0] + 1,
                         "kind": "class",
                         "class_name": None,
+                        "node_count": init_calls,
                     })
 
         return entry_points

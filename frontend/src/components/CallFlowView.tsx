@@ -1,16 +1,29 @@
 import { useState, useMemo, useEffect } from "react";
 
 import { useCallFlowEntryPointsQuery, useCallFlowQuery } from "../hooks/useCallFlowQuery";
+import { useSettingsQuery } from "../hooks/useSettingsQuery";
 import { CallFlowGraph } from "./call-flow/CallFlowGraph";
 import { FileBrowserModal } from "./settings/FileBrowserModal";
 import { getCallFlowSource } from "../api/client";
 import type { CallFlowEntryPoint } from "../api/types";
 
 export function CallFlowView(): JSX.Element {
+  // Get project root from settings
+  const settingsQuery = useSettingsQuery();
+  const projectRoot = settingsQuery.data?.absolute_root || "";
+
   const [filePath, setFilePath] = useState("");
   const [inputValue, setInputValue] = useState("");
+
+  // Initialize inputValue with project root when settings load
+  useEffect(() => {
+    if (projectRoot && !inputValue) {
+      setInputValue(projectRoot);
+    }
+  }, [projectRoot, inputValue]);
   const [selectedFunction, setSelectedFunction] = useState<CallFlowEntryPoint | null>(null);
   const [maxDepth, setMaxDepth] = useState(5);
+  const [minCalls, setMinCalls] = useState(0);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [isBrowseModalOpen, setIsBrowseModalOpen] = useState(false);
@@ -60,12 +73,23 @@ export function CallFlowView(): JSX.Element {
 
   const entryPoints = entryPointsQuery.data?.entry_points || [];
 
+  // Calculate max node_count for slider range
+  const maxNodeCount = useMemo(() => {
+    return Math.max(0, ...entryPoints.map((ep) => ep.node_count ?? 0));
+  }, [entryPoints]);
+
+  // Filter entry points by minimum calls
+  const filteredEntryPoints = useMemo(() => {
+    if (minCalls === 0) return entryPoints;
+    return entryPoints.filter((ep) => (ep.node_count ?? 0) >= minCalls);
+  }, [entryPoints, minCalls]);
+
   // Group entry points by class
   const groupedEntryPoints = useMemo(() => {
     const functions: CallFlowEntryPoint[] = [];
     const methods: Map<string, CallFlowEntryPoint[]> = new Map();
 
-    for (const ep of entryPoints) {
+    for (const ep of filteredEntryPoints) {
       if (ep.class_name) {
         const existing = methods.get(ep.class_name) || [];
         existing.push(ep);
@@ -76,7 +100,7 @@ export function CallFlowView(): JSX.Element {
     }
 
     return { functions, methods };
-  }, [entryPoints]);
+  }, [filteredEntryPoints]);
 
   // Load source code when a node is selected
   useEffect(() => {
@@ -214,22 +238,47 @@ export function CallFlowView(): JSX.Element {
           </button>
         </form>
 
-        {/* Depth Control */}
-        {selectedFunction && (
-          <div style={{ marginTop: "12px", display: "flex", gap: "12px", alignItems: "center" }}>
-            <label htmlFor="max-depth" style={{ fontSize: "14px", fontWeight: 500 }}>
-              Max Depth:
-            </label>
-            <input
-              id="max-depth"
-              type="range"
-              min={1}
-              max={10}
-              value={maxDepth}
-              onChange={(e) => setMaxDepth(Number(e.target.value))}
-              style={{ width: "120px" }}
-            />
-            <span style={{ fontSize: "14px", color: "#94a3b8", minWidth: "24px" }}>{maxDepth}</span>
+        {/* Controls Row */}
+        {filePath && entryPoints.length > 0 && (
+          <div style={{ marginTop: "12px", display: "flex", gap: "24px", alignItems: "center", flexWrap: "wrap" }}>
+            {/* Max Depth Slider */}
+            {selectedFunction && (
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <label htmlFor="max-depth" style={{ fontSize: "14px", fontWeight: 500 }}>
+                  Max Depth:
+                </label>
+                <input
+                  id="max-depth"
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={maxDepth}
+                  onChange={(e) => setMaxDepth(Number(e.target.value))}
+                  style={{ width: "120px" }}
+                />
+                <span style={{ fontSize: "14px", color: "#94a3b8", minWidth: "24px" }}>{maxDepth}</span>
+              </div>
+            )}
+
+            {/* Min Calls Slider */}
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <label htmlFor="min-calls" style={{ fontSize: "14px", fontWeight: 500 }}>
+                Min Calls:
+              </label>
+              <input
+                id="min-calls"
+                type="range"
+                min={0}
+                max={Math.max(maxNodeCount, 10)}
+                value={minCalls}
+                onChange={(e) => setMinCalls(Number(e.target.value))}
+                style={{ width: "120px" }}
+              />
+              <span style={{ fontSize: "14px", color: "#94a3b8", minWidth: "24px" }}>{minCalls}</span>
+              <span style={{ fontSize: "12px", color: "#64748b" }}>
+                ({filteredEntryPoints.length}/{entryPoints.length} shown)
+              </span>
+            </div>
           </div>
         )}
 
@@ -369,7 +418,24 @@ export function CallFlowView(): JSX.Element {
                       fontSize: "13px",
                     }}
                   >
-                    <div style={{ fontWeight: 500 }}>{ep.name}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontWeight: 500 }}>{ep.name}</span>
+                      {ep.node_count != null && ep.node_count > 0 && (
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            padding: "2px 6px",
+                            borderRadius: "10px",
+                            backgroundColor: ep.node_count > 10 ? "#dc2626" : ep.node_count > 5 ? "#f59e0b" : "#3b82f6",
+                            color: "#fff",
+                            fontWeight: 600,
+                          }}
+                          title={`${ep.node_count} calls in this function`}
+                        >
+                          {ep.node_count}
+                        </span>
+                      )}
+                    </div>
                     <div style={{ fontSize: "11px", color: "#64748b" }}>Line {ep.line}</div>
                   </button>
                 ))}
@@ -398,7 +464,24 @@ export function CallFlowView(): JSX.Element {
                       fontSize: "13px",
                     }}
                   >
-                    <div style={{ fontWeight: 500 }}>{ep.name}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontWeight: 500 }}>{ep.name}</span>
+                      {ep.node_count != null && ep.node_count > 0 && (
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            padding: "2px 6px",
+                            borderRadius: "10px",
+                            backgroundColor: ep.node_count > 10 ? "#dc2626" : ep.node_count > 5 ? "#f59e0b" : "#3b82f6",
+                            color: "#fff",
+                            fontWeight: 600,
+                          }}
+                          title={`${ep.node_count} calls in this method`}
+                        >
+                          {ep.node_count}
+                        </span>
+                      )}
+                    </div>
                     <div style={{ fontSize: "11px", color: "#64748b" }}>Line {ep.line}</div>
                   </button>
                 ))}
@@ -414,10 +497,10 @@ export function CallFlowView(): JSX.Element {
                   color: "#64748b",
                   fontSize: "11px",
                 }}
-                title={`${entryPoints.length} entry points`}
+                title={`${filteredEntryPoints.length}/${entryPoints.length} entry points`}
               >
                 <div style={{ fontSize: "16px", marginBottom: "4px" }}>📋</div>
-                <div>{entryPoints.length}</div>
+                <div>{filteredEntryPoints.length}</div>
               </div>
             )}
           </div>

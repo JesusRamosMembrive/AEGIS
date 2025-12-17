@@ -871,6 +871,7 @@ class CallFlowEntryPointSchema(BaseModel):
     line: int
     kind: str  # function, method, class
     class_name: Optional[str] = None
+    node_count: Optional[int] = None  # Estimated number of nodes in call graph
 
 
 class CallFlowEntryPointsResponse(BaseModel):

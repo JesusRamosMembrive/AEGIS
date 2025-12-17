@@ -231,6 +231,22 @@ class CppCallFlowExtractor:
             return False  # Always include main
         return False
 
+    def _count_calls_in_node(self, node: Any) -> int:
+        """
+        Count function/method calls within an AST node.
+
+        Args:
+            node: AST node (typically a function_definition)
+
+        Returns:
+            Number of call expressions found in the node
+        """
+        count = 0
+        for child in self._walk_tree(node):
+            if child.type == "call_expression":
+                count += 1
+        return count
+
     def list_entry_points(self, file_path: Path) -> List[Dict[str, Any]]:
         """
         List all functions and methods in a C++ file that could be entry points.
@@ -239,7 +255,7 @@ class CppCallFlowExtractor:
             file_path: Path to C++ file
 
         Returns:
-            List of entry point info with name, qualified_name, line, kind
+            List of entry point info with name, qualified_name, line, kind, node_count
         """
         if not self._ensure_parser():
             return []
@@ -276,12 +292,16 @@ class CppCallFlowExtractor:
                 if is_template:
                     kind = f"template_{kind}"
 
+                # Count calls within this function
+                call_count = self._count_calls_in_node(node)
+
                 entry_points.append({
                     "name": func_name,
                     "qualified_name": qualified_name,
                     "line": node.start_point[0] + 1,
                     "kind": kind,
                     "class_name": class_name,
+                    "node_count": call_count,
                 })
 
         return entry_points

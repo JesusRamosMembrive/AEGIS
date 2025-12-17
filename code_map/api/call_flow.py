@@ -232,6 +232,7 @@ async def list_entry_points(
                 line=ep["line"],
                 kind=ep["kind"],
                 class_name=ep.get("class_name"),
+                node_count=ep.get("node_count"),
             )
             for ep in entry_points
         ],

@@ -619,6 +619,7 @@ export interface CallFlowEntryPoint {
   line: number;
   kind: string;  // "function" | "method" | "class"
   class_name?: string | null;
+  node_count?: number | null;  // Number of calls in this function
 }
 
 export interface CallFlowEntryPointsResponse {
