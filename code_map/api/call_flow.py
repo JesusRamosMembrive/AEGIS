@@ -251,12 +251,10 @@ async def get_call_flow(
     Returns a React Flow compatible graph showing all function calls
     reachable from the entry point up to max_depth levels.
 
-    Currently supports full call flow analysis for Python files.
-    C++ files are listed in entry-points but full call flow analysis
-    is not yet implemented.
+    Supports both Python (.py) and C++ (.cpp, .c, .hpp, .h) files.
 
     Args:
-        file_path: Path to source file (Python supported, C++ entry-points only)
+        file_path: Path to source file (Python or C++)
         function: Name of function/method to analyze
         max_depth: Maximum depth to follow calls (default: 5)
         class_name: Class name if analyzing a method (optional)
@@ -283,33 +281,32 @@ async def get_call_flow(
 
     suffix = path.suffix.lower()
 
-    # C++ call flow analysis is not yet implemented
-    if suffix in CPP_EXTENSIONS:
-        raise HTTPException(
-            status_code=501,
-            detail=f"Full call flow analysis for C++ files is not yet implemented. "
-            f"Use /entry-points/ endpoint to list functions in C++ files.",
-        )
-
-    if suffix not in PYTHON_EXTENSIONS:
+    if suffix not in SUPPORTED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported file type: {path.suffix}. "
-            f"Call flow analysis currently supports: {', '.join(sorted(PYTHON_EXTENSIONS))}",
+            f"Supported: {', '.join(sorted(SUPPORTED_EXTENSIONS))}",
         )
 
-    extractor = _get_extractor()
+    # Select appropriate extractor
+    if suffix in PYTHON_EXTENSIONS:
+        extractor = _get_python_extractor()
+        lang_name = "Python"
+    else:
+        extractor = _get_cpp_extractor()
+        lang_name = "C++"
 
     if not extractor.is_available():
         raise HTTPException(
             status_code=503,
-            detail="tree-sitter not available. Install tree_sitter and tree_sitter_languages packages.",
+            detail=f"tree-sitter for {lang_name} not available. "
+            "Install tree_sitter and tree_sitter_languages packages.",
         )
 
     # Build the function identifier
     if class_name:
         func_to_find = function
-        logger.info("Extracting call flow for %s.%s in %s", class_name, function, path)
+        logger.info("Extracting call flow for %s::%s in %s", class_name, function, path)
     else:
         func_to_find = function
         logger.info("Extracting call flow for %s in %s", function, path)

@@ -2,22 +2,68 @@
 """
 C++ Call Flow extractor using tree-sitter.
 
-Extracts function definitions from C++ code to build call graphs.
-This is a simplified version that focuses on entry point listing.
-Full call flow analysis for C++ is more complex due to:
-- Header files and forward declarations
-- Namespaces and classes
-- Templates and overloading
-- Multiple translation units
+Extracts function definitions and call graphs from C++ code.
+Supports single-file analysis with function call tracking.
+
+Limitations (by design):
+- Header files: Analyzed independently, not as includes
+- Namespaces: Basic support, not full resolution
+- Templates: Listed as entry points, limited call tracking
+- Multiple translation units: Each file analyzed separately
 """
 
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+from .models import CallEdge, CallGraph, CallNode, IgnoredCall, ResolutionStatus
 
 logger = logging.getLogger(__name__)
+
+
+# Common C++ stdlib functions/types to ignore
+CPP_STDLIB_FUNCTIONS: Set[str] = {
+    # I/O
+    "cout", "cin", "cerr", "clog", "endl", "printf", "scanf", "puts", "gets",
+    "fprintf", "fscanf", "sprintf", "sscanf", "fopen", "fclose", "fread", "fwrite",
+    # Memory
+    "malloc", "calloc", "realloc", "free", "new", "delete",
+    # String
+    "strlen", "strcpy", "strncpy", "strcat", "strcmp", "strncmp", "memcpy", "memset",
+    # Math
+    "abs", "sqrt", "pow", "sin", "cos", "tan", "log", "exp", "floor", "ceil",
+    # STL containers common methods
+    "push_back", "pop_back", "push_front", "pop_front", "begin", "end",
+    "size", "empty", "clear", "insert", "erase", "find", "front", "back",
+    "at", "reserve", "resize", "capacity", "data",
+    # STL algorithms
+    "sort", "find", "count", "copy", "transform", "accumulate",
+    # Utility
+    "swap", "move", "forward", "make_pair", "make_tuple", "get",
+    "make_unique", "make_shared",
+    # Type traits
+    "static_cast", "dynamic_cast", "const_cast", "reinterpret_cast",
+}
+
+# Common C++ stdlib namespaces/prefixes to ignore
+CPP_STDLIB_NAMESPACES: Set[str] = {
+    "std", "boost", "fmt", "spdlog", "nlohmann", "google", "absl",
+}
+
+
+@dataclass
+class CppCallInfo:
+    """Information about a C++ function/method call."""
+
+    name: str  # Function/method name
+    receiver: Optional[str]  # Object (obj in obj.method()) or namespace (ns in ns::func())
+    qualified_name: str  # Full call expression
+    line: int  # Line where call occurs
+    call_type: str  # "direct" | "method" | "static" | "constructor"
+    arguments: List[str]  # Argument expressions
 
 
 class CppCallFlowExtractor:
@@ -244,3 +290,546 @@ class CppCallFlowExtractor:
     def supports_extension(cls, extension: str) -> bool:
         """Check if this extractor supports the given file extension."""
         return extension.lower() in cls.CPP_EXTENSIONS
+
+    # ─────────────────────────────────────────────────────────────
+    # Call Flow Extraction (v2)
+    # ─────────────────────────────────────────────────────────────
+
+    def extract(
+        self,
+        file_path: Path,
+        function_name: str,
+        max_depth: int = 5,
+        project_root: Optional[Path] = None,
+    ) -> Optional[CallGraph]:
+        """
+        Extract call flow graph starting from a function.
+
+        Args:
+            file_path: Path to the C++ source file
+            function_name: Name of the entry point function/method
+            max_depth: Maximum depth to follow calls
+            project_root: Project root for relative paths (default: file's parent)
+
+        Returns:
+            CallGraph containing all reachable calls, or None if extraction fails
+        """
+        if not self._ensure_parser():
+            logger.warning("tree-sitter not available for C++ call flow extraction")
+            return None
+
+        file_path = file_path.resolve()
+        effective_root = project_root or file_path.parent
+
+        try:
+            source = file_path.read_bytes()
+        except OSError as e:
+            logger.error("Failed to read file %s: %s", file_path, e)
+            return None
+
+        tree = self._parser.parse(source)
+
+        # Find the target function
+        func_node, class_name = self._find_function_by_name(
+            tree.root_node, function_name, source
+        )
+        if func_node is None:
+            logger.warning(
+                "Function '%s' not found in %s", function_name, file_path
+            )
+            return None
+
+        # Build qualified name
+        if class_name:
+            qualified_name = f"{class_name}::{function_name}"
+        else:
+            qualified_name = function_name
+
+        # Create entry point node
+        line = func_node.start_point[0] + 1
+        col = func_node.start_point[1]
+        kind = "method" if class_name else "function"
+        entry_id = self._make_symbol_id(file_path, line, col, kind, function_name, effective_root)
+
+        entry_node = CallNode(
+            id=entry_id,
+            name=function_name,
+            qualified_name=qualified_name,
+            file_path=file_path,
+            line=line,
+            column=col,
+            kind=kind,
+            is_entry_point=True,
+            depth=0,
+            symbol_id=entry_id,
+            resolution_status=ResolutionStatus.RESOLVED_PROJECT,
+        )
+
+        # Initialize graph
+        graph = CallGraph(
+            entry_point=entry_id,
+            max_depth=max_depth,
+            source_file=file_path,
+        )
+        graph.add_node(entry_node)
+
+        # Build index of all functions in file for resolution
+        function_index = self._build_function_index(tree.root_node, source, file_path, effective_root)
+
+        # Extract calls recursively
+        call_stack: List[str] = [entry_id]
+        self._extract_calls_recursive(
+            graph=graph,
+            node=func_node,
+            parent_id=entry_id,
+            file_path=file_path,
+            source=source,
+            project_root=effective_root,
+            depth=1,
+            max_depth=max_depth,
+            call_stack=call_stack,
+            class_context=class_name,
+            function_index=function_index,
+        )
+
+        return graph
+
+    def _make_symbol_id(
+        self,
+        file_path: Path,
+        line: int,
+        col: int,
+        kind: str,
+        name: str,
+        root: Path,
+    ) -> str:
+        """Generate a stable symbol ID."""
+        try:
+            rel_path = file_path.relative_to(root)
+        except ValueError:
+            rel_path = file_path
+        return f"{rel_path.as_posix()}:{line}:{col}:{kind}:{name}"
+
+    def _build_function_index(
+        self,
+        root: Any,
+        source: bytes,
+        file_path: Path,
+        project_root: Path,
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Build index of all functions in file for fast lookup.
+
+        Returns:
+            Dict mapping function names to their info (node, line, col, class_name)
+        """
+        index: Dict[str, Dict[str, Any]] = {}
+
+        for node in self._walk_tree(root):
+            if node.type == "function_definition":
+                func_name = self._get_function_name(node, source)
+                if not func_name:
+                    continue
+
+                class_name = self._get_class_context(node, source)
+                line = node.start_point[0] + 1
+                col = node.start_point[1]
+
+                # Use qualified name as key for methods
+                key = f"{class_name}::{func_name}" if class_name else func_name
+
+                index[key] = {
+                    "node": node,
+                    "name": func_name,
+                    "class_name": class_name,
+                    "line": line,
+                    "col": col,
+                    "kind": "method" if class_name else "function",
+                }
+
+                # Also index by simple name for unqualified calls
+                if key != func_name and func_name not in index:
+                    index[func_name] = index[key]
+
+        return index
+
+    def _find_function_by_name(
+        self,
+        root: Any,
+        name: str,
+        source: bytes,
+        class_name: Optional[str] = None,
+    ) -> Tuple[Optional[Any], Optional[str]]:
+        """
+        Find a function definition by name.
+
+        Args:
+            root: AST root node
+            name: Function name to find
+            source: Source bytes
+            class_name: If provided, look for method in this class
+
+        Returns:
+            Tuple of (function_node, class_name) or (None, None)
+        """
+        for node in self._walk_tree(root):
+            if node.type == "function_definition":
+                func_name = self._get_function_name(node, source)
+                if func_name != name:
+                    continue
+
+                found_class = self._get_class_context(node, source)
+
+                # If specific class requested, match it
+                if class_name:
+                    if found_class == class_name:
+                        return (node, found_class)
+                else:
+                    return (node, found_class)
+
+        return (None, None)
+
+    def _extract_calls_recursive(
+        self,
+        graph: CallGraph,
+        node: Any,
+        parent_id: str,
+        file_path: Path,
+        source: bytes,
+        project_root: Path,
+        depth: int,
+        max_depth: int,
+        call_stack: List[str],
+        class_context: Optional[str] = None,
+        function_index: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> None:
+        """
+        Recursively extract calls from a function body.
+
+        Uses per-branch cycle detection via call_stack.
+        """
+        if depth > max_depth:
+            graph.max_depth_reached = True
+            graph.diagnostics["max_depth_reached"] = True
+            return
+
+        # Find function body (compound_statement)
+        body = self._find_child_by_type(node, "compound_statement")
+        if body is None:
+            return
+
+        # Extract all calls in this function
+        calls = self._extract_calls_from_body(body, source)
+
+        for call_info in calls:
+            # Try to resolve the call
+            resolved, status, hint = self._resolve_call(
+                call_info=call_info,
+                file_path=file_path,
+                source=source,
+                project_root=project_root,
+                class_context=class_context,
+                function_index=function_index,
+            )
+
+            # Handle ignored/unresolved calls
+            if status != ResolutionStatus.RESOLVED_PROJECT:
+                ignored_call = IgnoredCall(
+                    expression=call_info.qualified_name,
+                    status=status,
+                    call_site_line=call_info.line,
+                    module_hint=hint,
+                )
+                graph.ignored_calls.append(ignored_call)
+
+                if status == ResolutionStatus.UNRESOLVED:
+                    graph.unresolved_calls.append(call_info.qualified_name)
+                continue
+
+            # Resolved call
+            target_node, target_info = resolved
+            target_id = self._make_symbol_id(
+                file_path,
+                target_info["line"],
+                target_info["col"],
+                target_info["kind"],
+                target_info["name"],
+                project_root,
+            )
+
+            target_class = target_info.get("class_name")
+            if target_class:
+                target_qualified = f"{target_class}::{target_info['name']}"
+            else:
+                target_qualified = target_info["name"]
+
+            # Per-branch cycle detection
+            is_cycle = target_id in call_stack
+            if is_cycle:
+                graph.diagnostics.setdefault("cycles_detected", []).append({
+                    "from": parent_id,
+                    "to": target_id,
+                    "path": list(call_stack),
+                })
+
+            # Add edge
+            edge = CallEdge(
+                source_id=parent_id,
+                target_id=target_id,
+                call_site_line=call_info.line,
+                call_type=call_info.call_type,
+                arguments=call_info.arguments if call_info.arguments else None,
+                expression=call_info.qualified_name,
+                resolution_status=ResolutionStatus.RESOLVED_PROJECT,
+            )
+            graph.add_edge(edge)
+
+            if is_cycle:
+                continue
+
+            # Create node if not exists
+            if graph.get_node(target_id) is None:
+                target_node_obj = CallNode(
+                    id=target_id,
+                    name=target_info["name"],
+                    qualified_name=target_qualified,
+                    file_path=file_path,
+                    line=target_info["line"],
+                    column=target_info["col"],
+                    kind=target_info["kind"],
+                    is_entry_point=False,
+                    depth=depth,
+                    symbol_id=target_id,
+                    resolution_status=ResolutionStatus.RESOLVED_PROJECT,
+                )
+                graph.add_node(target_node_obj)
+
+            # Recurse
+            call_stack.append(target_id)
+            self._extract_calls_recursive(
+                graph=graph,
+                node=target_node,
+                parent_id=target_id,
+                file_path=file_path,
+                source=source,
+                project_root=project_root,
+                depth=depth + 1,
+                max_depth=max_depth,
+                call_stack=call_stack,
+                class_context=target_class,
+                function_index=function_index,
+            )
+            call_stack.pop()
+
+    def _extract_calls_from_body(self, body: Any, source: bytes) -> List[CppCallInfo]:
+        """Extract all function calls from a code block."""
+        calls: List[CppCallInfo] = []
+
+        for node in self._walk_tree(body):
+            if node.type == "call_expression":
+                call_info = self._parse_call(node, source)
+                if call_info:
+                    calls.append(call_info)
+
+        return calls
+
+    def _parse_call(self, node: Any, source: bytes) -> Optional[CppCallInfo]:
+        """
+        Parse a call_expression node to extract call information.
+
+        Handles:
+        - Direct calls: foo()
+        - Method calls: obj.method()
+        - Static/namespace calls: Class::method() or ns::func()
+        - Constructor calls: ClassName()
+        """
+        if node.type != "call_expression":
+            return None
+
+        func_node = node.children[0] if node.children else None
+        if func_node is None:
+            return None
+
+        name = ""
+        receiver = None
+        call_type = "direct"
+
+        if func_node.type == "identifier":
+            # Direct function call: foo()
+            name = self._get_node_text(func_node, source)
+            call_type = "direct"
+
+        elif func_node.type == "field_expression":
+            # Method call: obj.method() or ptr->method()
+            parts = self._parse_field_expression(func_node, source)
+            if parts:
+                receiver = parts[0] if len(parts) > 1 else None
+                name = parts[-1]
+                call_type = "method"
+
+        elif func_node.type == "qualified_identifier":
+            # Static/namespace call: Class::method() or std::cout
+            parts = self._parse_qualified_identifier(func_node, source)
+            if parts:
+                receiver = parts[0] if len(parts) > 1 else None
+                name = parts[-1]
+                call_type = "static"
+
+        elif func_node.type == "template_function":
+            # Template call: func<T>()
+            for child in func_node.children:
+                if child.type == "identifier":
+                    name = self._get_node_text(child, source)
+                    call_type = "direct"
+                    break
+
+        if not name:
+            return None
+
+        # Build qualified name
+        if receiver:
+            if call_type == "static":
+                qualified_name = f"{receiver}::{name}"
+            else:
+                qualified_name = f"{receiver}.{name}"
+        else:
+            qualified_name = name
+
+        # Extract arguments
+        arguments: List[str] = []
+        args_node = self._find_child_by_type(node, "argument_list")
+        if args_node:
+            for child in args_node.children:
+                if child.type not in ("(", ")", ","):
+                    arg_text = self._get_node_text(child, source)
+                    arguments.append(arg_text)
+
+        return CppCallInfo(
+            name=name,
+            receiver=receiver,
+            qualified_name=qualified_name,
+            line=node.start_point[0] + 1,
+            call_type=call_type,
+            arguments=arguments,
+        )
+
+    def _parse_field_expression(self, node: Any, source: bytes) -> List[str]:
+        """Parse field expression like obj.method or ptr->method into parts."""
+        parts: List[str] = []
+
+        def extract(n: Any) -> None:
+            if n.type == "identifier":
+                parts.append(self._get_node_text(n, source))
+            elif n.type == "field_identifier":
+                parts.append(self._get_node_text(n, source))
+            elif n.type == "field_expression":
+                for child in n.children:
+                    if child.type not in (".", "->"):
+                        extract(child)
+            elif n.type == "this":
+                parts.append("this")
+
+        extract(node)
+        return parts
+
+    def _parse_qualified_identifier(self, node: Any, source: bytes) -> List[str]:
+        """Parse qualified identifier like Class::method or ns::func into parts."""
+        parts: List[str] = []
+
+        for child in node.children:
+            if child.type == "identifier":
+                parts.append(self._get_node_text(child, source))
+            elif child.type == "namespace_identifier":
+                parts.append(self._get_node_text(child, source))
+            elif child.type == "template_type":
+                # Handle Class<T>::method
+                for sub in child.children:
+                    if sub.type == "type_identifier":
+                        parts.append(self._get_node_text(sub, source))
+                        break
+            # Skip "::" separator
+
+        return parts
+
+    def _find_child_by_type(self, node: Any, type_name: str) -> Optional[Any]:
+        """Find first direct child of given type."""
+        for child in node.children:
+            if child.type == type_name:
+                return child
+        return None
+
+    def _resolve_call(
+        self,
+        call_info: CppCallInfo,
+        file_path: Path,
+        source: bytes,
+        project_root: Path,
+        class_context: Optional[str] = None,
+        function_index: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> Tuple[
+        Optional[Tuple[Any, Dict[str, Any]]],  # (node, info)
+        ResolutionStatus,
+        Optional[str],  # hint (namespace/class)
+    ]:
+        """
+        Resolve a call to its definition in the same file.
+
+        Args:
+            call_info: Information about the call
+            file_path: Current file
+            source: Source bytes
+            project_root: Project root
+            class_context: Current class name if inside a method
+            function_index: Pre-built index of functions
+
+        Returns:
+            Tuple of:
+            - (node, info_dict) or None
+            - ResolutionStatus
+            - hint string for ignored calls
+        """
+        if function_index is None:
+            function_index = {}
+
+        # Check for stdlib functions
+        if call_info.name in CPP_STDLIB_FUNCTIONS:
+            return (None, ResolutionStatus.IGNORED_STDLIB, call_info.name)
+
+        # Check for stdlib namespace calls
+        if call_info.receiver and call_info.receiver in CPP_STDLIB_NAMESPACES:
+            return (None, ResolutionStatus.IGNORED_STDLIB, call_info.receiver)
+
+        # Case 1: this->method() or implicit this
+        if call_info.receiver == "this" and class_context:
+            qualified_key = f"{class_context}::{call_info.name}"
+            if qualified_key in function_index:
+                info = function_index[qualified_key]
+                return ((info["node"], info), ResolutionStatus.RESOLVED_PROJECT, None)
+            return (None, ResolutionStatus.UNRESOLVED, None)
+
+        # Case 2: Static/namespace call Class::method()
+        if call_info.call_type == "static" and call_info.receiver:
+            qualified_key = f"{call_info.receiver}::{call_info.name}"
+            if qualified_key in function_index:
+                info = function_index[qualified_key]
+                return ((info["node"], info), ResolutionStatus.RESOLVED_PROJECT, None)
+            # Could be stdlib or external
+            return (None, ResolutionStatus.IGNORED_THIRD_PARTY, call_info.receiver)
+
+        # Case 3: Method call on object obj.method()
+        if call_info.call_type == "method":
+            # Can't resolve object type without type inference
+            # Mark as unresolved
+            return (None, ResolutionStatus.UNRESOLVED, None)
+
+        # Case 4: Direct function call
+        if call_info.call_type == "direct":
+            # Try to find in same file
+            if call_info.name in function_index:
+                info = function_index[call_info.name]
+                return ((info["node"], info), ResolutionStatus.RESOLVED_PROJECT, None)
+
+            # Could be from header/external
+            return (None, ResolutionStatus.UNRESOLVED, None)
+
+        return (None, ResolutionStatus.UNRESOLVED, None)
