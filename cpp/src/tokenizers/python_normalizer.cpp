@@ -158,86 +158,128 @@ NormalizedToken PythonNormalizer::parse_string(TokenizerState& state) {
     return tok;
 }
 
+// -----------------------------------------------------------------------------
+// Number parsing helpers (reduce cyclomatic complexity)
+// -----------------------------------------------------------------------------
+
+bool PythonNormalizer::parse_hex_number(TokenizerState& state, std::string& value) {
+    if (state.peek() != '0' || state.eof()) return false;
+    char next = state.peek_next();
+    if (next != 'x' && next != 'X') return false;
+
+    value += state.advance();  // '0'
+    value += state.advance();  // 'x' or 'X'
+    while (!state.eof() && (is_hex_digit(state.peek()) || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+    return true;
+}
+
+bool PythonNormalizer::parse_binary_number(TokenizerState& state, std::string& value) {
+    if (state.peek() != '0' || state.eof()) return false;
+    char next = state.peek_next();
+    if (next != 'b' && next != 'B') return false;
+
+    value += state.advance();  // '0'
+    value += state.advance();  // 'b' or 'B'
+    while (!state.eof() && (state.peek() == '0' || state.peek() == '1' || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+    return true;
+}
+
+bool PythonNormalizer::parse_octal_number(TokenizerState& state, std::string& value) {
+    if (state.peek() != '0' || state.eof()) return false;
+    char next = state.peek_next();
+    if (next != 'o' && next != 'O') return false;
+
+    value += state.advance();  // '0'
+    value += state.advance();  // 'o' or 'O'
+    while (!state.eof() && ((state.peek() >= '0' && state.peek() <= '7') || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+    return true;
+}
+
+void PythonNormalizer::parse_integer_part(TokenizerState& state, std::string& value) {
+    // Handle leading zero without special prefix
+    if (state.peek() == '0') {
+        value += state.advance();
+        return;
+    }
+    // Regular integer digits
+    while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+}
+
+void PythonNormalizer::parse_decimal_part(TokenizerState& state, std::string& value) {
+    if (state.peek() != '.' || !is_digit(state.peek_next())) return;
+
+    value += state.advance();  // '.'
+    while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+}
+
+void PythonNormalizer::parse_exponent_part(TokenizerState& state, std::string& value) {
+    if (state.peek() != 'e' && state.peek() != 'E') return;
+
+    value += state.advance();  // 'e' or 'E'
+    if (state.peek() == '+' || state.peek() == '-') {
+        value += state.advance();
+    }
+    while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+}
+
+void PythonNormalizer::skip_complex_suffix(TokenizerState& state, std::string& value) {
+    if (state.peek() == 'j' || state.peek() == 'J') {
+        value += state.advance();
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Main parse_number (refactored to use helpers)
+// -----------------------------------------------------------------------------
+
 NormalizedToken PythonNormalizer::parse_number(TokenizerState& state) {
     NormalizedToken tok;
     tok.type = TokenType::NUMBER_LITERAL;
     tok.line = state.line;
     tok.column = state.column;
-
     std::string value;
     size_t start_pos = state.pos;
 
-    // Check for hex, binary, octal
-    if (state.peek() == '0' && !state.eof()) {
-        char next = state.peek_next();
-        if (next == 'x' || next == 'X') {
-            // Hex
-            value += state.advance();
-            value += state.advance();
-            while (!state.eof() && (is_hex_digit(state.peek()) || state.peek() == '_')) {
-                if (state.peek() != '_') value += state.peek();
-                state.advance();
-            }
-        } else if (next == 'b' || next == 'B') {
-            // Binary
-            value += state.advance();
-            value += state.advance();
-            while (!state.eof() && (state.peek() == '0' || state.peek() == '1' || state.peek() == '_')) {
-                if (state.peek() != '_') value += state.peek();
-                state.advance();
-            }
-        } else if (next == 'o' || next == 'O') {
-            // Octal
-            value += state.advance();
-            value += state.advance();
-            while (!state.eof() && ((state.peek() >= '0' && state.peek() <= '7') || state.peek() == '_')) {
-                if (state.peek() != '_') value += state.peek();
-                state.advance();
-            }
-        } else {
-            // Regular number starting with 0
-            value += state.advance();
-        }
+    // Try special number formats first (hex, binary, octal)
+    bool is_special = parse_hex_number(state, value) ||
+                      parse_binary_number(state, value) ||
+                      parse_octal_number(state, value);
+
+    // Regular number if no special format matched
+    if (!is_special) {
+        parse_integer_part(state, value);
     }
 
-    // Integer or float part
-    if (value.empty()) {
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
-            if (state.peek() != '_') value += state.peek();
-            state.advance();
-        }
+    // Decimal and exponent parts (only for regular numbers)
+    if (!is_special) {
+        parse_decimal_part(state, value);
+        parse_exponent_part(state, value);
     }
 
-    // Decimal part
-    if (state.peek() == '.' && is_digit(state.peek_next())) {
-        value += state.advance();
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
-            if (state.peek() != '_') value += state.peek();
-            state.advance();
-        }
-    }
-
-    // Exponent part
-    if (state.peek() == 'e' || state.peek() == 'E') {
-        value += state.advance();
-        if (state.peek() == '+' || state.peek() == '-') {
-            value += state.advance();
-        }
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
-            if (state.peek() != '_') value += state.peek();
-            state.advance();
-        }
-    }
-
-    // Complex number suffix
-    if (state.peek() == 'j' || state.peek() == 'J') {
-        value += state.advance();
-    }
+    // Complex number suffix (j/J)
+    skip_complex_suffix(state, value);
 
     tok.length = static_cast<uint16_t>(state.pos - start_pos);
     tok.original_hash = hash_string(value);
     tok.normalized_hash = hash_placeholder(TokenType::NUMBER_LITERAL);
-
     return tok;
 }
 
