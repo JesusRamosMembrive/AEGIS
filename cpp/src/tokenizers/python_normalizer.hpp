@@ -111,6 +111,15 @@ private:
     bool is_digit(char c) const;
     bool is_hex_digit(char c) const;
     bool is_operator_char(char c) const;
+
+    // Number parsing helpers (reduce cyclomatic complexity of parse_number)
+    bool parse_hex_number(TokenizerState& state, std::string& value);
+    bool parse_binary_number(TokenizerState& state, std::string& value);
+    bool parse_octal_number(TokenizerState& state, std::string& value);
+    void parse_integer_part(TokenizerState& state, std::string& value);
+    void parse_decimal_part(TokenizerState& state, std::string& value);
+    void parse_exponent_part(TokenizerState& state, std::string& value);
+    void skip_complex_suffix(TokenizerState& state, std::string& value);
     bool is_docstring_context(const std::vector<NormalizedToken>& tokens) const;
     bool is_import_statement(const TokenizerState& state) const;
     void skip_to_end_of_line(TokenizerState& state);

@@ -430,59 +430,18 @@ NormalizedToken JavaScriptNormalizer::parse_operator(TokenizerState& state) {
     std::string value;
     const size_t start_pos = state.pos;
 
-    // Try to match the longest operator first
-    // Check 4-character operators
-    if (state.pos + 3 < state.source.size()) {
-        if (std::string four(state.source.substr(state.pos, 4)); four == ">>>=") {
-            value = four;
-            for (int i = 0; i < 4; i++) state.advance();
-        }
-    }
-
-    // Check 3-character operators
-    if (value.empty() && state.pos + 2 < state.source.size()) {
-        if (const std::string three(state.source.substr(state.pos, 3)); three == "===" || three == "!==" || three == ">>>" ||
-            three == "..." || three == "<<=" || three == ">>=" ||
-            three == "**=" || three == "&&=" || three == "||=" ||
-            three == "?" "?=") {  // Split to avoid trigraph warning
-            value = three;
-            state.advance();
-            state.advance();
-            state.advance();
-        }
-    }
-
-    // Check 2-character operators
-    if (value.empty() && state.pos + 1 < state.source.size()) {
-        if (const std::string two(state.source.substr(state.pos, 2)); two == "==" || two == "!=" || two == "<=" || two == ">=" ||
-            two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
-            two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
-            two == "**" || two == "++" || two == "--" || two == "&&" ||
-            two == "||" || two == "??" || two == "?." || two == "=>" ||
-            two == "<<" || two == ">>") {
-            value = two;
-            state.advance();
-            state.advance();
-        }
-    }
-
-    // Single character operator
-    if (value.empty()) {
+    // Try to match the longest operator first (4, 3, 2, then 1 character)
+    if (!try_match_four_char_operator(state, value) &&
+        !try_match_three_char_operator(state, value) &&
+        !try_match_two_char_operator(state, value)) {
+        // Single character operator
         value = state.advance();
     }
 
     tok.length = static_cast<uint16_t>(state.pos - start_pos);
     tok.original_hash = hash_string(value);
     tok.normalized_hash = tok.original_hash;
-
-    // Classify as operator or punctuation
-    if (value == "(" || value == ")" || value == "[" || value == "]" ||
-        value == "{" || value == "}" || value == "," || value == ":" ||
-        value == ";" || value == ".") {
-        tok.type = TokenType::PUNCTUATION;
-    } else {
-        tok.type = TokenType::OPERATOR;
-    }
+    tok.type = is_punctuation(value) ? TokenType::PUNCTUATION : TokenType::OPERATOR;
 
     return tok;
 }
@@ -599,6 +558,69 @@ bool JavaScriptNormalizer::could_be_regex(const TokenType last_type) {
     return last_type == TokenType::OPERATOR ||
            last_type == TokenType::PUNCTUATION ||
            last_type == TokenType::KEYWORD;
+}
+
+// Operator parsing helper functions (extracted to reduce cyclomatic complexity)
+
+bool JavaScriptNormalizer::try_match_four_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 3 >= state.source.size()) {
+        return false;
+    }
+
+    const std::string four(state.source.substr(state.pos, 4));
+    if (four == ">>>=") {
+        value = four;
+        for (int i = 0; i < 4; i++) {
+            state.advance();
+        }
+        return true;
+    }
+    return false;
+}
+
+bool JavaScriptNormalizer::try_match_three_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 2 >= state.source.size()) {
+        return false;
+    }
+
+    const std::string three(state.source.substr(state.pos, 3));
+    if (three == "===" || three == "!==" || three == ">>>" ||
+        three == "..." || three == "<<=" || three == ">>=" ||
+        three == "**=" || three == "&&=" || three == "||=" ||
+        three == "?\?=") {  // Escaped to avoid trigraph
+        value = three;
+        for (int i = 0; i < 3; i++) {
+            state.advance();
+        }
+        return true;
+    }
+    return false;
+}
+
+bool JavaScriptNormalizer::try_match_two_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 1 >= state.source.size()) {
+        return false;
+    }
+
+    const std::string two(state.source.substr(state.pos, 2));
+    if (two == "==" || two == "!=" || two == "<=" || two == ">=" ||
+        two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
+        two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
+        two == "**" || two == "++" || two == "--" || two == "&&" ||
+        two == "||" || two == "??" || two == "?." || two == "=>" ||
+        two == "<<" || two == ">>") {
+        value = two;
+        state.advance();
+        state.advance();
+        return true;
+    }
+    return false;
+}
+
+bool JavaScriptNormalizer::is_punctuation(const std::string& op) {
+    return op == "(" || op == ")" || op == "[" || op == "]" ||
+           op == "{" || op == "}" || op == "," || op == ":" ||
+           op == ";" || op == ".";
 }
 
 }  // namespace aegis::similarity

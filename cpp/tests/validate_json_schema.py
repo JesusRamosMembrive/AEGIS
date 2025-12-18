@@ -3,6 +3,132 @@
 import json
 import subprocess
 import sys
+from typing import Any
+
+
+def _validate_required_keys(data: dict, required_keys: list[str]) -> list[str]:
+    """Check that all required top-level keys are present."""
+    return [f"Missing required key: {key}" for key in required_keys if key not in data]
+
+
+def _validate_summary(summary: dict) -> list[str]:
+    """Validate the summary section schema and types."""
+    errors = []
+
+    required_keys = [
+        "analysis_time_ms",
+        "clone_pairs_found",
+        "estimated_duplication",
+        "files_analyzed",
+        "total_lines",
+    ]
+    for key in required_keys:
+        if key not in summary:
+            errors.append(f"summary missing key: {key}")
+
+    # Type checks for integer fields
+    int_fields = ["analysis_time_ms", "clone_pairs_found", "files_analyzed", "total_lines"]
+    for field in int_fields:
+        if field in summary and not isinstance(summary[field], int):
+            errors.append(f"summary.{field} should be int")
+
+    # Type check for string field
+    if "estimated_duplication" in summary and not isinstance(
+        summary["estimated_duplication"], str
+    ):
+        errors.append("summary.estimated_duplication should be string")
+
+    return errors
+
+
+def _validate_timing(timing: dict) -> list[str]:
+    """Validate the timing section schema and types."""
+    errors = []
+    timing_keys = ["hash_ms", "match_ms", "tokenize_ms", "total_ms"]
+
+    for key in timing_keys:
+        if key not in timing:
+            errors.append(f"timing missing key: {key}")
+        elif not isinstance(timing[key], int):
+            errors.append(f"timing.{key} should be int")
+
+    return errors
+
+
+def _validate_metrics(metrics: dict) -> list[str]:
+    """Validate the metrics section schema."""
+    errors = []
+    if "by_language" not in metrics:
+        errors.append("metrics missing by_language")
+    if "by_type" not in metrics:
+        errors.append("metrics missing by_type")
+    return errors
+
+
+def _validate_clone_location(loc: dict, clone_idx: int, loc_idx: int) -> list[str]:
+    """Validate a single clone location entry."""
+    errors = []
+    loc_keys = ["end_line", "file", "snippet_preview", "start_line"]
+
+    for key in loc_keys:
+        if key not in loc:
+            errors.append(f"clones[{clone_idx}].locations[{loc_idx}] missing key: {key}")
+
+    return errors
+
+
+def _validate_clone_entry(clone: dict, idx: int) -> list[str]:
+    """Validate a single clone entry."""
+    errors = []
+    clone_keys = ["id", "locations", "recommendation", "similarity", "type"]
+
+    for key in clone_keys:
+        if key not in clone:
+            errors.append(f"clones[{idx}] missing key: {key}")
+
+    # Validate locations array
+    if "locations" in clone:
+        if not isinstance(clone["locations"], list) or len(clone["locations"]) < 2:
+            errors.append(f"clones[{idx}].locations should have at least 2 locations")
+        else:
+            for j, loc in enumerate(clone["locations"]):
+                errors.extend(_validate_clone_location(loc, idx, j))
+
+    # Validate similarity field
+    if "similarity" in clone:
+        if not isinstance(clone["similarity"], (int, float)):
+            errors.append(f"clones[{idx}].similarity should be number")
+        elif not (0.0 <= clone["similarity"] <= 1.0):
+            errors.append(f"clones[{idx}].similarity should be between 0 and 1")
+
+    return errors
+
+
+def _validate_clones(clones: Any) -> list[str]:
+    """Validate the clones array."""
+    if not isinstance(clones, list):
+        return ["clones should be array"]
+
+    errors = []
+    for i, clone in enumerate(clones):
+        errors.extend(_validate_clone_entry(clone, i))
+    return errors
+
+
+def _validate_hotspots(hotspots: Any) -> list[str]:
+    """Validate the hotspots array."""
+    if not isinstance(hotspots, list):
+        return ["hotspots should be array"]
+
+    errors = []
+    hotspot_keys = ["clone_count", "duplication_score", "file", "recommendation"]
+
+    for i, hotspot in enumerate(hotspots):
+        for key in hotspot_keys:
+            if key not in hotspot:
+                errors.append(f"hotspots[{i}] missing key: {key}")
+
+    return errors
 
 
 def validate_schema(data: dict) -> list[str]:
@@ -11,118 +137,23 @@ def validate_schema(data: dict) -> list[str]:
 
     # Required top-level keys
     required_keys = ["clones", "hotspots", "metrics", "summary", "timing"]
-    for key in required_keys:
-        if key not in data:
-            errors.append(f"Missing required key: {key}")
+    errors.extend(_validate_required_keys(data, required_keys))
 
-    # Validate summary
+    # Validate each section
     if "summary" in data:
-        summary = data["summary"]
-        summary_keys = [
-            "analysis_time_ms",
-            "clone_pairs_found",
-            "estimated_duplication",
-            "files_analyzed",
-            "total_lines",
-        ]
-        for key in summary_keys:
-            if key not in summary:
-                errors.append(f"summary missing key: {key}")
+        errors.extend(_validate_summary(data["summary"]))
 
-        # Type checks
-        if "analysis_time_ms" in summary and not isinstance(
-            summary["analysis_time_ms"], int
-        ):
-            errors.append("summary.analysis_time_ms should be int")
-        if "clone_pairs_found" in summary and not isinstance(
-            summary["clone_pairs_found"], int
-        ):
-            errors.append("summary.clone_pairs_found should be int")
-        if "files_analyzed" in summary and not isinstance(
-            summary["files_analyzed"], int
-        ):
-            errors.append("summary.files_analyzed should be int")
-        if "total_lines" in summary and not isinstance(summary["total_lines"], int):
-            errors.append("summary.total_lines should be int")
-        if "estimated_duplication" in summary and not isinstance(
-            summary["estimated_duplication"], str
-        ):
-            errors.append("summary.estimated_duplication should be string")
-
-    # Validate timing
     if "timing" in data:
-        timing = data["timing"]
-        timing_keys = ["hash_ms", "match_ms", "tokenize_ms", "total_ms"]
-        for key in timing_keys:
-            if key not in timing:
-                errors.append(f"timing missing key: {key}")
-            elif not isinstance(timing[key], int):
-                errors.append(f"timing.{key} should be int")
+        errors.extend(_validate_timing(data["timing"]))
 
-    # Validate metrics
     if "metrics" in data:
-        metrics = data["metrics"]
-        if "by_language" not in metrics:
-            errors.append("metrics missing by_language")
-        if "by_type" not in metrics:
-            errors.append("metrics missing by_type")
+        errors.extend(_validate_metrics(data["metrics"]))
 
-    # Validate clones array
     if "clones" in data:
-        if not isinstance(data["clones"], list):
-            errors.append("clones should be array")
-        else:
-            for i, clone in enumerate(data["clones"]):
-                clone_keys = ["id", "locations", "recommendation", "similarity", "type"]
-                for key in clone_keys:
-                    if key not in clone:
-                        errors.append(f"clones[{i}] missing key: {key}")
+        errors.extend(_validate_clones(data["clones"]))
 
-                if "locations" in clone:
-                    if (
-                        not isinstance(clone["locations"], list)
-                        or len(clone["locations"]) < 2
-                    ):
-                        errors.append(
-                            f"clones[{i}].locations should have at least 2 locations"
-                        )
-                    else:
-                        for j, loc in enumerate(clone["locations"]):
-                            loc_keys = [
-                                "end_line",
-                                "file",
-                                "snippet_preview",
-                                "start_line",
-                            ]
-                            for key in loc_keys:
-                                if key not in loc:
-                                    errors.append(
-                                        f"clones[{i}].locations[{j}] missing key: {key}"
-                                    )
-
-                if "similarity" in clone:
-                    if not isinstance(clone["similarity"], (int, float)):
-                        errors.append(f"clones[{i}].similarity should be number")
-                    elif not (0.0 <= clone["similarity"] <= 1.0):
-                        errors.append(
-                            f"clones[{i}].similarity should be between 0 and 1"
-                        )
-
-    # Validate hotspots array
     if "hotspots" in data:
-        if not isinstance(data["hotspots"], list):
-            errors.append("hotspots should be array")
-        else:
-            for i, hotspot in enumerate(data["hotspots"]):
-                hotspot_keys = [
-                    "clone_count",
-                    "duplication_score",
-                    "file",
-                    "recommendation",
-                ]
-                for key in hotspot_keys:
-                    if key not in hotspot:
-                        errors.append(f"hotspots[{i}] missing key: {key}")
+        errors.extend(_validate_hotspots(data["hotspots"]))
 
     return errors
 

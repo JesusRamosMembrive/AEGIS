@@ -99,9 +99,15 @@ private:
     static bool is_identifier_start(char c);
     static bool is_identifier_char(char c);
     static bool is_digit(char c);
-    static bool is_hex_digit(char c) ;
-    static bool is_operator_char(char c) ;
-    static bool could_be_regex(TokenType last_type) ;
+    static bool is_hex_digit(char c);
+    static bool is_operator_char(char c);
+    static bool could_be_regex(TokenType last_type);
+
+    // Operator parsing helpers (extracted from parse_operator to reduce cyclomatic complexity)
+    static bool try_match_four_char_operator(TokenizerState& state, std::string& value);
+    static bool try_match_three_char_operator(TokenizerState& state, std::string& value);
+    static bool try_match_two_char_operator(TokenizerState& state, std::string& value);
+    static bool is_punctuation(const std::string& op);
 };
 
 }  // namespace aegis::similarity

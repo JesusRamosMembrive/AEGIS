@@ -264,74 +264,29 @@ NormalizedToken CppNormalizer::parse_number(TokenizerState& state) const
     tok.column = state.column;
 
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
-    // Check for hex, binary, octal
+    // Try special number formats (hex, binary, octal) if starts with '0'
     if (state.peek() == '0' && !state.eof()) {
-        char next = state.peek_next();
-        if (next == 'x' || next == 'X') {
-            // Hex
-            value += state.advance();
-            value += state.advance();
-            while (!state.eof() && (is_hex_digit(state.peek()) || state.peek() == '\'')) {
-                if (state.peek() != '\'') value += state.peek();
-                state.advance();
-            }
-        } else if (next == 'b' || next == 'B') {
-            // Binary (C++14)
-            value += state.advance();
-            value += state.advance();
-            while (!state.eof() && (state.peek() == '0' || state.peek() == '1' || state.peek() == '\'')) {
-                if (state.peek() != '\'') value += state.peek();
-                state.advance();
-            }
-        } else if (next >= '0' && next <= '7') {
-            // Octal
-            value += state.advance();
-            while (!state.eof() && ((state.peek() >= '0' && state.peek() <= '7') || state.peek() == '\'')) {
-                if (state.peek() != '\'') value += state.peek();
-                state.advance();
-            }
-        } else {
+        if (!parse_hex_number(state, value) &&
+            !parse_binary_number(state, value) &&
+            !parse_octal_number(state, value)) {
+            // Just a leading zero (could be 0, 0.5, 0e1, etc.)
             value += state.advance();
         }
     }
 
-    // Integer or float part
+    // Parse integer part if no special format was matched
     if (value.empty()) {
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '\'')) {
-            if (state.peek() != '\'') value += state.peek();
-            state.advance();
-        }
+        parse_integer_part(state, value);
     }
 
-    // Decimal part
-    if (state.peek() == '.' && (is_digit(state.peek_next()) || state.peek_next() == 'e' || state.peek_next() == 'E')) {
-        value += state.advance();
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '\'')) {
-            if (state.peek() != '\'') value += state.peek();
-            state.advance();
-        }
-    }
+    // Parse optional decimal and exponent parts
+    parse_decimal_part(state, value);
+    parse_exponent_part(state, value);
 
-    // Exponent part
-    if (state.peek() == 'e' || state.peek() == 'E') {
-        value += state.advance();
-        if (state.peek() == '+' || state.peek() == '-') {
-            value += state.advance();
-        }
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '\'')) {
-            if (state.peek() != '\'') value += state.peek();
-            state.advance();
-        }
-    }
-
-    // Suffixes (u, l, ll, ul, ull, f, etc.)
-    while (!state.eof() && (state.peek() == 'u' || state.peek() == 'U' ||
-           state.peek() == 'l' || state.peek() == 'L' ||
-           state.peek() == 'f' || state.peek() == 'F')) {
-        state.advance();
-    }
+    // Skip type suffixes (u, l, ll, ul, ull, f, etc.)
+    skip_number_suffix(state);
 
     tok.length = static_cast<uint16_t>(state.pos - start_pos);
     tok.original_hash = hash_string(value);
@@ -375,65 +330,87 @@ NormalizedToken CppNormalizer::parse_identifier_or_keyword(TokenizerState& state
     return tok;
 }
 
+// Operator parsing helpers (extracted to reduce cyclomatic complexity)
+
+bool CppNormalizer::try_match_four_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 3 >= state.source.size()) {
+        return false;
+    }
+
+    std::string four(state.source.substr(state.pos, 4));
+    if (four == ">>>=") {
+        value = four;
+        for (int i = 0; i < 4; i++) {
+            state.advance();
+        }
+        return true;
+    }
+    return false;
+}
+
+bool CppNormalizer::try_match_three_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 2 >= state.source.size()) {
+        return false;
+    }
+
+    std::string three(state.source.substr(state.pos, 3));
+    if (three == "<<=" || three == ">>=" || three == "<=>" ||
+        three == "->*" || three == "...") {
+        value = three;
+        state.advance();
+        state.advance();
+        state.advance();
+        return true;
+    }
+    return false;
+}
+
+bool CppNormalizer::try_match_two_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 1 >= state.source.size()) {
+        return false;
+    }
+
+    std::string two(state.source.substr(state.pos, 2));
+    if (two == "==" || two == "!=" || two == "<=" || two == ">=" ||
+        two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
+        two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
+        two == "++" || two == "--" || two == "&&" || two == "||" ||
+        two == "<<" || two == ">>" || two == "->" || two == "::" ||
+        two == ".*" || two == "##") {
+        value = two;
+        state.advance();
+        state.advance();
+        return true;
+    }
+    return false;
+}
+
+bool CppNormalizer::is_punctuation(const std::string& op) {
+    return op == "(" || op == ")" || op == "[" || op == "]" ||
+           op == "{" || op == "}" || op == "," || op == ":" ||
+           op == ";" || op == ".";
+}
+
 NormalizedToken CppNormalizer::parse_operator(TokenizerState& state) {
     NormalizedToken tok{};
     tok.line = state.line;
     tok.column = state.column;
 
     std::string value;
-    size_t start_pos = state.pos;
+    const size_t start_pos = state.pos;
 
-    // Check 4-character operators
-    if (state.pos + 3 < state.source.size()) {
-        if (std::string four(state.source.substr(state.pos, 4)); four == ">>>=") {
-            value = four;
-            for (int i = 0; i < 4; i++) state.advance();
-        }
-    }
-
-    // Check 3-character operators
-    if (value.empty() && state.pos + 2 < state.source.size()) {
-        std::string three(state.source.substr(state.pos, 3));
-        if (three == "<<=" || three == ">>=" || three == "<=>" ||
-            three == "->*" || three == "...") {
-            value = three;
-            state.advance();
-            state.advance();
-            state.advance();
-        }
-    }
-
-    // Check 2-character operators
-    if (value.empty() && state.pos + 1 < state.source.size()) {
-        if (std::string two(state.source.substr(state.pos, 2)); two == "==" || two == "!=" || two == "<=" || two == ">=" ||
-            two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
-            two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
-            two == "++" || two == "--" || two == "&&" || two == "||" ||
-            two == "<<" || two == ">>" || two == "->" || two == "::" ||
-            two == ".*" || two == "##") {
-            value = two;
-            state.advance();
-            state.advance();
-        }
-    }
-
-    // Single character operator
-    if (value.empty()) {
+    // Try matching operators from longest to shortest
+    if (!try_match_four_char_operator(state, value) &&
+        !try_match_three_char_operator(state, value) &&
+        !try_match_two_char_operator(state, value)) {
+        // Single character operator
         value = state.advance();
     }
 
     tok.length = static_cast<uint16_t>(state.pos - start_pos);
     tok.original_hash = hash_string(value);
     tok.normalized_hash = tok.original_hash;
-
-    // Classify
-    if (value == "(" || value == ")" || value == "[" || value == "]" ||
-        value == "{" || value == "}" || value == "," || value == ":" ||
-        value == ";" || value == ".") {
-        tok.type = TokenType::PUNCTUATION;
-    } else {
-        tok.type = TokenType::OPERATOR;
-    }
+    tok.type = is_punctuation(value) ? TokenType::PUNCTUATION : TokenType::OPERATOR;
 
     return tok;
 }
@@ -499,6 +476,14 @@ bool CppNormalizer::is_digit(char c) {
 
 bool CppNormalizer::is_hex_digit(char c) {
     return is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+bool CppNormalizer::is_binary_digit(char c) {
+    return c == '0' || c == '1';
+}
+
+bool CppNormalizer::is_octal_digit(char c) {
+    return c >= '0' && c <= '7';
 }
 
 bool CppNormalizer::is_operator_char(char c) {
@@ -637,16 +622,112 @@ bool CppNormalizer::process_identifier(TokenizerState& state, TokenizedFile& res
 
 bool CppNormalizer::process_operator(TokenizerState& state, TokenizedFile& result, bool& line_has_code) {
     char c = state.peek();
-    
+
     if (is_operator_char(c)) {
         line_has_code = true;
         result.tokens.push_back(parse_operator(state));
         return true;
     }
-    
+
     return false;
 }
 
+// Number parsing helper functions (extracted to reduce cyclomatic complexity)
 
+void CppNormalizer::consume_digits_with_separator(TokenizerState& state, std::string& value,
+                                                   bool (*digit_check)(char)) {
+    while (!state.eof()) {
+        char c = state.peek();
+        if (digit_check(c)) {
+            value += c;
+            state.advance();
+        } else if (c == '\'') {
+            state.advance();  // Skip digit separator, don't add to value
+        } else {
+            break;
+        }
+    }
+}
+
+bool CppNormalizer::parse_hex_number(TokenizerState& state, std::string& value) {
+    char next = state.peek_next();
+    if (next != 'x' && next != 'X') {
+        return false;
+    }
+
+    value += state.advance();  // '0'
+    value += state.advance();  // 'x' or 'X'
+    consume_digits_with_separator(state, value, is_hex_digit);
+    return true;
+}
+
+bool CppNormalizer::parse_binary_number(TokenizerState& state, std::string& value) {
+    char next = state.peek_next();
+    if (next != 'b' && next != 'B') {
+        return false;
+    }
+
+    value += state.advance();  // '0'
+    value += state.advance();  // 'b' or 'B'
+    consume_digits_with_separator(state, value, is_binary_digit);
+    return true;
+}
+
+bool CppNormalizer::parse_octal_number(TokenizerState& state, std::string& value) {
+    char next = state.peek_next();
+    if (next < '0' || next > '7') {
+        return false;
+    }
+
+    value += state.advance();  // '0'
+    consume_digits_with_separator(state, value, is_octal_digit);
+    return true;
+}
+
+void CppNormalizer::parse_integer_part(TokenizerState& state, std::string& value) {
+    consume_digits_with_separator(state, value, is_digit);
+}
+
+bool CppNormalizer::parse_decimal_part(TokenizerState& state, std::string& value) {
+    if (state.peek() != '.') {
+        return false;
+    }
+
+    char next = state.peek_next();
+    if (!is_digit(next) && next != 'e' && next != 'E') {
+        return false;
+    }
+
+    value += state.advance();  // '.'
+    consume_digits_with_separator(state, value, is_digit);
+    return true;
+}
+
+void CppNormalizer::parse_exponent_part(TokenizerState& state, std::string& value) {
+    char c = state.peek();
+    if (c != 'e' && c != 'E') {
+        return;
+    }
+
+    value += state.advance();  // 'e' or 'E'
+
+    c = state.peek();
+    if (c == '+' || c == '-') {
+        value += state.advance();
+    }
+
+    consume_digits_with_separator(state, value, is_digit);
+}
+
+void CppNormalizer::skip_number_suffix(TokenizerState& state) {
+    while (!state.eof()) {
+        char c = state.peek();
+        if (c == 'u' || c == 'U' || c == 'l' || c == 'L' || c == 'f' || c == 'F') {
+            state.advance();
+        } else {
+            break;
+        }
+    }
+}
 
 } // namespace aegis::similarity

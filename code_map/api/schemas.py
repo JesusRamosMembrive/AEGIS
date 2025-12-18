@@ -23,6 +23,62 @@ class HealthResponse(BaseModel):
     status: str = "ok"
 
 
+# -----------------------------------------------------------------------------
+# Notify Changes Schemas
+# -----------------------------------------------------------------------------
+
+
+class FileChangeType(str, Enum):
+    """Tipo de cambio en un archivo."""
+
+    CREATED = "created"
+    MODIFIED = "modified"
+    DELETED = "deleted"
+
+
+class FileChangeItem(BaseModel):
+    """Representa un cambio individual en un archivo."""
+
+    path: str = Field(..., description="Ruta relativa del archivo cambiado")
+    change_type: FileChangeType = Field(
+        default=FileChangeType.MODIFIED,
+        description="Tipo de cambio: created, modified, deleted",
+    )
+
+
+class NotifyChangesRequest(BaseModel):
+    """Petición para notificar cambios externos."""
+
+    changes: List[FileChangeItem] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Lista de cambios a procesar (máximo 100)",
+    )
+
+
+class ProcessedChangeItem(BaseModel):
+    """Resultado del procesamiento de un cambio individual."""
+
+    path: str
+    change_type: FileChangeType
+    status: str = Field(description="processed, skipped, error")
+    reason: Optional[str] = None
+
+
+class NotifyChangesResponse(BaseModel):
+    """Respuesta del endpoint de notificación de cambios."""
+
+    processed: int = Field(description="Número de archivos procesados")
+    skipped: int = Field(description="Número de archivos omitidos")
+    errors: int = Field(description="Número de errores")
+    details: List[ProcessedChangeItem] = Field(default_factory=list)
+    handlers_triggered: List[str] = Field(
+        default_factory=list,
+        description="Lista de handlers ejecutados",
+    )
+
+
 class AnalysisErrorSchema(BaseModel):
     """Esquema para un error de análisis."""
 
