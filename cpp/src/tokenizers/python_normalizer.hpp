@@ -124,6 +124,11 @@ private:
     bool is_import_statement(const TokenizerState& state) const;
     void skip_to_end_of_line(TokenizerState& state);
 
+    // Operator parsing helpers (reduce cyclomatic complexity of parse_operator)
+    static bool try_match_three_char_operator(TokenizerState& state, std::string& value);
+    static bool try_match_two_char_operator(TokenizerState& state, std::string& value);
+    static bool is_punctuation(const std::string& op);
+
     // Refactored processing methods (reduce cyclomatic complexity)
     void update_line_metrics(TokenizerState& state, LineMetrics& metrics);
     bool skip_whitespace(TokenizerState& state, char c);

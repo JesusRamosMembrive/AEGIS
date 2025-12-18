@@ -317,58 +317,71 @@ NormalizedToken PythonNormalizer::parse_identifier_or_keyword(TokenizerState& st
     return tok;
 }
 
+// -----------------------------------------------------------------------------
+// Operator parsing helpers (reduce cyclomatic complexity of parse_operator)
+// -----------------------------------------------------------------------------
+
+bool PythonNormalizer::try_match_three_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 2 >= state.source.size()) return false;
+
+    std::string three(state.source.substr(state.pos, 3));
+    if (three == "..." || three == "<<=" || three == ">>=" ||
+        three == "**=" || three == "//=") {
+        value = three;
+        state.advance();
+        state.advance();
+        state.advance();
+        return true;
+    }
+    return false;
+}
+
+bool PythonNormalizer::try_match_two_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 1 >= state.source.size()) return false;
+
+    std::string two(state.source.substr(state.pos, 2));
+    if (two == "==" || two == "!=" || two == "<=" || two == ">=" ||
+        two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
+        two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
+        two == "**" || two == "//" || two == "<<" || two == ">>" ||
+        two == "->" || two == "@=") {
+        value = two;
+        state.advance();
+        state.advance();
+        return true;
+    }
+    return false;
+}
+
+bool PythonNormalizer::is_punctuation(const std::string& op) {
+    return op == "(" || op == ")" || op == "[" || op == "]" ||
+           op == "{" || op == "}" || op == "," || op == ":" ||
+           op == ";" || op == ".";
+}
+
+// -----------------------------------------------------------------------------
+// Main parse_operator (refactored to use helpers)
+// -----------------------------------------------------------------------------
+
 NormalizedToken PythonNormalizer::parse_operator(TokenizerState& state) {
     NormalizedToken tok;
     tok.line = state.line;
     tok.column = state.column;
-
     std::string value;
     size_t start_pos = state.pos;
 
-    // Try to match longest operator first
-    // Check 3-character operators
-    if (state.pos + 2 < state.source.size()) {
-        std::string three(state.source.substr(state.pos, 3));
-        if (three == "..." || three == "<<=" || three == ">>=" ||
-            three == "**=" || three == "//=") {
-            value = three;
-            state.advance();
-            state.advance();
-            state.advance();
+    // Try to match longest operator first (3-char, then 2-char)
+    if (!try_match_three_char_operator(state, value)) {
+        if (!try_match_two_char_operator(state, value)) {
+            // Single character operator
+            value = state.advance();
         }
-    }
-
-    // Check 2-character operators
-    if (value.empty() && state.pos + 1 < state.source.size()) {
-        std::string two(state.source.substr(state.pos, 2));
-        if (two == "==" || two == "!=" || two == "<=" || two == ">=" ||
-            two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
-            two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
-            two == "**" || two == "//" || two == "<<" || two == ">>" ||
-            two == "->" || two == "@=") {
-            value = two;
-            state.advance();
-            state.advance();
-        }
-    }
-
-    // Single character operator
-    if (value.empty()) {
-        value = state.advance();
     }
 
     tok.length = static_cast<uint16_t>(state.pos - start_pos);
     tok.original_hash = hash_string(value);
     tok.normalized_hash = tok.original_hash;  // Operators keep their hash
-
-    // Classify as operator or punctuation
-    if (value == "(" || value == ")" || value == "[" || value == "]" ||
-        value == "{" || value == "}" || value == "," || value == ":" ||
-        value == ";" || value == ".") {
-        tok.type = TokenType::PUNCTUATION;
-    } else {
-        tok.type = TokenType::OPERATOR;
-    }
+    tok.type = is_punctuation(value) ? TokenType::PUNCTUATION : TokenType::OPERATOR;
 
     return tok;
 }
