@@ -44,199 +44,51 @@ TokenizedFile PythonNormalizer::normalize(std::string_view source) {
     TokenizerState state;
     state.source = source;
 
-    uint32_t code_lines = 0;
-    uint32_t blank_lines = 0;
-    uint32_t comment_lines = 0;
-    uint32_t current_line = 0;
-    bool line_has_code = false;
-    bool line_has_comment = false;
+    LineMetrics metrics{};
 
     while (!state.eof()) {
         // Track line changes for metrics
-        if (state.line != current_line) {
-            if (current_line > 0) {
-                if (line_has_code) {
-                    code_lines++;
-                } else if (line_has_comment) {
-                    comment_lines++;
-                } else {
-                    blank_lines++;
-                }
-            }
-            current_line = state.line;
-            line_has_code = false;
-            line_has_comment = false;
-        }
+        update_line_metrics(state, metrics);
 
         char c = state.peek();
 
         // Handle indentation at line start
         if (state.at_line_start && c != '\n' && c != '#') {
-            size_t indent = 0;
-            while (!state.eof() && (state.peek() == ' ' || state.peek() == '\t')) {
-                if (state.peek() == '\t') {
-                    indent += 8 - (indent % 8);  // Tab stops at 8
-                } else {
-                    indent++;
-                }
-                state.advance();
-            }
-
-            // Don't emit indent tokens for blank lines or comment-only lines
-            if (!state.eof() && state.peek() != '\n' && state.peek() != '#') {
-                auto indent_tokens = handle_indentation(state, indent);
-                for (auto& tok : indent_tokens) {
-                    result.tokens.push_back(std::move(tok));
-                }
-            }
-            state.at_line_start = false;
-
+            process_indentation(state, result);
             if (state.eof()) break;
             c = state.peek();
         }
 
-        // Skip whitespace (not at line start)
-        if (c == ' ' || c == '\t') {
-            state.advance();
-            continue;
-        }
-
-        // Newline
-        if (c == '\n') {
-            // Emit newline token for significant line breaks
-            if (!result.tokens.empty() &&
-                result.tokens.back().type != TokenType::NEWLINE) {
-                NormalizedToken tok;
-                tok.type = TokenType::NEWLINE;
-                tok.original_hash = hash_string("\n");
-                tok.normalized_hash = tok.original_hash;
-                tok.line = state.line;
-                tok.column = state.column;
-                tok.length = 1;
-                result.tokens.push_back(tok);
-            }
-            state.advance();
-            continue;
-        }
-
-        // Comments
-        if (c == '#') {
-            line_has_comment = true;
-            skip_comment(state);
-            continue;
-        }
-
-        // Import statements - skip entire line (imports are structural, not logic)
-        // This prevents false positives from common import patterns
-        if (!line_has_code && is_import_statement(state)) {
-            skip_to_end_of_line(state);
-            line_has_code = true;  // Count as code line but don't emit tokens
-            continue;
-        }
-
-        // String literals (check for docstrings)
-        if (c == '"' || c == '\'') {
-            // Check if this is a potential docstring (triple-quoted at start of logical line)
-            bool is_triple = (state.peek_next() == c);
-            if (is_triple && state.pos + 2 < state.source.size() && state.source[state.pos + 2] == c) {
-                // It's a triple-quoted string - check if it's a docstring
-                // A docstring is a triple-quoted string that appears as the first statement
-                // We detect this by checking if we have no code tokens yet on this line
-                // or if the previous meaningful token was : (after def/class)
-                bool is_docstring = !line_has_code && is_docstring_context(result.tokens);
-                if (is_docstring) {
-                    // Skip the docstring entirely (treat like a comment)
-                    skip_docstring(state, c);
-                    line_has_comment = true;  // Count as comment line
-                    continue;
-                }
-            }
-            line_has_code = true;
-            result.tokens.push_back(parse_string(state));
-            continue;
-        }
-
-        // f-strings, r-strings, b-strings
-        if ((c == 'f' || c == 'F' || c == 'r' || c == 'R' || c == 'b' || c == 'B') &&
-            (state.peek_next() == '"' || state.peek_next() == '\'')) {
-            line_has_code = true;
-            state.advance();  // Skip prefix
-            result.tokens.push_back(parse_string(state));
-            continue;
-        }
-
-        // fr"" or rf"" strings
-        if ((c == 'f' || c == 'F' || c == 'r' || c == 'R') &&
-            (state.peek_next() == 'r' || state.peek_next() == 'R' ||
-             state.peek_next() == 'f' || state.peek_next() == 'F')) {
-            size_t pos = state.pos + 2;
-            if (pos < state.source.size() &&
-                (state.source[pos] == '"' || state.source[pos] == '\'')) {
-                line_has_code = true;
-                state.advance();  // Skip first prefix
-                state.advance();  // Skip second prefix
-                result.tokens.push_back(parse_string(state));
-                continue;
-            }
-        }
-
-        // Numbers
-        if (is_digit(c) || (c == '.' && is_digit(state.peek_next()))) {
-            line_has_code = true;
-            result.tokens.push_back(parse_number(state));
-            continue;
-        }
-
-        // Identifiers and keywords
-        if (is_identifier_start(c)) {
-            line_has_code = true;
-            result.tokens.push_back(parse_identifier_or_keyword(state));
-            continue;
-        }
-
-        // Operators and punctuation
-        if (is_operator_char(c)) {
-            line_has_code = true;
-            result.tokens.push_back(parse_operator(state));
-            continue;
-        }
+        // Process each token type (early return pattern)
+        if (skip_whitespace(state, c)) continue;
+        if (process_newline(state, c, result)) continue;
+        if (process_comment(state, c, metrics)) continue;
+        if (process_import(state, metrics)) continue;
+        if (process_string_or_docstring(state, c, result, metrics)) continue;
+        if (process_number(state, c, result, metrics)) continue;
+        if (process_identifier(state, c, result, metrics)) continue;
+        if (process_operator(state, c, result, metrics)) continue;
 
         // Unknown character - skip
         state.advance();
     }
 
-    // Handle final line
-    if (current_line > 0) {
-        if (line_has_code) {
-            code_lines++;
-        } else if (line_has_comment) {
-            comment_lines++;
+    // Handle final line metrics (force processing of current line even without line change)
+    if (metrics.current_line > 0) {
+        if (metrics.line_has_code) {
+            metrics.code_lines++;
+        } else if (metrics.line_has_comment) {
+            metrics.comment_lines++;
         } else {
-            blank_lines++;
+            metrics.blank_lines++;
         }
     }
 
     // Handle remaining dedents at end of file
-    while (state.indent_stack.size() > 1) {
-        state.indent_stack.pop_back();
-        NormalizedToken tok;
-        tok.type = TokenType::DEDENT;
-        tok.original_hash = hash_string("DEDENT");
-        tok.normalized_hash = tok.original_hash;
-        tok.line = state.line;
-        tok.column = 1;
-        tok.length = 0;
-        result.tokens.push_back(tok);
-    }
+    emit_remaining_dedents(state, result);
 
-    // Calculate total lines: if file ends with newline, don't count the empty line after it
-    // If the source is empty, total_lines is 0
-    // If the source has content but no newline, line will be 1
-    // If source ends with \n, the line counter has already incremented past the last actual line
-    result.total_lines = source.empty() ? 0 : (state.column == 1 && state.line > 1 ? state.line - 1 : state.line);
-    result.code_lines = code_lines;
-    result.blank_lines = blank_lines;
-    result.comment_lines = comment_lines;
+    // Finalize metrics
+    finalize_metrics(state, metrics, result);
 
     return result;
 }
@@ -644,6 +496,195 @@ std::vector<NormalizedToken> PythonNormalizer::handle_indentation(
 
     return tokens;
 }
+
+// ============================================================================
+// Refactored processing methods (reduce cyclomatic complexity)
+// ============================================================================
+
+void PythonNormalizer::update_line_metrics(TokenizerState& state, LineMetrics& metrics) {
+    if (state.line != metrics.current_line) {
+        if (metrics.current_line > 0) {
+            if (metrics.line_has_code) {
+                metrics.code_lines++;
+            } else if (metrics.line_has_comment) {
+                metrics.comment_lines++;
+            } else {
+                metrics.blank_lines++;
+            }
+        }
+        metrics.current_line = state.line;
+        metrics.line_has_code = false;
+        metrics.line_has_comment = false;
+    }
+}
+
+bool PythonNormalizer::skip_whitespace(TokenizerState& state, char c) {
+    if (c == ' ' || c == '\t') {
+        state.advance();
+        return true;
+    }
+    return false;
+}
+
+bool PythonNormalizer::process_newline(TokenizerState& state, char c, TokenizedFile& result) {
+    if (c != '\n') {
+        return false;
+    }
+    // Emit newline token for significant line breaks
+    if (!result.tokens.empty() && result.tokens.back().type != TokenType::NEWLINE) {
+        NormalizedToken tok;
+        tok.type = TokenType::NEWLINE;
+        tok.original_hash = hash_string("\n");
+        tok.normalized_hash = tok.original_hash;
+        tok.line = state.line;
+        tok.column = state.column;
+        tok.length = 1;
+        result.tokens.push_back(tok);
+    }
+    state.advance();
+    return true;
+}
+
+bool PythonNormalizer::process_comment(TokenizerState& state, char c, LineMetrics& metrics) {
+    if (c != '#') {
+        return false;
+    }
+    metrics.line_has_comment = true;
+    skip_comment(state);
+    return true;
+}
+
+bool PythonNormalizer::process_import(TokenizerState& state, LineMetrics& metrics) {
+    if (metrics.line_has_code || !is_import_statement(state)) {
+        return false;
+    }
+    skip_to_end_of_line(state);
+    metrics.line_has_code = true;  // Count as code line but don't emit tokens
+    return true;
+}
+
+bool PythonNormalizer::process_string_or_docstring(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    // Check for direct string literals
+    if (c == '"' || c == '\'') {
+        // Check if this is a potential docstring (triple-quoted at start of logical line)
+        bool is_triple = (state.peek_next() == c);
+        if (is_triple && state.pos + 2 < state.source.size() && state.source[state.pos + 2] == c) {
+            // It's a triple-quoted string - check if it's a docstring
+            bool is_docstring = !metrics.line_has_code && is_docstring_context(result.tokens);
+            if (is_docstring) {
+                // Skip the docstring entirely (treat like a comment)
+                skip_docstring(state, c);
+                metrics.line_has_comment = true;  // Count as comment line
+                return true;
+            }
+        }
+        metrics.line_has_code = true;
+        result.tokens.push_back(parse_string(state));
+        return true;
+    }
+
+    // f-strings, r-strings, b-strings (single prefix)
+    if ((c == 'f' || c == 'F' || c == 'r' || c == 'R' || c == 'b' || c == 'B') &&
+        (state.peek_next() == '"' || state.peek_next() == '\'')) {
+        metrics.line_has_code = true;
+        state.advance();  // Skip prefix
+        result.tokens.push_back(parse_string(state));
+        return true;
+    }
+
+    // fr"" or rf"" strings (double prefix)
+    if ((c == 'f' || c == 'F' || c == 'r' || c == 'R') &&
+        (state.peek_next() == 'r' || state.peek_next() == 'R' ||
+         state.peek_next() == 'f' || state.peek_next() == 'F')) {
+        size_t pos = state.pos + 2;
+        if (pos < state.source.size() && (state.source[pos] == '"' || state.source[pos] == '\'')) {
+            metrics.line_has_code = true;
+            state.advance();  // Skip first prefix
+            state.advance();  // Skip second prefix
+            result.tokens.push_back(parse_string(state));
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool PythonNormalizer::process_number(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    if (!is_digit(c) && !(c == '.' && is_digit(state.peek_next()))) {
+        return false;
+    }
+    metrics.line_has_code = true;
+    result.tokens.push_back(parse_number(state));
+    return true;
+}
+
+bool PythonNormalizer::process_identifier(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    if (!is_identifier_start(c)) {
+        return false;
+    }
+    metrics.line_has_code = true;
+    result.tokens.push_back(parse_identifier_or_keyword(state));
+    return true;
+}
+
+bool PythonNormalizer::process_operator(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    if (!is_operator_char(c)) {
+        return false;
+    }
+    metrics.line_has_code = true;
+    result.tokens.push_back(parse_operator(state));
+    return true;
+}
+
+void PythonNormalizer::process_indentation(TokenizerState& state, TokenizedFile& result) {
+    size_t indent = 0;
+    while (!state.eof() && (state.peek() == ' ' || state.peek() == '\t')) {
+        if (state.peek() == '\t') {
+            indent += 8 - (indent % 8);  // Tab stops at 8
+        } else {
+            indent++;
+        }
+        state.advance();
+    }
+
+    // Don't emit indent tokens for blank lines or comment-only lines
+    if (!state.eof() && state.peek() != '\n' && state.peek() != '#') {
+        auto indent_tokens = handle_indentation(state, indent);
+        for (auto& tok : indent_tokens) {
+            result.tokens.push_back(std::move(tok));
+        }
+    }
+    state.at_line_start = false;
+}
+
+void PythonNormalizer::emit_remaining_dedents(TokenizerState& state, TokenizedFile& result) {
+    while (state.indent_stack.size() > 1) {
+        state.indent_stack.pop_back();
+        NormalizedToken tok;
+        tok.type = TokenType::DEDENT;
+        tok.original_hash = hash_string("DEDENT");
+        tok.normalized_hash = tok.original_hash;
+        tok.line = state.line;
+        tok.column = 1;
+        tok.length = 0;
+        result.tokens.push_back(tok);
+    }
+}
+
+void PythonNormalizer::finalize_metrics(const TokenizerState& state, const LineMetrics& metrics, TokenizedFile& result) {
+    // Calculate total lines: if file ends with newline, don't count the empty line after it
+    // If the source is empty, total_lines is 0
+    // If the source has content but no newline, line will be 1
+    // If source ends with \n, the line counter has already incremented past the last actual line
+    result.total_lines = state.source.empty() ? 0 : (state.column == 1 && state.line > 1 ? state.line - 1 : state.line);
+    result.code_lines = metrics.code_lines;
+    result.blank_lines = metrics.blank_lines;
+    result.comment_lines = metrics.comment_lines;
+}
+
+// ============================================================================
+// Helper methods
+// ============================================================================
 
 bool PythonNormalizer::is_identifier_start(char c) const {
     return std::isalpha(static_cast<unsigned char>(c)) || c == '_';

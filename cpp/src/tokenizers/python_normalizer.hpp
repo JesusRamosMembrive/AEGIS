@@ -48,6 +48,18 @@ private:
     std::unordered_set<std::string> operators_;
 
     /**
+     * Line metrics tracking for code analysis.
+     */
+    struct LineMetrics {
+        uint32_t code_lines = 0;
+        uint32_t blank_lines = 0;
+        uint32_t comment_lines = 0;
+        uint32_t current_line = 0;
+        bool line_has_code = false;
+        bool line_has_comment = false;
+    };
+
+    /**
      * Internal tokenization state.
      */
     struct TokenizerState {
@@ -102,6 +114,20 @@ private:
     bool is_docstring_context(const std::vector<NormalizedToken>& tokens) const;
     bool is_import_statement(const TokenizerState& state) const;
     void skip_to_end_of_line(TokenizerState& state);
+
+    // Refactored processing methods (reduce cyclomatic complexity)
+    void update_line_metrics(TokenizerState& state, LineMetrics& metrics);
+    bool skip_whitespace(TokenizerState& state, char c);
+    bool process_newline(TokenizerState& state, char c, TokenizedFile& result);
+    bool process_comment(TokenizerState& state, char c, LineMetrics& metrics);
+    bool process_import(TokenizerState& state, LineMetrics& metrics);
+    bool process_string_or_docstring(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics);
+    bool process_number(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics);
+    bool process_identifier(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics);
+    bool process_operator(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics);
+    void process_indentation(TokenizerState& state, TokenizedFile& result);
+    void emit_remaining_dedents(TokenizerState& state, TokenizedFile& result);
+    void finalize_metrics(const TokenizerState& state, const LineMetrics& metrics, TokenizedFile& result);
 };
 
 }  // namespace aegis::similarity
