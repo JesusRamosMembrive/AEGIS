@@ -23,11 +23,11 @@
 .main-grid {
   display: grid;
   width: 100%;
-  grid-template-columns: minmax(240px, 0.24fr) minmax(460px, 0.52fr) minmax(
-      240px,
-      0.24fr
-    );
-  gap: 22px;
+  grid-template-columns:
+    minmax(180px, 0.22fr)
+    minmax(280px, 0.54fr)
+    minmax(180px, 0.24fr);
+  gap: 18px;
 }
 
 .panel {
@@ -39,6 +39,8 @@
   flex-direction: column;
   gap: 18px;
   min-height: 560px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
   box-shadow: 0 28px 60px rgba(7, 9, 15, 0.45);
 }
 

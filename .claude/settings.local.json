@@ -102,7 +102,8 @@
       "Bash(python -m pytest tests/test_call_flow_baseline.py -v --tb=short)",
       "Bash(python3 -m pytest:*)",
       "Bash(npm run type-check:*)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx tsc --noEmit)",
+      "mcp__sequential-thinking__sequentialthinking"
     ],
     "deny": [],
     "ask": []
