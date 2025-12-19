@@ -337,7 +337,9 @@ class AppState:
             if batch:
                 logger.info(
                     "Processing batch: created=%d, modified=%d, deleted=%d",
-                    len(batch.created), len(batch.modified), len(batch.deleted)
+                    len(batch.created),
+                    len(batch.modified),
+                    len(batch.deleted),
                 )
                 changes = await asyncio.to_thread(
                     self.scanner.apply_change_batch,
@@ -347,8 +349,11 @@ class AppState:
                     store=self.snapshot_store,
                 )
                 payload = self._serialize_changes(changes)
-                logger.info("Changes applied: updated=%d, deleted=%d",
-                           len(payload["updated"]), len(payload["deleted"]))
+                logger.info(
+                    "Changes applied: updated=%d, deleted=%d",
+                    len(payload["updated"]),
+                    len(payload["deleted"]),
+                )
                 if payload["updated"] or payload["deleted"]:
                     self.last_event_batch = datetime.now(timezone.utc)
                     await self.event_queue.put(payload)
@@ -424,11 +429,11 @@ class AppState:
         self.last_full_scan = datetime.now(timezone.utc)
         self.linters.schedule(pending_changes=self.scheduler.pending_count())
         self.insights.schedule()
-        
+
         # Fire and forget similarity analysis if available
         if is_available():
             asyncio.create_task(self.run_similarity_bg())
-            
+
         return len(summaries)
 
     async def run_similarity_bg(
@@ -438,7 +443,7 @@ class AppState:
     ) -> None:
         """
         Run similarity analysis in a background thread and update state.
-        
+
         Args:
             extensions: List of file extensions to include (default: [".py"])
             type3: Whether to enable Type-3 (modified clone) detection
@@ -454,7 +459,7 @@ class AppState:
                 analyze_similarity,
                 root=self.settings.root_path,
                 extensions=extensions or [".py"],
-                type3=type3
+                type3=type3,
             )
             self.similarity_report = report_to_dict(report)
             logger.info(
@@ -1074,7 +1079,9 @@ class AppState:
         if batch:
             logger.info(
                 "Applying external changes: created=%d, modified=%d, deleted=%d",
-                len(batch.created), len(batch.modified), len(batch.deleted)
+                len(batch.created),
+                len(batch.modified),
+                len(batch.deleted),
             )
             await asyncio.to_thread(
                 self.scanner.apply_change_batch,

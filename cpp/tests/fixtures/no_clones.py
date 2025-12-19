@@ -1,15 +1,16 @@
 # Test file with unique code (no clones)
 
+
 def unique_algorithm():
     """A unique algorithm not found elsewhere."""
     data = [1, 2, 3, 4, 5]
-    result = sum(x ** 2 for x in data if x % 2 == 0)
+    result = sum(x**2 for x in data if x % 2 == 0)
     return result
 
 
 def another_unique_function():
     """Different logic than other files."""
-    mapping = {'a': 1, 'b': 2, 'c': 3}
+    mapping = {"a": 1, "b": 2, "c": 3}
     return list(mapping.values())
 
 

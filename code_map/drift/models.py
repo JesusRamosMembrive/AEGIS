@@ -50,7 +50,9 @@ class DriftCategory(Enum):
 
     # Semantic drift categories
     THREAD_SAFETY_MISMATCH = "thread_safety_mismatch"  # Contract says safe, code is not
-    PRECONDITION_UNCHECKED = "precondition_unchecked"  # Precondition not validated in code
+    PRECONDITION_UNCHECKED = (
+        "precondition_unchecked"  # Precondition not validated in code
+    )
     POSTCONDITION_UNMET = "postcondition_unmet"  # Postcondition not ensured
     ERROR_UNHANDLED = "error_unhandled"  # Declared error not handled
 
@@ -71,9 +73,7 @@ class DriftItem:
     suggestion: Optional[str] = None
     before_context: Optional[str] = None  # What was expected
     after_context: Optional[str] = None  # What was found
-    detected_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    detected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -109,9 +109,11 @@ class DriftItem:
             suggestion=data.get("suggestion"),
             before_context=data.get("before_context"),
             after_context=data.get("after_context"),
-            detected_at=datetime.fromisoformat(data["detected_at"])
-            if "detected_at" in data
-            else datetime.now(timezone.utc),
+            detected_at=(
+                datetime.fromisoformat(data["detected_at"])
+                if "detected_at" in data
+                else datetime.now(timezone.utc)
+            ),
         )
 
 
@@ -120,9 +122,7 @@ class DriftReport:
     """Complete drift analysis report."""
 
     items: list[DriftItem] = field(default_factory=list)
-    analyzed_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    analyzed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     analyzed_files: list[Path] = field(default_factory=list)
     duration_ms: float = 0.0
 
@@ -188,9 +188,11 @@ class DriftReport:
         """Create from dictionary."""
         return cls(
             items=[DriftItem.from_dict(item) for item in data.get("items", [])],
-            analyzed_at=datetime.fromisoformat(data["analyzed_at"])
-            if "analyzed_at" in data
-            else datetime.now(timezone.utc),
+            analyzed_at=(
+                datetime.fromisoformat(data["analyzed_at"])
+                if "analyzed_at" in data
+                else datetime.now(timezone.utc)
+            ),
             analyzed_files=[Path(f) for f in data.get("analyzed_files", [])],
             duration_ms=data.get("duration_ms", 0.0),
         )

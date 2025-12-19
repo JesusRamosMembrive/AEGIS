@@ -160,12 +160,12 @@ class SocketIOPTYServer:
 
             # Check platform availability
             if not self._pty_available:
-                logger.error(
-                    f"[SocketIO PTY] PTY not available on this platform"
-                )
+                logger.error(f"[SocketIO PTY] PTY not available on this platform")
                 await self.sio.emit(
                     "pty-error",
-                    {"error": "PTY terminal not available. Install pywinpty on Windows."},
+                    {
+                        "error": "PTY terminal not available. Install pywinpty on Windows."
+                    },
                     namespace="/pty",
                     to=sid,
                 )
@@ -181,9 +181,7 @@ class SocketIOPTYServer:
                 session = self._spawn_pty()
                 self.sessions[sid] = session
 
-                logger.info(
-                    f"[SocketIO PTY] Spawned PTY for {sid}: pid={session.pid}"
-                )
+                logger.info(f"[SocketIO PTY] Spawned PTY for {sid}: pid={session.pid}")
 
                 # Start background task for reading PTY output
                 task = asyncio.create_task(
@@ -362,9 +360,7 @@ class SocketIOPTYServer:
 
         try:
             # Start the read loop in background thread via WinPTYShell
-            read_task = asyncio.create_task(
-                session.shell.read(output_callback)
-            )
+            read_task = asyncio.create_task(session.shell.read(output_callback))
 
             while sid in self.sessions and session.shell.running:
                 try:
@@ -392,7 +388,9 @@ class SocketIOPTYServer:
         except asyncio.CancelledError:
             logger.info(f"[SocketIO PTY] Windows reader task cancelled for {sid}")
         except Exception as e:
-            logger.error(f"[SocketIO PTY] Unexpected error in Windows reader for {sid}: {e}")
+            logger.error(
+                f"[SocketIO PTY] Unexpected error in Windows reader for {sid}: {e}"
+            )
         finally:
             logger.info(f"[SocketIO PTY] Windows reader exiting for {sid}")
             try:
@@ -448,7 +446,9 @@ class SocketIOPTYServer:
         except asyncio.CancelledError:
             logger.info(f"[SocketIO PTY] Unix reader task cancelled for {sid}")
         except Exception as e:
-            logger.error(f"[SocketIO PTY] Unexpected error in Unix reader for {sid}: {e}")
+            logger.error(
+                f"[SocketIO PTY] Unexpected error in Unix reader for {sid}: {e}"
+            )
         finally:
             logger.info(f"[SocketIO PTY] Unix reader exiting for {sid}")
             # Notify client that session ended

@@ -134,15 +134,14 @@ async def run_analysis(
 
         # Trigger background run logic but wait for it here for the POST response
         # or we could reimplement just the blocking call here.
-        # To reuse logic, we can call the function we added to state, 
+        # To reuse logic, we can call the function we added to state,
         # but state.run_similarity_bg is async wrapping a blocking call.
-        
+
         # Explicit call to update state
         await state.run_similarity_bg(
-            extensions=request.extensions,
-            type3=request.type3
+            extensions=request.extensions, type3=request.type3
         )
-        
+
         return state.similarity_report or {}
 
     except SimilarityServiceError as e:
@@ -184,7 +183,7 @@ async def get_hotspots(
         ext_list = extensions.split(",") if extensions else [".py"]
         # Trigger update in state
         await state.run_similarity_bg(extensions=ext_list)
-        
+
         hotspots = (state.similarity_report or {}).get("hotspots", [])
         sorted_hotspots = sorted(
             hotspots, key=lambda h: h.get("duplication_score", 0), reverse=True

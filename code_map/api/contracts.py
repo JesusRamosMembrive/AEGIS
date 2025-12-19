@@ -185,11 +185,15 @@ async def discover_contracts(
 
     if not request.symbol_line:
         raise HTTPException(
-            status_code=400, detail="symbol_line is required (full-file scan not yet implemented)"
+            status_code=400,
+            detail="symbol_line is required (full-file scan not yet implemented)",
         )
 
-    logger.info("[DEBUG] /contracts/discover: file=%s, symbol_line=%d",
-                file_path, request.symbol_line)
+    logger.info(
+        "[DEBUG] /contracts/discover: file=%s, symbol_line=%d",
+        file_path,
+        request.symbol_line,
+    )
 
     discovery = ContractDiscovery(enable_llm=True)
 
@@ -344,7 +348,8 @@ async def validate_contract(
 
     if contract.is_empty():
         raise HTTPException(
-            status_code=404, detail=f"No contract found at {file_path}:{request.symbol_line}"
+            status_code=404,
+            detail=f"No contract found at {file_path}:{request.symbol_line}",
         )
 
     # Run evidence

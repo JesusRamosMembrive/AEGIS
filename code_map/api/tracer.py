@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 # Import from legacy compatibility layer (will emit DeprecationWarning)
 # TODO: Migrate to new PythonCallFlowExtractor API
 import warnings
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from ..call_tracer_v2 import CrossFileCallGraphExtractor
@@ -22,6 +23,7 @@ with warnings.catch_warnings():
 try:
     from tree_sitter import Parser
     from tree_sitter_languages import get_language
+
     TREE_SITTER_AVAILABLE = True
 except ImportError:
     TREE_SITTER_AVAILABLE = False

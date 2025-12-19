@@ -45,24 +45,29 @@ try:
     from code_map.audit import create_run, close_run, append_event
     from code_map.audit.hooks import AuditContext, audit_run_command
     from code_map.audit.file_watcher_hook import AuditFileWatcher
+
     AUDIT_AVAILABLE = True
     FILE_WATCHER_AVAILABLE = True
 except ImportError as e:
     # Graceful degradation if audit system not available
     AUDIT_AVAILABLE = False
     FILE_WATCHER_AVAILABLE = False
-    print(f"[Audit Bridge] Warning: code_map.audit not available. Audit logging disabled. ({e})", file=sys.stderr)
+    print(
+        f"[Audit Bridge] Warning: code_map.audit not available. Audit logging disabled. ({e})",
+        file=sys.stderr,
+    )
 
 
 # ============================================================================
 # Session Management
 # ============================================================================
 
+
 def start_audit_session(
     name: str,
     root_path: Optional[str] = None,
     notes: Optional[str] = None,
-    actor: str = "claude_code"
+    actor: str = "claude_code",
 ) -> Optional[int]:
     """
     Start a new audit session for tracking agent work.
@@ -88,11 +93,7 @@ def start_audit_session(
     if root_path is None:
         root_path = os.getcwd()
 
-    run = create_run(
-        name=name,
-        root_path=root_path,
-        notes=notes or ""
-    )
+    run = create_run(name=name, root_path=root_path, notes=notes or "")
 
     # Log session start event
     append_event(
@@ -102,7 +103,7 @@ def start_audit_session(
         detail=notes,
         actor=actor,
         phase="init",
-        status="running"
+        status="running",
     )
 
     return run.id
@@ -112,7 +113,7 @@ def end_audit_session(
     run_id: Optional[int],
     success: bool = True,
     summary: Optional[str] = None,
-    actor: str = "claude_code"
+    actor: str = "claude_code",
 ) -> None:
     """
     End an audit session and mark it as closed.
@@ -141,7 +142,7 @@ def end_audit_session(
         detail=summary,
         actor=actor,
         phase="complete",
-        status="ok" if success else "error"
+        status="ok" if success else "error",
     )
 
     # Close the run
@@ -152,11 +153,9 @@ def end_audit_session(
 # Event Logging Functions
 # ============================================================================
 
+
 def log_thought(
-    run_id: Optional[int],
-    thought: str,
-    phase: str = "plan",
-    actor: str = "claude_code"
+    run_id: Optional[int], thought: str, phase: str = "plan", actor: str = "claude_code"
 ) -> None:
     """
     Log a thought, analysis, or planning decision.
@@ -187,7 +186,7 @@ def log_thought(
         detail=thought,
         actor=actor,
         phase=phase,
-        status="ok"
+        status="ok",
     )
 
 
@@ -196,7 +195,7 @@ def log_command(
     command: str,
     phase: str = "apply",
     actor: str = "claude_code",
-    timeout: Optional[int] = None
+    timeout: Optional[int] = None,
 ) -> Optional[Any]:
     """
     Log a command execution (and actually run it).
@@ -222,6 +221,7 @@ def log_command(
     if not AUDIT_AVAILABLE or run_id is None:
         # Fallback: just run the command without audit
         import subprocess
+
         return subprocess.run(command, shell=True, capture_output=True, text=True)
 
     return audit_run_command(
@@ -230,7 +230,7 @@ def log_command(
         phase=phase,
         actor=actor,
         timeout=timeout,
-        shell=True
+        shell=True,
     )
 
 
@@ -240,7 +240,7 @@ def log_file_change(
     description: str,
     change_type: str = "modify",
     phase: str = "apply",
-    actor: str = "claude_code"
+    actor: str = "claude_code",
 ) -> None:
     """
     Log a file change (create, modify, delete).
@@ -276,7 +276,7 @@ def log_file_change(
         phase=phase,
         ref=file_path,
         status="ok",
-        payload={"change_type": change_type, "file_path": file_path}
+        payload={"change_type": change_type, "file_path": file_path},
     )
 
 
@@ -286,7 +286,7 @@ def log_git_operation(
     description: str,
     phase: str = "apply",
     actor: str = "claude_code",
-    payload: Optional[Dict[str, Any]] = None
+    payload: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     Log a git operation (commit, push, branch, etc.).
@@ -318,7 +318,7 @@ def log_git_operation(
         actor=actor,
         phase=phase,
         status="ok",
-        payload=payload or {}
+        payload=payload or {},
     )
 
 
@@ -328,7 +328,7 @@ def log_error(
     error_type: Optional[str] = None,
     phase: Optional[str] = None,
     actor: str = "claude_code",
-    traceback: Optional[str] = None
+    traceback: Optional[str] = None,
 ) -> None:
     """
     Log an error or exception that occurred.
@@ -368,7 +368,7 @@ def log_error(
         actor=actor,
         phase=phase,
         status="error",
-        payload={"error_type": error_type, "error_message": error_message}
+        payload={"error_type": error_type, "error_message": error_message},
     )
 
 
@@ -376,7 +376,7 @@ def log_phase_start(
     run_id: Optional[int],
     phase_name: str,
     description: Optional[str] = None,
-    actor: str = "claude_code"
+    actor: str = "claude_code",
 ) -> None:
     """
     Log the start of a workflow phase.
@@ -405,7 +405,7 @@ def log_phase_start(
         actor=actor,
         phase=phase_name,
         status="running",
-        payload={"phase_name": phase_name}
+        payload={"phase_name": phase_name},
     )
 
 
@@ -414,7 +414,7 @@ def log_phase_end(
     phase_name: str,
     success: bool = True,
     summary: Optional[str] = None,
-    actor: str = "claude_code"
+    actor: str = "claude_code",
 ) -> None:
     """
     Log the end of a workflow phase.
@@ -445,13 +445,14 @@ def log_phase_end(
         actor=actor,
         phase=phase_name,
         status="ok" if success else "error",
-        payload={"phase_name": phase_name}
+        payload={"phase_name": phase_name},
     )
 
 
 # ============================================================================
 # Context Manager for Tracking Work Blocks
 # ============================================================================
+
 
 class audit_context:
     """
@@ -474,7 +475,7 @@ class audit_context:
         title: str,
         phase: str = "apply",
         actor: str = "claude_code",
-        detail: Optional[str] = None
+        detail: Optional[str] = None,
     ):
         self.run_id = run_id
         self.title = title
@@ -491,7 +492,7 @@ class audit_context:
                 event_type="operation",
                 phase=self.phase,
                 actor=self.actor,
-                detail=self.detail
+                detail=self.detail,
             )
             self._ctx.__enter__()
         return self
@@ -505,6 +506,7 @@ class audit_context:
 # ============================================================================
 # Helper: Get current run ID from environment
 # ============================================================================
+
 
 def get_current_run_id() -> Optional[int]:
     """
@@ -538,11 +540,12 @@ def get_current_run_id() -> Optional[int]:
 # File Watcher Integration
 # ============================================================================
 
+
 def start_file_watcher(
     run_id: Optional[int],
     root_path: Optional[str] = None,
     phase: Optional[str] = None,
-    actor: str = "claude_code"
+    actor: str = "claude_code",
 ) -> Optional[Any]:
     """
     Start automatic file change monitoring with diff generation.
@@ -575,10 +578,7 @@ def start_file_watcher(
         root_path = os.getcwd()
 
     watcher = AuditFileWatcher(
-        run_id=run_id,
-        root_path=root_path,
-        actor=actor,
-        phase=phase
+        run_id=run_id, root_path=root_path, actor=actor, phase=phase
     )
 
     # Snapshot current state before watching
@@ -610,14 +610,14 @@ def stop_file_watcher(watcher: Optional[Any]) -> None:
 # Quick Start Example
 # ============================================================================
 
+
 def example_usage():
     """
     Example of how to use the audit bridge in your agent code.
     """
     # Start a session
     run_id = start_audit_session(
-        name="Example agent work",
-        notes="Demonstrating audit bridge usage"
+        name="Example agent work", notes="Demonstrating audit bridge usage"
     )
 
     if run_id is None:
@@ -642,7 +642,7 @@ def example_usage():
                 run_id,
                 "src/auth/middleware.py",
                 "Created JWT validation middleware",
-                change_type="create"
+                change_type="create",
             )
 
         log_phase_end(run_id, "apply", success=True)
@@ -659,17 +659,18 @@ def example_usage():
         end_audit_session(
             run_id,
             success=True,
-            summary="Successfully implemented and tested authentication"
+            summary="Successfully implemented and tested authentication",
         )
 
     except Exception as e:
         # Log error and end session
         import traceback
+
         log_error(
             run_id,
             error_message=str(e),
             error_type=type(e).__name__,
-            traceback=traceback.format_exc()
+            traceback=traceback.format_exc(),
         )
         end_audit_session(run_id, success=False, summary=f"Failed with error: {e}")
         raise

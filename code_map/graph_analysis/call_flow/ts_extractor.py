@@ -31,57 +31,220 @@ logger = logging.getLogger(__name__)
 # Common JavaScript/TypeScript built-in functions to ignore
 JS_BUILTIN_FUNCTIONS: Set[str] = {
     # Console
-    "log", "warn", "error", "info", "debug", "trace", "dir", "table",
-    "time", "timeEnd", "group", "groupEnd", "clear", "count", "assert",
+    "log",
+    "warn",
+    "error",
+    "info",
+    "debug",
+    "trace",
+    "dir",
+    "table",
+    "time",
+    "timeEnd",
+    "group",
+    "groupEnd",
+    "clear",
+    "count",
+    "assert",
     # Array methods
-    "push", "pop", "shift", "unshift", "splice", "slice", "concat",
-    "map", "filter", "reduce", "reduceRight", "forEach", "find", "findIndex",
-    "some", "every", "includes", "indexOf", "lastIndexOf", "join", "reverse",
-    "sort", "flat", "flatMap", "fill", "copyWithin", "entries", "keys", "values",
+    "push",
+    "pop",
+    "shift",
+    "unshift",
+    "splice",
+    "slice",
+    "concat",
+    "map",
+    "filter",
+    "reduce",
+    "reduceRight",
+    "forEach",
+    "find",
+    "findIndex",
+    "some",
+    "every",
+    "includes",
+    "indexOf",
+    "lastIndexOf",
+    "join",
+    "reverse",
+    "sort",
+    "flat",
+    "flatMap",
+    "fill",
+    "copyWithin",
+    "entries",
+    "keys",
+    "values",
     # Object methods
-    "keys", "values", "entries", "assign", "freeze", "seal", "create",
-    "defineProperty", "defineProperties", "getOwnPropertyDescriptor",
-    "getOwnPropertyNames", "getOwnPropertySymbols", "getPrototypeOf",
-    "setPrototypeOf", "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable",
+    "keys",
+    "values",
+    "entries",
+    "assign",
+    "freeze",
+    "seal",
+    "create",
+    "defineProperty",
+    "defineProperties",
+    "getOwnPropertyDescriptor",
+    "getOwnPropertyNames",
+    "getOwnPropertySymbols",
+    "getPrototypeOf",
+    "setPrototypeOf",
+    "hasOwnProperty",
+    "isPrototypeOf",
+    "propertyIsEnumerable",
     # String methods
-    "charAt", "charCodeAt", "codePointAt", "concat", "includes", "endsWith",
-    "startsWith", "indexOf", "lastIndexOf", "localeCompare", "match", "matchAll",
-    "normalize", "padEnd", "padStart", "repeat", "replace", "replaceAll",
-    "search", "slice", "split", "substring", "toLowerCase", "toUpperCase",
-    "trim", "trimStart", "trimEnd", "valueOf", "toString",
+    "charAt",
+    "charCodeAt",
+    "codePointAt",
+    "concat",
+    "includes",
+    "endsWith",
+    "startsWith",
+    "indexOf",
+    "lastIndexOf",
+    "localeCompare",
+    "match",
+    "matchAll",
+    "normalize",
+    "padEnd",
+    "padStart",
+    "repeat",
+    "replace",
+    "replaceAll",
+    "search",
+    "slice",
+    "split",
+    "substring",
+    "toLowerCase",
+    "toUpperCase",
+    "trim",
+    "trimStart",
+    "trimEnd",
+    "valueOf",
+    "toString",
     # Math
-    "abs", "ceil", "floor", "round", "max", "min", "pow", "sqrt", "random",
-    "sin", "cos", "tan", "log", "exp",
+    "abs",
+    "ceil",
+    "floor",
+    "round",
+    "max",
+    "min",
+    "pow",
+    "sqrt",
+    "random",
+    "sin",
+    "cos",
+    "tan",
+    "log",
+    "exp",
     # JSON
-    "parse", "stringify",
+    "parse",
+    "stringify",
     # Promise
-    "then", "catch", "finally", "all", "allSettled", "any", "race", "resolve", "reject",
+    "then",
+    "catch",
+    "finally",
+    "all",
+    "allSettled",
+    "any",
+    "race",
+    "resolve",
+    "reject",
     # Utility
-    "setTimeout", "setInterval", "clearTimeout", "clearInterval",
-    "requestAnimationFrame", "cancelAnimationFrame",
-    "fetch", "alert", "confirm", "prompt",
+    "setTimeout",
+    "setInterval",
+    "clearTimeout",
+    "clearInterval",
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+    "fetch",
+    "alert",
+    "confirm",
+    "prompt",
     # Type checking
-    "isArray", "isNaN", "isFinite", "parseInt", "parseFloat",
+    "isArray",
+    "isNaN",
+    "isFinite",
+    "parseInt",
+    "parseFloat",
     # DOM (common)
-    "getElementById", "getElementsByClassName", "getElementsByTagName",
-    "querySelector", "querySelectorAll", "createElement", "appendChild",
-    "removeChild", "addEventListener", "removeEventListener",
-    "getAttribute", "setAttribute", "removeAttribute",
+    "getElementById",
+    "getElementsByClassName",
+    "getElementsByTagName",
+    "querySelector",
+    "querySelectorAll",
+    "createElement",
+    "appendChild",
+    "removeChild",
+    "addEventListener",
+    "removeEventListener",
+    "getAttribute",
+    "setAttribute",
+    "removeAttribute",
     # React hooks (very common)
-    "useState", "useEffect", "useContext", "useReducer", "useCallback",
-    "useMemo", "useRef", "useImperativeHandle", "useLayoutEffect",
-    "useDebugValue", "useTransition", "useDeferredValue", "useId",
+    "useState",
+    "useEffect",
+    "useContext",
+    "useReducer",
+    "useCallback",
+    "useMemo",
+    "useRef",
+    "useImperativeHandle",
+    "useLayoutEffect",
+    "useDebugValue",
+    "useTransition",
+    "useDeferredValue",
+    "useId",
 }
 
 # Common JS/TS library namespaces to ignore
 JS_LIBRARY_NAMESPACES: Set[str] = {
-    "console", "Math", "JSON", "Object", "Array", "String", "Number",
-    "Boolean", "Date", "RegExp", "Error", "Promise", "Map", "Set",
-    "WeakMap", "WeakSet", "Symbol", "Reflect", "Proxy", "Intl",
-    "document", "window", "navigator", "localStorage", "sessionStorage",
-    "React", "ReactDOM", "Vue", "Angular", "jQuery", "$",
-    "axios", "lodash", "_", "moment", "dayjs",
-    "fs", "path", "os", "http", "https", "crypto", "util", "events",
+    "console",
+    "Math",
+    "JSON",
+    "Object",
+    "Array",
+    "String",
+    "Number",
+    "Boolean",
+    "Date",
+    "RegExp",
+    "Error",
+    "Promise",
+    "Map",
+    "Set",
+    "WeakMap",
+    "WeakSet",
+    "Symbol",
+    "Reflect",
+    "Proxy",
+    "Intl",
+    "document",
+    "window",
+    "navigator",
+    "localStorage",
+    "sessionStorage",
+    "React",
+    "ReactDOM",
+    "Vue",
+    "Angular",
+    "jQuery",
+    "$",
+    "axios",
+    "lodash",
+    "_",
+    "moment",
+    "dayjs",
+    "fs",
+    "path",
+    "os",
+    "http",
+    "https",
+    "crypto",
+    "util",
+    "events",
 }
 
 
@@ -157,7 +320,7 @@ class TsCallFlowExtractor:
 
     def _get_node_text(self, node: Any, source: bytes) -> str:
         """Extract text content from a node."""
-        return source[node.start_byte:node.end_byte].decode("utf-8", errors="replace")
+        return source[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
 
     def _should_skip_function(self, name: str) -> bool:
         """Check if function should be skipped from entry points."""
@@ -214,17 +377,22 @@ class TsCallFlowExtractor:
                 func_name = self._get_function_name(node, source)
                 if func_name and not self._should_skip_function(func_name):
                     call_count = self._count_calls_in_node(node)
-                    entry_points.append({
-                        "name": func_name,
-                        "qualified_name": func_name,
-                        "line": node.start_point[0] + 1,
-                        "kind": "function",
-                        "class_name": None,
-                        "node_count": call_count,
-                    })
+                    entry_points.append(
+                        {
+                            "name": func_name,
+                            "qualified_name": func_name,
+                            "line": node.start_point[0] + 1,
+                            "kind": "function",
+                            "class_name": None,
+                            "node_count": call_count,
+                        }
+                    )
 
             # Arrow functions assigned to const/let/var
-            elif node.type == "lexical_declaration" or node.type == "variable_declaration":
+            elif (
+                node.type == "lexical_declaration"
+                or node.type == "variable_declaration"
+            ):
                 for declarator in node.children:
                     if declarator.type == "variable_declarator":
                         name_node = declarator.child_by_field_name("name")
@@ -232,16 +400,20 @@ class TsCallFlowExtractor:
                         if name_node and value_node:
                             if value_node.type in ("arrow_function", "function"):
                                 func_name = self._get_node_text(name_node, source)
-                                if func_name and not self._should_skip_function(func_name):
+                                if func_name and not self._should_skip_function(
+                                    func_name
+                                ):
                                     call_count = self._count_calls_in_node(value_node)
-                                    entry_points.append({
-                                        "name": func_name,
-                                        "qualified_name": func_name,
-                                        "line": node.start_point[0] + 1,
-                                        "kind": "function",
-                                        "class_name": None,
-                                        "node_count": call_count,
-                                    })
+                                    entry_points.append(
+                                        {
+                                            "name": func_name,
+                                            "qualified_name": func_name,
+                                            "line": node.start_point[0] + 1,
+                                            "kind": "function",
+                                            "class_name": None,
+                                            "node_count": call_count,
+                                        }
+                                    )
 
             # Class declarations
             elif node.type == "class_declaration":
@@ -256,14 +428,16 @@ class TsCallFlowExtractor:
                                 constructor_calls = self._count_calls_in_node(child)
                                 break
 
-                    entry_points.append({
-                        "name": class_name,
-                        "qualified_name": class_name,
-                        "line": node.start_point[0] + 1,
-                        "kind": "class",
-                        "class_name": None,
-                        "node_count": constructor_calls,
-                    })
+                    entry_points.append(
+                        {
+                            "name": class_name,
+                            "qualified_name": class_name,
+                            "line": node.start_point[0] + 1,
+                            "kind": "class",
+                            "class_name": None,
+                            "node_count": constructor_calls,
+                        }
+                    )
 
                     # Add methods
                     body = self._find_child_by_type(node, "class_body")
@@ -271,16 +445,20 @@ class TsCallFlowExtractor:
                         for child in body.children:
                             if child.type == "method_definition":
                                 method_name = self._get_method_name(child, source)
-                                if method_name and not self._should_skip_function(method_name):
+                                if method_name and not self._should_skip_function(
+                                    method_name
+                                ):
                                     call_count = self._count_calls_in_node(child)
-                                    entry_points.append({
-                                        "name": method_name,
-                                        "qualified_name": f"{class_name}.{method_name}",
-                                        "line": child.start_point[0] + 1,
-                                        "kind": "method",
-                                        "class_name": class_name,
-                                        "node_count": call_count,
-                                    })
+                                    entry_points.append(
+                                        {
+                                            "name": method_name,
+                                            "qualified_name": f"{class_name}.{method_name}",
+                                            "line": child.start_point[0] + 1,
+                                            "kind": "method",
+                                            "class_name": class_name,
+                                            "node_count": call_count,
+                                        }
+                                    )
 
             # Exported functions
             elif node.type in ("export_statement", "export_default_declaration"):
@@ -291,14 +469,16 @@ class TsCallFlowExtractor:
                         call_count = self._count_calls_in_node(declaration)
                         # Check if already added
                         if not any(ep["name"] == func_name for ep in entry_points):
-                            entry_points.append({
-                                "name": func_name,
-                                "qualified_name": func_name,
-                                "line": declaration.start_point[0] + 1,
-                                "kind": "function",
-                                "class_name": None,
-                                "node_count": call_count,
-                            })
+                            entry_points.append(
+                                {
+                                    "name": func_name,
+                                    "qualified_name": func_name,
+                                    "line": declaration.start_point[0] + 1,
+                                    "kind": "function",
+                                    "class_name": None,
+                                    "node_count": call_count,
+                                }
+                            )
 
         return entry_points
 
@@ -431,7 +611,9 @@ class TsCallFlowExtractor:
         """
         is_tsx = self._is_tsx_file(file_path)
         if not self._ensure_parser(is_tsx):
-            logger.warning("tree-sitter not available for TypeScript call flow extraction")
+            logger.warning(
+                "tree-sitter not available for TypeScript call flow extraction"
+            )
             return None
 
         file_path = file_path.resolve()
@@ -450,9 +632,7 @@ class TsCallFlowExtractor:
             tree.root_node, function_name, source
         )
         if func_node is None:
-            logger.warning(
-                "Function '%s' not found in %s", function_name, file_path
-            )
+            logger.warning("Function '%s' not found in %s", function_name, file_path)
             return None
 
         # Build qualified name
@@ -465,7 +645,9 @@ class TsCallFlowExtractor:
         line = func_node.start_point[0] + 1
         col = func_node.start_point[1]
         kind = "method" if class_name else "function"
-        entry_id = self._make_symbol_id(file_path, line, col, kind, function_name, effective_root)
+        entry_id = self._make_symbol_id(
+            file_path, line, col, kind, function_name, effective_root
+        )
 
         entry_node = CallNode(
             id=entry_id,
@@ -492,7 +674,9 @@ class TsCallFlowExtractor:
         graph.add_node(entry_node)
 
         # Build index of all functions in file
-        function_index = self._build_function_index(tree.root_node, source, file_path, effective_root)
+        function_index = self._build_function_index(
+            tree.root_node, source, file_path, effective_root
+        )
 
         # Extract calls recursively
         call_stack: List[str] = [entry_id]
@@ -566,7 +750,11 @@ class TsCallFlowExtractor:
             elif node.type == "variable_declarator":
                 name_node = node.child_by_field_name("name")
                 value_node = node.child_by_field_name("value")
-                if name_node and value_node and value_node.type in ("arrow_function", "function"):
+                if (
+                    name_node
+                    and value_node
+                    and value_node.type in ("arrow_function", "function")
+                ):
                     func_name = self._get_node_text(name_node, source)
                     if func_name:
                         line = value_node.start_point[0] + 1
@@ -651,7 +839,11 @@ class TsCallFlowExtractor:
             elif node.type == "variable_declarator":
                 name_node = node.child_by_field_name("name")
                 value_node = node.child_by_field_name("value")
-                if name_node and value_node and value_node.type in ("arrow_function", "function"):
+                if (
+                    name_node
+                    and value_node
+                    and value_node.type in ("arrow_function", "function")
+                ):
                     func_name = self._get_node_text(name_node, source)
                     if func_name == name:
                         return (value_node, None)
@@ -747,11 +939,13 @@ class TsCallFlowExtractor:
             # Per-branch cycle detection
             is_cycle = target_id in call_stack
             if is_cycle:
-                graph.diagnostics.setdefault("cycles_detected", []).append({
-                    "from": parent_id,
-                    "to": target_id,
-                    "path": list(call_stack),
-                })
+                graph.diagnostics.setdefault("cycles_detected", []).append(
+                    {
+                        "from": parent_id,
+                        "to": target_id,
+                        "path": list(call_stack),
+                    }
+                )
 
             # Add edge
             edge = CallEdge(
@@ -1004,7 +1198,11 @@ class TsCallFlowExtractor:
                 qualified_key = f"{call_info.receiver}.{call_info.name}"
                 if qualified_key in function_index:
                     info = function_index[qualified_key]
-                    return ((info["node"], info), ResolutionStatus.RESOLVED_PROJECT, None)
+                    return (
+                        (info["node"], info),
+                        ResolutionStatus.RESOLVED_PROJECT,
+                        None,
+                    )
 
             # Try just the method name (might be defined locally)
             if call_info.name in function_index:

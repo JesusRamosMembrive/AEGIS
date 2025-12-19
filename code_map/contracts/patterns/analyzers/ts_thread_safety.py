@@ -206,7 +206,9 @@ class TypeScriptThreadSafetyAnalyzer:
 
         return None
 
-    def _analyze_class_name(self, class_name: str, class_node: Node) -> L4Finding | None:
+    def _analyze_class_name(
+        self, class_name: str, class_node: Node
+    ) -> L4Finding | None:
         """Check class name for thread-safety patterns."""
         for pattern in self.SAFE_TYPE_PATTERNS:
             if pattern in class_name:

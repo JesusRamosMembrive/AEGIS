@@ -216,9 +216,7 @@ class EvidenceExecutor:
             return await self._run_command(["ruff", "check", str(self.project_root)])
         elif linter == "clang-tidy":
             # Assumes compile_commands.json exists
-            return await self._run_command(
-                ["clang-tidy", "-p", str(self.project_root)]
-            )
+            return await self._run_command(["clang-tidy", "-p", str(self.project_root)])
         elif linter == "mypy":
             return await self._run_command(["mypy", str(self.project_root)])
         elif linter == "eslint":

@@ -90,6 +90,7 @@ def with_match(value):
 # Helper Functions
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def get_ast_complexity(code: str) -> int:
     """Calculate complexity using code_map/analyzer.py (AST-based)."""
     tree = ast.parse(code)
@@ -157,6 +158,7 @@ def get_call_flow_complexity(code: str, func_name: str = None) -> int:
 # Tests
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TestASTComplexity:
     """Test the AST-based complexity calculation (analyzer.py)."""
 
@@ -222,21 +224,26 @@ class TestCallFlowComplexity:
 class TestConsistency:
     """Test that AST and tree-sitter implementations give same results."""
 
-    @pytest.mark.parametrize("code,expected", [
-        (PYTHON_SIMPLE_FUNCTION, 1),
-        (PYTHON_IF_ONLY, 2),
-        (PYTHON_COMPREHENSION, 1),  # Both should exclude comprehensions
-    ])
+    @pytest.mark.parametrize(
+        "code,expected",
+        [
+            (PYTHON_SIMPLE_FUNCTION, 1),
+            (PYTHON_IF_ONLY, 2),
+            (PYTHON_COMPREHENSION, 1),  # Both should exclude comprehensions
+        ],
+    )
     def test_consistency(self, code: str, expected: int):
         """Both implementations should return the same complexity."""
         ast_result = get_ast_complexity(code)
         call_flow_result = get_call_flow_complexity(code)
 
         assert ast_result == expected, f"AST: expected {expected}, got {ast_result}"
-        assert call_flow_result == expected, f"CallFlow: expected {expected}, got {call_flow_result}"
-        assert ast_result == call_flow_result, (
-            f"Inconsistency: AST={ast_result}, CallFlow={call_flow_result}"
-        )
+        assert (
+            call_flow_result == expected
+        ), f"CallFlow: expected {expected}, got {call_flow_result}"
+        assert (
+            ast_result == call_flow_result
+        ), f"Inconsistency: AST={ast_result}, CallFlow={call_flow_result}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -278,6 +285,7 @@ class TestCAnalyzerComplexity:
         """Check if C analyzer is available."""
         try:
             from code_map.c_analyzer import CAnalyzer
+
             analyzer = CAnalyzer()
             assert hasattr(analyzer, "_calculate_complexity")
         except ImportError:

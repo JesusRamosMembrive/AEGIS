@@ -217,7 +217,14 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
             if child.type == "expression_statement":
                 for subchild in child.children:
                     if subchild.type == "string":
-                        doc = self._get_node_text(subchild, source.encode("utf-8") if isinstance(source, str) else source)
+                        doc = self._get_node_text(
+                            subchild,
+                            (
+                                source.encode("utf-8")
+                                if isinstance(source, str)
+                                else source
+                            ),
+                        )
                         # Clean up and get first line
                         doc = doc.strip("\"'")
                         first_line = doc.split("\n")[0].strip()
@@ -237,7 +244,9 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                 count += 1
         return count
 
-    def _classify_external(self, name: str, module_hint: Optional[str] = None) -> ResolutionStatus:
+    def _classify_external(
+        self, name: str, module_hint: Optional[str] = None
+    ) -> ResolutionStatus:
         """Classify an external (non-project) call."""
         if name in PYTHON_BUILTINS:
             return ResolutionStatus.IGNORED_BUILTIN
@@ -299,15 +308,17 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
 
                     call_count = self._count_calls_in_node(node)
 
-                    entry_points.append({
-                        "name": func_name,
-                        "qualified_name": qualified_name,
-                        "line": node.start_point[0] + 1,
-                        "kind": kind,
-                        "class_name": class_name,
-                        "node_count": call_count,
-                        "file_path": str(file_path),
-                    })
+                    entry_points.append(
+                        {
+                            "name": func_name,
+                            "qualified_name": qualified_name,
+                            "line": node.start_point[0] + 1,
+                            "kind": kind,
+                            "class_name": class_name,
+                            "node_count": call_count,
+                            "file_path": str(file_path),
+                        }
+                    )
 
             elif node.type == "class_definition":
                 class_name = self._get_class_name(node)
@@ -321,15 +332,17 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                                 init_calls = self._count_calls_in_node(child)
                                 break
 
-                    entry_points.append({
-                        "name": class_name,
-                        "qualified_name": class_name,
-                        "line": node.start_point[0] + 1,
-                        "kind": "class",
-                        "class_name": None,
-                        "node_count": init_calls,
-                        "file_path": str(file_path),
-                    })
+                    entry_points.append(
+                        {
+                            "name": class_name,
+                            "qualified_name": class_name,
+                            "line": node.start_point[0] + 1,
+                            "kind": "class",
+                            "class_name": None,
+                            "node_count": init_calls,
+                            "file_path": str(file_path),
+                        }
+                    )
 
         return entry_points
 
@@ -372,9 +385,7 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
             tree.root_node, function_name, source
         )
         if func_node is None:
-            logger.warning(
-                "Function '%s' not found in %s", function_name, file_path
-            )
+            logger.warning("Function '%s' not found in %s", function_name, file_path)
             return None
 
         # Build qualified name
@@ -387,7 +398,9 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
         line = func_node.start_point[0] + 1
         col = func_node.start_point[1]
         kind = "method" if class_name else "function"
-        entry_id = self._make_symbol_id(file_path, line, col, kind, function_name, effective_root)
+        entry_id = self._make_symbol_id(
+            file_path, line, col, kind, function_name, effective_root
+        )
 
         entry_node = CallNode(
             id=entry_id,
@@ -511,7 +524,12 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
             # Build target node ID using stable symbol ID
             target_kind = "method" if target_class else "function"
             target_id = self._make_symbol_id(
-                target_file, target_line, target_col, target_kind, target_func, project_root
+                target_file,
+                target_line,
+                target_col,
+                target_kind,
+                target_func,
+                project_root,
             )
 
             if target_class:
@@ -522,11 +540,13 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
             # Per-branch cycle detection
             is_cycle = target_id in call_stack
             if is_cycle:
-                graph.diagnostics.setdefault("cycles_detected", []).append({
-                    "from": parent_id,
-                    "to": target_id,
-                    "path": list(call_stack),
-                })
+                graph.diagnostics.setdefault("cycles_detected", []).append(
+                    {
+                        "from": parent_id,
+                        "to": target_id,
+                        "path": list(call_stack),
+                    }
+                )
 
             # Add edge
             edge = CallEdge(
@@ -574,7 +594,9 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                     # Update node with complexity metrics
                     node_to_update = graph.get_node(target_id)
                     if node_to_update:
-                        node_to_update.complexity = self._calculate_complexity(target_node_ast)
+                        node_to_update.complexity = self._calculate_complexity(
+                            target_node_ast
+                        )
                         node_to_update.loc = self._calculate_loc(target_node_ast)
 
                     self._extract_calls_recursive(
@@ -595,7 +617,9 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                 try:
                     target_source = target_file.read_text(encoding="utf-8")
                     target_tree = self._parser.parse(bytes(target_source, "utf-8"))
-                    target_imports = self._extract_imports(target_tree.root_node, target_source)
+                    target_imports = self._extract_imports(
+                        target_tree.root_node, target_source
+                    )
                     target_node_ast, _ = self._find_function_or_method(
                         target_tree.root_node, target_func, target_source, target_class
                     )
@@ -603,7 +627,9 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                         # Update node with complexity metrics
                         node_to_update = graph.get_node(target_id)
                         if node_to_update:
-                            node_to_update.complexity = self._calculate_complexity(target_node_ast)
+                            node_to_update.complexity = self._calculate_complexity(
+                                target_node_ast
+                            )
                             node_to_update.loc = self._calculate_loc(target_node_ast)
 
                         self._extract_calls_recursive(
@@ -620,7 +646,9 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                             imports=target_imports,
                         )
                 except OSError:
-                    logger.debug("Could not read file for recursive extraction: %s", target_file)
+                    logger.debug(
+                        "Could not read file for recursive extraction: %s", target_file
+                    )
 
             call_stack.pop()
 
@@ -650,7 +678,9 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
         call_type = "direct"
 
         if func_node.type == "identifier":
-            name = self._get_node_text(func_node, source.encode("utf-8") if isinstance(source, str) else source)
+            name = self._get_node_text(
+                func_node, source.encode("utf-8") if isinstance(source, str) else source
+            )
             call_type = "direct"
         elif func_node.type == "attribute":
             parts = self._parse_attribute_chain(func_node, source)
@@ -674,7 +704,10 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
         if args_node:
             for child in args_node.children:
                 if child.type not in ("(", ")", ","):
-                    arg_text = self._get_node_text(child, source.encode("utf-8") if isinstance(source, str) else source)
+                    arg_text = self._get_node_text(
+                        child,
+                        source.encode("utf-8") if isinstance(source, str) else source,
+                    )
                     arguments.append(arg_text)
 
         return CallInfo(
@@ -831,7 +864,10 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                     )
                     if target_cls:
                         init_node = self._find_method_in_class(
-                            target_tree.root_node, original_name, "__init__", target_source
+                            target_tree.root_node,
+                            original_name,
+                            "__init__",
+                            target_source,
                         )
                         if init_node:
                             return (
@@ -882,9 +918,21 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                         imports=imports,
                     )
                     if method_result:
-                        target_file, target_method, target_line, target_col, target_class = method_result
+                        (
+                            target_file,
+                            target_method,
+                            target_line,
+                            target_col,
+                            target_class,
+                        ) = method_result
                         return (
-                            (target_file, target_method, target_line, target_col, target_class),
+                            (
+                                target_file,
+                                target_method,
+                                target_line,
+                                target_col,
+                                target_class,
+                            ),
                             ResolutionStatus.RESOLVED_PROJECT,
                             None,
                         )
@@ -893,7 +941,10 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
 
         # Could not resolve - check if it might be external
         status = self._classify_external(call_info.name)
-        if status in (ResolutionStatus.IGNORED_BUILTIN, ResolutionStatus.IGNORED_STDLIB):
+        if status in (
+            ResolutionStatus.IGNORED_BUILTIN,
+            ResolutionStatus.IGNORED_STDLIB,
+        ):
             return (None, status, call_info.name)
 
         return (None, ResolutionStatus.UNRESOLVED, None)
@@ -941,7 +992,9 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                         for subchild in child.children:
                             if subchild.type == "identifier":
                                 if original is None:
-                                    original = self._get_node_text(subchild, source_bytes)
+                                    original = self._get_node_text(
+                                        subchild, source_bytes
+                                    )
                                 else:
                                     alias = self._get_node_text(subchild, source_bytes)
                         if original and alias and module_name:

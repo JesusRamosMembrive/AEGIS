@@ -85,7 +85,9 @@ class ThreadSafetyAnalyzer:
 
         return findings
 
-    def _analyze_class(self, class_node: Node, helper: CppQueryHelper) -> List[L4Finding]:
+    def _analyze_class(
+        self, class_node: Node, helper: CppQueryHelper
+    ) -> List[L4Finding]:
         """Analyze a single class for thread safety patterns."""
         findings = []
         mechanisms_found: Set[str] = set()
@@ -177,7 +179,9 @@ class ThreadSafetyAnalyzer:
 
         return None
 
-    def _check_type_name_pattern(self, type_name: str) -> tuple[L4Confidence, str] | None:
+    def _check_type_name_pattern(
+        self, type_name: str
+    ) -> tuple[L4Confidence, str] | None:
         """Check if type name matches thread safety patterns."""
         for pattern, confidence in self.SAFE_TYPE_PATTERNS:
             if pattern.search(type_name):

@@ -48,15 +48,9 @@ class CppLanguageStrategy(LanguageStrategy):
     # ─────────────────────────────────────────────────────────────
 
     DOXYGEN_PATTERNS = {
-        "preconditions": re.compile(
-            r"@pre\s+(.+?)(?=\n\s*[@*]|\*/|\Z)", re.DOTALL
-        ),
-        "postconditions": re.compile(
-            r"@post\s+(.+?)(?=\n\s*[@*]|\*/|\Z)", re.DOTALL
-        ),
-        "invariants": re.compile(
-            r"@invariant\s+(.+?)(?=\n\s*[@*]|\*/|\Z)", re.DOTALL
-        ),
+        "preconditions": re.compile(r"@pre\s+(.+?)(?=\n\s*[@*]|\*/|\Z)", re.DOTALL),
+        "postconditions": re.compile(r"@post\s+(.+?)(?=\n\s*[@*]|\*/|\Z)", re.DOTALL),
+        "invariants": re.compile(r"@invariant\s+(.+?)(?=\n\s*[@*]|\*/|\Z)", re.DOTALL),
         "errors": re.compile(
             r"@throws?\s+(\S+)\s+(.+?)(?=\n\s*[@*]|\*/|\Z)", re.DOTALL
         ),
@@ -89,8 +83,12 @@ class CppLanguageStrategy(LanguageStrategy):
         # Note: symbol_line is 1-based, lines[] is 0-based
         # Start from line BEFORE the symbol (symbol_line - 2 in 0-based)
         search_start = max(0, symbol_line - 31)
-        logger.info("[DEBUG] find_contract_block: symbol_line=%d, search_range=[%d..%d]",
-                    symbol_line, search_start, symbol_line - 2)
+        logger.info(
+            "[DEBUG] find_contract_block: symbol_line=%d, search_range=[%d..%d]",
+            symbol_line,
+            search_start,
+            symbol_line - 2,
+        )
         for i in range(symbol_line - 2, search_start - 1, -1):
             if i >= len(lines):
                 continue

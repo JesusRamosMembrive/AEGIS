@@ -27,7 +27,12 @@ def _validate_summary(summary: dict) -> list[str]:
             errors.append(f"summary missing key: {key}")
 
     # Type checks for integer fields
-    int_fields = ["analysis_time_ms", "clone_pairs_found", "files_analyzed", "total_lines"]
+    int_fields = [
+        "analysis_time_ms",
+        "clone_pairs_found",
+        "files_analyzed",
+        "total_lines",
+    ]
     for field in int_fields:
         if field in summary and not isinstance(summary[field], int):
             errors.append(f"summary.{field} should be int")
@@ -72,7 +77,9 @@ def _validate_clone_location(loc: dict, clone_idx: int, loc_idx: int) -> list[st
 
     for key in loc_keys:
         if key not in loc:
-            errors.append(f"clones[{clone_idx}].locations[{loc_idx}] missing key: {key}")
+            errors.append(
+                f"clones[{clone_idx}].locations[{loc_idx}] missing key: {key}"
+            )
 
     return errors
 

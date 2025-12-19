@@ -115,9 +115,15 @@ class TestEvidenceExecutor:
         """Should filter evidence by scope."""
         contract = ContractData(
             evidence=[
-                EvidenceItem(type="test", reference="test1.py", policy=EvidencePolicy.REQUIRED),
-                EvidenceItem(type="test", reference="test2.py", policy=EvidencePolicy.OPTIONAL),
-                EvidenceItem(type="lint", reference="ruff", policy=EvidencePolicy.REQUIRED),
+                EvidenceItem(
+                    type="test", reference="test1.py", policy=EvidencePolicy.REQUIRED
+                ),
+                EvidenceItem(
+                    type="test", reference="test2.py", policy=EvidencePolicy.OPTIONAL
+                ),
+                EvidenceItem(
+                    type="lint", reference="ruff", policy=EvidencePolicy.REQUIRED
+                ),
             ]
         )
 
@@ -136,8 +142,12 @@ class TestEvidenceExecutor:
         """Scope 'all' should run all evidence."""
         contract = ContractData(
             evidence=[
-                EvidenceItem(type="test", reference="test1.py", policy=EvidencePolicy.REQUIRED),
-                EvidenceItem(type="test", reference="test2.py", policy=EvidencePolicy.OPTIONAL),
+                EvidenceItem(
+                    type="test", reference="test1.py", policy=EvidencePolicy.REQUIRED
+                ),
+                EvidenceItem(
+                    type="test", reference="test2.py", policy=EvidencePolicy.OPTIONAL
+                ),
             ]
         )
 

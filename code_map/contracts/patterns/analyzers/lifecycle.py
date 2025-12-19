@@ -25,7 +25,10 @@ class LifecycleAnalyzer:
     # Method name patterns mapped to (target_phase, transition_name)
     LIFECYCLE_METHODS: Dict[Tuple[str, ...], Tuple[str, str]] = {
         # Start methods -> "running" phase
-        ("start", "begin", "run", "activate", "launch", "execute"): ("running", "start"),
+        ("start", "begin", "run", "activate", "launch", "execute"): (
+            "running",
+            "start",
+        ),
         # Stop methods -> "stopped" phase
         ("stop", "shutdown", "close", "terminate", "finish", "halt", "kill"): (
             "stopped",
@@ -82,7 +85,9 @@ class LifecycleAnalyzer:
 
         return findings
 
-    def _analyze_class(self, class_node: Node, helper: CppQueryHelper) -> List[L4Finding]:
+    def _analyze_class(
+        self, class_node: Node, helper: CppQueryHelper
+    ) -> List[L4Finding]:
         """Analyze a single class for lifecycle patterns."""
         findings = []
         phases_found: Set[str] = set()
@@ -152,7 +157,9 @@ class LifecycleAnalyzer:
 
         return findings
 
-    def _matches_lifecycle_pattern(self, method_name: str, patterns: Tuple[str, ...]) -> bool:
+    def _matches_lifecycle_pattern(
+        self, method_name: str, patterns: Tuple[str, ...]
+    ) -> bool:
         """Check if method name matches any lifecycle pattern."""
         # Exact match
         if method_name in patterns:

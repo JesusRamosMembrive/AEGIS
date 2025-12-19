@@ -113,9 +113,7 @@ class PythonOwnershipAnalyzer:
 
         return None
 
-    def _analyze_instantiation(
-        self, field, assigned_from: str
-    ) -> L4Finding | None:
+    def _analyze_instantiation(self, field, assigned_from: str) -> L4Finding | None:
         """Analyze ownership when field is assigned from instantiation."""
         # Check for threading types
         for threading_type in self.THREADING_TYPES:

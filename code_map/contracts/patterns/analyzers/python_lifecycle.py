@@ -94,13 +94,19 @@ class PythonLifecycleAnalyzer:
         """Analyze for lifecycle method pairs."""
         findings = []
 
-        for (start_method, end_method), (start_phase, end_phase, confidence) in self.LIFECYCLE_PAIRS.items():
+        for (start_method, end_method), (
+            start_phase,
+            end_phase,
+            confidence,
+        ) in self.LIFECYCLE_PAIRS.items():
             has_start = start_method in method_names
             has_end = end_method in method_names
 
             if has_start and has_end:
                 # Full lifecycle pair found
-                start_line = next((m.line for m in methods if m.name == start_method), 0)
+                start_line = next(
+                    (m.line for m in methods if m.name == start_method), 0
+                )
 
                 findings.append(
                     L4Finding(
@@ -114,7 +120,9 @@ class PythonLifecycleAnalyzer:
                 )
             elif has_start:
                 # Only start method - partial lifecycle
-                start_line = next((m.line for m in methods if m.name == start_method), 0)
+                start_line = next(
+                    (m.line for m in methods if m.name == start_method), 0
+                )
 
                 findings.append(
                     L4Finding(
@@ -137,7 +145,9 @@ class PythonLifecycleAnalyzer:
 
         for method_name, (phase, confidence) in self.SINGLE_LIFECYCLE_METHODS.items():
             if method_name in method_names:
-                method_line = next((m.line for m in methods if m.name == method_name), 0)
+                method_line = next(
+                    (m.line for m in methods if m.name == method_name), 0
+                )
 
                 findings.append(
                     L4Finding(

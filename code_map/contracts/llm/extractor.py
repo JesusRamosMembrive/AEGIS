@@ -73,9 +73,7 @@ class LLMContractExtractor:
 
         return self._available
 
-    async def extract(
-        self, code_block: str, documentation: str
-    ) -> ContractData:
+    async def extract(self, code_block: str, documentation: str) -> ContractData:
         """
         Extract contract from code and documentation using LLM.
 

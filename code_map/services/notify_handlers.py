@@ -73,9 +73,7 @@ class SSEBroadcastHandler(ChangeHandler):
 
         # Extraer paths procesados
         updated_paths = [
-            d["path"]
-            for d in result.details
-            if d.get("status") == "processed"
+            d["path"] for d in result.details if d.get("status") == "processed"
         ]
         if updated_paths:
             payload = {

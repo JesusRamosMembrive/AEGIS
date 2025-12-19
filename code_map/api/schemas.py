@@ -700,7 +700,8 @@ class ListFilesResponse(BaseModel):
         default_factory=list, description="Lista de subdirectorios"
     )
     files: List[FileItem] = Field(
-        default_factory=list, description="Lista de archivos que coinciden con el filtro"
+        default_factory=list,
+        description="Lista de archivos que coinciden con el filtro",
     )
 
 
@@ -784,6 +785,7 @@ class CallFlowResolutionStatus(str, Enum):
         unresolved: Could not resolve (unknown symbol)
         ambiguous: Multiple possible targets
     """
+
     RESOLVED_PROJECT = "resolved_project"
     IGNORED_BUILTIN = "ignored_builtin"
     IGNORED_STDLIB = "ignored_stdlib"
@@ -803,6 +805,7 @@ class CallFlowIgnoredCallSchema(BaseModel):
         module_hint: Module name if known
         caller_id: ID of the node that made this call
     """
+
     expression: str
     status: CallFlowResolutionStatus
     call_site_line: int
@@ -841,7 +844,9 @@ class CallFlowNodeSchema(BaseModel):
     depth: int = 0
     docstring: Optional[str] = None
     symbol_id: Optional[str] = None
-    resolution_status: CallFlowResolutionStatus = CallFlowResolutionStatus.RESOLVED_PROJECT
+    resolution_status: CallFlowResolutionStatus = (
+        CallFlowResolutionStatus.RESOLVED_PROJECT
+    )
     reasons: Optional[str] = None
 
 
@@ -865,7 +870,9 @@ class CallFlowEdgeSchema(BaseModel):
     call_site_line: int
     call_type: str = "direct"
     expression: Optional[str] = None
-    resolution_status: CallFlowResolutionStatus = CallFlowResolutionStatus.RESOLVED_PROJECT
+    resolution_status: CallFlowResolutionStatus = (
+        CallFlowResolutionStatus.RESOLVED_PROJECT
+    )
 
 
 class CallFlowReactFlowNodeSchema(BaseModel):

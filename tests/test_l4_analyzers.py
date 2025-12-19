@@ -98,7 +98,8 @@ class TestCppQueryHelper:
 
     def test_find_class_declarations(self):
         """Test finding class declarations."""
-        source = dedent("""
+        source = dedent(
+            """
             class Foo {
             public:
                 void bar();
@@ -107,7 +108,8 @@ class TestCppQueryHelper:
             struct Baz {
                 int x;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         helper = CppQueryHelper(source)
@@ -117,13 +119,15 @@ class TestCppQueryHelper:
 
     def test_find_field_declarations(self):
         """Test finding field declarations in a class."""
-        source = dedent("""
+        source = dedent(
+            """
             class Foo {
             private:
                 int count_;
                 std::string name_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         helper = CppQueryHelper(source)
@@ -137,12 +141,14 @@ class TestCppQueryHelper:
 
     def test_parse_template_type(self):
         """Test parsing template types like unique_ptr<T>."""
-        source = dedent("""
+        source = dedent(
+            """
             class Foo {
             private:
                 std::unique_ptr<ILogger> logger_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         helper = CppQueryHelper(source)
@@ -167,12 +173,14 @@ class TestOwnershipAnalyzer:
 
     def test_unique_ptr_ownership(self):
         """unique_ptr should be detected as 'owns' with HIGH confidence."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
             private:
                 std::unique_ptr<ILogger> logger_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = OwnershipAnalyzer()
@@ -193,12 +201,14 @@ class TestOwnershipAnalyzer:
 
     def test_shared_ptr_ownership(self):
         """shared_ptr should be detected as 'shares' with HIGH confidence."""
-        source = dedent("""
+        source = dedent(
+            """
             class Cache {
             private:
                 std::shared_ptr<Config> config_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = OwnershipAnalyzer()
@@ -214,12 +224,14 @@ class TestOwnershipAnalyzer:
 
     def test_raw_pointer_uses(self):
         """Raw pointer should be detected as 'uses' with MEDIUM confidence."""
-        source = dedent("""
+        source = dedent(
+            """
             class Handler {
             private:
                 ICallback* callback_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = OwnershipAnalyzer()
@@ -234,12 +246,14 @@ class TestOwnershipAnalyzer:
 
     def test_std_thread_ownership(self):
         """std::thread member should be detected as 'owns'."""
-        source = dedent("""
+        source = dedent(
+            """
             class Worker {
             private:
                 std::thread workerThread_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = OwnershipAnalyzer()
@@ -264,12 +278,14 @@ class TestDependencyAnalyzer:
 
     def test_constructor_interface_dependency(self):
         """Interface pointer in constructor = HIGH confidence dependency."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
             public:
                 explicit Service(ILogger* logger, IStore* store);
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = DependencyAnalyzer()
@@ -288,12 +304,14 @@ class TestDependencyAnalyzer:
 
     def test_setter_optional_dependency(self):
         """Setter method parameter = optional dependency."""
-        source = dedent("""
+        source = dedent(
+            """
             class Module {
             public:
                 void setNext(IModule* next);
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = DependencyAnalyzer()
@@ -309,12 +327,14 @@ class TestDependencyAnalyzer:
 
     def test_value_parameter_configuration(self):
         """Value parameter in constructor = configuration."""
-        source = dedent("""
+        source = dedent(
+            """
             class Filter {
             public:
                 explicit Filter(ByteArray targetSequence);
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = DependencyAnalyzer()
@@ -338,13 +358,15 @@ class TestLifecycleAnalyzer:
 
     def test_start_stop_lifecycle(self):
         """start/stop methods should detect running/stopped phases."""
-        source = dedent("""
+        source = dedent(
+            """
             class Worker {
             public:
                 void start();
                 void stop();
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = LifecycleAnalyzer()
@@ -359,17 +381,22 @@ class TestLifecycleAnalyzer:
             None,
         )
         assert phases_finding is not None
-        assert "running" in phases_finding.value.lower() or "stopped" in phases_finding.value.lower()
+        assert (
+            "running" in phases_finding.value.lower()
+            or "stopped" in phases_finding.value.lower()
+        )
 
     def test_init_cleanup_lifecycle(self):
         """init/cleanup methods should detect initialized/destroyed phases."""
-        source = dedent("""
+        source = dedent(
+            """
             class Resource {
             public:
                 void initialize();
                 void cleanup();
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = LifecycleAnalyzer()
@@ -380,7 +407,8 @@ class TestLifecycleAnalyzer:
 
     def test_atomic_state_detection(self):
         """atomic<State> member should detect state machine."""
-        source = dedent("""
+        source = dedent(
+            """
             class Module {
             private:
                 std::atomic<ModuleState> state_;
@@ -388,7 +416,8 @@ class TestLifecycleAnalyzer:
                 void start();
                 void stop();
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = LifecycleAnalyzer()
@@ -413,13 +442,15 @@ class TestThreadSafetyAnalyzer:
 
     def test_mutex_detection(self):
         """std::mutex member should detect thread safety."""
-        source = dedent("""
+        source = dedent(
+            """
             class SharedData {
             private:
                 std::mutex mutex_;
                 int data_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = ThreadSafetyAnalyzer()
@@ -437,12 +468,14 @@ class TestThreadSafetyAnalyzer:
 
     def test_atomic_detection(self):
         """std::atomic member should detect thread safety."""
-        source = dedent("""
+        source = dedent(
+            """
             class Counter {
             private:
                 std::atomic<int> count_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = ThreadSafetyAnalyzer()
@@ -453,12 +486,14 @@ class TestThreadSafetyAnalyzer:
 
     def test_safe_naming_pattern(self):
         """SafeQueue type should suggest thread safety."""
-        source = dedent("""
+        source = dedent(
+            """
             class Producer {
             private:
                 SafeQueue<Message> queue_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = ThreadSafetyAnalyzer()
@@ -469,12 +504,14 @@ class TestThreadSafetyAnalyzer:
 
     def test_mutex_member_name_pattern(self):
         """Member named *_mutex should suggest synchronization."""
-        source = dedent("""
+        source = dedent(
+            """
             class Cache {
             private:
                 SomeLock data_mutex_;
             };
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_cpp(source)
         analyzer = ThreadSafetyAnalyzer()
@@ -493,7 +530,8 @@ class TestThreadSafetyAnalyzer:
 class TestStaticAnalyzerIntegration:
     """Test full StaticAnalyzer integration."""
 
-    FILTER_MODULE_SOURCE = dedent("""
+    FILTER_MODULE_SOURCE = dedent(
+        """
         class FilterModule final : public IModule {
         private:
             IModule *next_ = nullptr;
@@ -509,7 +547,8 @@ class TestStaticAnalyzerIntegration:
             void start() override;
             void stop() override;
         };
-    """).strip()
+    """
+    ).strip()
 
     def test_filter_module_analysis(self):
         """Test the FilterModule example from brainstorming."""
@@ -563,7 +602,8 @@ class TestStaticAnalyzerIntegration:
 
     def test_legacy_regex_fallback_for_python(self):
         """Python files should use legacy regex analysis."""
-        source = dedent("""
+        source = dedent(
+            """
             import threading
 
             class Service:
@@ -574,7 +614,8 @@ class TestStaticAnalyzerIntegration:
                 def process(self, data):
                     if data is None:
                         raise ValueError("data required")
-        """).strip()
+        """
+        ).strip()
 
         analyzer = StaticAnalyzer()
         contract = analyzer.analyze(source, Path("service.py"))

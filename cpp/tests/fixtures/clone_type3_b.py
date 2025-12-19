@@ -1,6 +1,7 @@
 # Type-3 Clone Test Fixture B - Modified version with gaps
 # This file contains modified implementations (~70-80% similar)
 
+
 def process_data(items):
     """Process a list of items and return doubled positive values with total."""
     result = []
@@ -29,12 +30,12 @@ def calculate_statistics(numbers):
     variance = sum((x - average) ** 2 for x in numbers) / count
 
     return {
-        'sum': total,
-        'count': count,
-        'average': average,
-        'min': minimum,
-        'max': maximum,
-        'variance': variance  # Added field
+        "sum": total,
+        "count": count,
+        "average": average,
+        "min": minimum,
+        "max": maximum,
+        "variance": variance,  # Added field
     }
 
 

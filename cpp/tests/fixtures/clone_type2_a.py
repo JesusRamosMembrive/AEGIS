@@ -1,6 +1,7 @@
 # Test file for Type-2 clone detection (renamed variables)
 # Same structure as clone_type2_b.py but different names
 
+
 def calculate_sum(numbers, multiplier):
     """Calculate sum of numbers with multiplier."""
     total = 0

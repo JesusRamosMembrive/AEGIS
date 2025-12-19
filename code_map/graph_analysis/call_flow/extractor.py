@@ -195,7 +195,9 @@ class PythonCallFlowExtractor:
     # v2 Resolution methods
     # ─────────────────────────────────────────────────────────────
 
-    def _classify_external(self, name: str, module_hint: Optional[str] = None) -> ResolutionStatus:
+    def _classify_external(
+        self, name: str, module_hint: Optional[str] = None
+    ) -> ResolutionStatus:
         """
         Classify an external (non-project) call.
 
@@ -294,9 +296,7 @@ class PythonCallFlowExtractor:
             tree.root_node, function_name, source
         )
         if func_node is None:
-            logger.warning(
-                "Function '%s' not found in %s", function_name, file_path
-            )
+            logger.warning("Function '%s' not found in %s", function_name, file_path)
             return None
 
         # Build qualified name
@@ -447,11 +447,13 @@ class PythonCallFlowExtractor:
             # Per-branch cycle detection: check if this symbol is in current call path
             is_cycle = target_id in call_stack
             if is_cycle:
-                graph.diagnostics.setdefault("cycles_detected", []).append({
-                    "from": parent_id,
-                    "to": target_id,
-                    "path": list(call_stack),
-                })
+                graph.diagnostics.setdefault("cycles_detected", []).append(
+                    {
+                        "from": parent_id,
+                        "to": target_id,
+                        "path": list(call_stack),
+                    }
+                )
 
             # Add edge (even for cycles, to show the connection)
             edge = CallEdge(
@@ -501,7 +503,9 @@ class PythonCallFlowExtractor:
                     # Update node with complexity metrics now that we have AST
                     node_to_update = graph.get_node(target_id)
                     if node_to_update:
-                        node_to_update.complexity = self._calculate_complexity(target_node_ast)
+                        node_to_update.complexity = self._calculate_complexity(
+                            target_node_ast
+                        )
                         node_to_update.loc = self._calculate_loc(target_node_ast)
 
                     self._extract_calls_recursive(
@@ -522,7 +526,9 @@ class PythonCallFlowExtractor:
                 try:
                     target_source = target_file.read_text(encoding="utf-8")
                     target_tree = self._parser.parse(bytes(target_source, "utf-8"))
-                    target_imports = self._extract_imports(target_tree.root_node, target_source)
+                    target_imports = self._extract_imports(
+                        target_tree.root_node, target_source
+                    )
                     target_node_ast, _ = self._find_function_or_method(
                         target_tree.root_node, target_func, target_source, target_class
                     )
@@ -530,7 +536,9 @@ class PythonCallFlowExtractor:
                         # Update node with complexity metrics now that we have AST
                         node_to_update = graph.get_node(target_id)
                         if node_to_update:
-                            node_to_update.complexity = self._calculate_complexity(target_node_ast)
+                            node_to_update.complexity = self._calculate_complexity(
+                                target_node_ast
+                            )
                             node_to_update.loc = self._calculate_loc(target_node_ast)
 
                         self._extract_calls_recursive(
@@ -547,7 +555,9 @@ class PythonCallFlowExtractor:
                             imports=target_imports,
                         )
                 except OSError:
-                    logger.debug("Could not read file for recursive extraction: %s", target_file)
+                    logger.debug(
+                        "Could not read file for recursive extraction: %s", target_file
+                    )
 
             # Remove from call stack after processing this branch
             call_stack.pop()
@@ -642,7 +652,9 @@ class PythonCallFlowExtractor:
         imports: Optional[Dict[str, Dict[str, Any]]] = None,
         scope_info: Optional[ScopeInfo] = None,
     ) -> Tuple[
-        Optional[Tuple[Path, str, int, int, Optional[str]]],  # resolved: (file, func, line, col, class)
+        Optional[
+            Tuple[Path, str, int, int, Optional[str]]
+        ],  # resolved: (file, func, line, col, class)
         ResolutionStatus,
         Optional[str],  # module_hint
     ]:
@@ -790,7 +802,10 @@ class PythonCallFlowExtractor:
                     )
                     if target_cls:
                         init_node = self._find_method_in_class(
-                            target_tree.root_node, original_name, "__init__", target_source
+                            target_tree.root_node,
+                            original_name,
+                            "__init__",
+                            target_source,
                         )
                         if init_node:
                             return (
@@ -845,9 +860,21 @@ class PythonCallFlowExtractor:
                         imports=imports,
                     )
                     if method_result:
-                        target_file, target_method, target_line, target_col, target_class = method_result
+                        (
+                            target_file,
+                            target_method,
+                            target_line,
+                            target_col,
+                            target_class,
+                        ) = method_result
                         return (
-                            (target_file, target_method, target_line, target_col, target_class),
+                            (
+                                target_file,
+                                target_method,
+                                target_line,
+                                target_col,
+                                target_class,
+                            ),
                             ResolutionStatus.RESOLVED_PROJECT,
                             None,
                         )
@@ -857,7 +884,10 @@ class PythonCallFlowExtractor:
 
         # Could not resolve - check if it might be external
         status = self._classify_external(call_info.name)
-        if status in (ResolutionStatus.IGNORED_BUILTIN, ResolutionStatus.IGNORED_STDLIB):
+        if status in (
+            ResolutionStatus.IGNORED_BUILTIN,
+            ResolutionStatus.IGNORED_STDLIB,
+        ):
             return (None, status, call_info.name)
 
         # Truly unresolved - not found anywhere
@@ -1140,9 +1170,7 @@ class PythonCallFlowExtractor:
                                 return child
         return None
 
-    def _find_class(
-        self, root: Any, class_name: str, source: str
-    ) -> Optional[Any]:
+    def _find_class(self, root: Any, class_name: str, source: str) -> Optional[Any]:
         """Find a class definition by name."""
         for node in self._walk_tree(root):
             if node.type == "class_definition":
@@ -1287,14 +1315,16 @@ class PythonCallFlowExtractor:
                     # Count calls within this function
                     call_count = self._count_calls_in_node(node)
 
-                    entry_points.append({
-                        "name": func_name,
-                        "qualified_name": qualified_name,
-                        "line": node.start_point[0] + 1,
-                        "kind": kind,
-                        "class_name": class_name,
-                        "node_count": call_count,
-                    })
+                    entry_points.append(
+                        {
+                            "name": func_name,
+                            "qualified_name": qualified_name,
+                            "line": node.start_point[0] + 1,
+                            "kind": kind,
+                            "class_name": class_name,
+                            "node_count": call_count,
+                        }
+                    )
 
             elif node.type == "class_definition":
                 # Include class itself as potential entry point
@@ -1309,14 +1339,16 @@ class PythonCallFlowExtractor:
                                 init_calls = self._count_calls_in_node(child)
                                 break
 
-                    entry_points.append({
-                        "name": class_name,
-                        "qualified_name": class_name,
-                        "line": node.start_point[0] + 1,
-                        "kind": "class",
-                        "class_name": None,
-                        "node_count": init_calls,
-                    })
+                    entry_points.append(
+                        {
+                            "name": class_name,
+                            "qualified_name": class_name,
+                            "line": node.start_point[0] + 1,
+                            "kind": "class",
+                            "class_name": None,
+                            "node_count": init_calls,
+                        }
+                    )
 
         return entry_points
 

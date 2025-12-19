@@ -85,9 +85,7 @@ class WiringUpdateRequest(BaseModel):
     instances: dict = Field(
         description="Map of instance_id to instance info (type, file, line)"
     )
-    edges: list[dict] = Field(
-        description="List of edges with 'from' and 'to' keys"
-    )
+    edges: list[dict] = Field(description="List of edges with 'from' and 'to' keys")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -154,9 +152,7 @@ async def analyze_drift(
     # Convert file paths
     file_paths = None
     if request.file_paths:
-        file_paths = [
-            state.settings.root_path / fp for fp in request.file_paths
-        ]
+        file_paths = [state.settings.root_path / fp for fp in request.file_paths]
 
     try:
         report = await analyzer.analyze(

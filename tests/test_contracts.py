@@ -96,7 +96,9 @@ class TestContractData:
 
         # Add optional evidence - still True (no required)
         contract.evidence.append(
-            EvidenceItem(type="test", reference="test.py", policy=EvidencePolicy.OPTIONAL)
+            EvidenceItem(
+                type="test", reference="test.py", policy=EvidencePolicy.OPTIONAL
+            )
         )
         assert contract.has_required_evidence()
 
@@ -167,7 +169,8 @@ class TestCppStrategy:
 
     def test_find_contract_block_level1(self):
         """Should find @aegis-contract block in C++."""
-        source = dedent("""
+        source = dedent(
+            """
             // @aegis-contract-begin
             // thread_safety: safe
             // preconditions:
@@ -176,7 +179,8 @@ class TestCppStrategy:
             void process(void* input) {
                 // implementation
             }
-        """).strip()
+        """
+        ).strip()
 
         strategy = CppLanguageStrategy()
         block = strategy.find_contract_block(source, symbol_line=7)
@@ -188,7 +192,8 @@ class TestCppStrategy:
 
     def test_parse_doxygen_patterns(self):
         """Should extract contracts from Doxygen comments."""
-        source = dedent("""
+        source = dedent(
+            """
             /**
              * Process the input data.
              *
@@ -198,7 +203,8 @@ class TestCppStrategy:
              * @note Safe after start
              */
             void process(Data* input);
-        """).strip()
+        """
+        ).strip()
 
         strategy = CppLanguageStrategy()
         comment = strategy.find_comment_block(source, symbol_line=9)
@@ -226,7 +232,9 @@ class TestCppStrategy:
             comment = strategy.find_comment_block(source, symbol_line=2)
             if comment:
                 contract = strategy.parse_known_patterns(comment)
-                assert contract.thread_safety == expected_safety, f"Failed for: {comment_text}"
+                assert (
+                    contract.thread_safety == expected_safety
+                ), f"Failed for: {comment_text}"
 
 
 # ─────────────────────────────────────────────────────────────
@@ -239,7 +247,8 @@ class TestPythonStrategy:
 
     def test_find_contract_in_docstring(self):
         """Should find @aegis-contract inside docstring."""
-        source = dedent('''
+        source = dedent(
+            '''
             def process(data):
                 """
                 @aegis-contract-begin
@@ -251,7 +260,8 @@ class TestPythonStrategy:
                 Process the input data.
                 """
                 return data
-        ''').strip()
+        '''
+        ).strip()
 
         strategy = PythonLanguageStrategy()
         block = strategy.find_contract_block(source, symbol_line=1)
@@ -261,7 +271,8 @@ class TestPythonStrategy:
 
     def test_parse_google_style_docstring(self):
         """Should extract contracts from Google-style docstrings."""
-        source = dedent('''
+        source = dedent(
+            '''
             def calculate(x, y):
                 """Calculate the result.
 
@@ -280,7 +291,8 @@ class TestPythonStrategy:
                     This function is thread-safe.
                 """
                 pass
-        ''').strip()
+        '''
+        ).strip()
 
         strategy = PythonLanguageStrategy()
         comment = strategy.find_comment_block(source, symbol_line=1)
@@ -293,11 +305,13 @@ class TestPythonStrategy:
 
     def test_single_line_docstring(self):
         """Should handle single-line docstrings."""
-        source = dedent('''
+        source = dedent(
+            '''
             def simple():
                 """Simple function."""
                 pass
-        ''').strip()
+        '''
+        ).strip()
 
         strategy = PythonLanguageStrategy()
         comment = strategy.find_comment_block(source, symbol_line=1)
@@ -317,7 +331,9 @@ class TestContractDiscovery:
     def test_discover_level1_contract(self, tmp_path):
         """Should discover Level 1 @aegis-contract."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent('''
+        test_file.write_text(
+            dedent(
+                '''
             def process(data):
                 """
                 @aegis-contract-begin
@@ -329,7 +345,9 @@ class TestContractDiscovery:
                 @aegis-contract-end
                 """
                 return data
-        ''').strip())
+        '''
+            ).strip()
+        )
 
         discovery = ContractDiscovery(enable_llm=False)
         contract = discovery.discover(test_file, symbol_line=1)
@@ -342,14 +360,18 @@ class TestContractDiscovery:
     def test_discover_level2_patterns(self, tmp_path):
         """Should discover Level 2 from known patterns."""
         test_file = tmp_path / "test.cpp"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent(
+                """
             /**
              * @pre buffer != nullptr
              * @post result >= 0
              * @throws std::runtime_error on failure
              */
             int process(char* buffer);
-        """).strip())
+        """
+            ).strip()
+        )
 
         discovery = ContractDiscovery(enable_llm=False)
         contract = discovery.discover(test_file, symbol_line=6)
@@ -371,11 +393,15 @@ class TestContractDiscovery:
     def test_discover_with_specific_levels(self, tmp_path):
         """Should only run specified levels."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent('''
+        test_file.write_text(
+            dedent(
+                '''
             def func():
                 """Thread-safe function."""
                 pass
-        ''').strip())
+        '''
+            ).strip()
+        )
 
         discovery = ContractDiscovery(enable_llm=False)
 
@@ -395,11 +421,15 @@ class TestContractRewriter:
     def test_write_contract_to_cpp(self, tmp_path):
         """Should write contract block to C++ file."""
         test_file = tmp_path / "test.cpp"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent(
+                """
             void process(int x) {
                 // implementation
             }
-        """).strip())
+        """
+            ).strip()
+        )
 
         contract = ContractData(
             thread_safety=ThreadSafety.SAFE,
@@ -408,7 +438,9 @@ class TestContractRewriter:
 
         rewriter = ContractRewriter()
         # write_contract returns (modified_source, diff)
-        modified_source, diff = rewriter.write_contract(test_file, symbol_line=1, contract=contract)
+        modified_source, diff = rewriter.write_contract(
+            test_file, symbol_line=1, contract=contract
+        )
 
         assert "@aegis-contract-begin" in diff
         assert "thread_safety: safe" in diff
@@ -417,10 +449,12 @@ class TestContractRewriter:
     def test_preview_without_writing(self, tmp_path):
         """Preview should return diff without modifying file."""
         test_file = tmp_path / "test.py"
-        original = dedent('''
+        original = dedent(
+            """
             def func():
                 pass
-        ''').strip()
+        """
+        ).strip()
         test_file.write_text(original)
 
         contract = ContractData(preconditions=["input valid"])
@@ -435,12 +469,16 @@ class TestContractRewriter:
     def test_update_existing_contract(self, tmp_path):
         """Should update existing contract block."""
         test_file = tmp_path / "test.cpp"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent(
+                """
             // @aegis-contract-begin
             // thread_safety: not_safe
             // @aegis-contract-end
             void process();
-        """).strip())
+        """
+            ).strip()
+        )
 
         contract = ContractData(
             thread_safety=ThreadSafety.SAFE,
@@ -448,7 +486,9 @@ class TestContractRewriter:
         )
 
         rewriter = ContractRewriter()
-        modified_source, diff = rewriter.write_contract(test_file, symbol_line=4, contract=contract)
+        modified_source, diff = rewriter.write_contract(
+            test_file, symbol_line=4, contract=contract
+        )
 
         assert "thread_safety: safe" in modified_source
         assert "new precondition" in modified_source
@@ -466,11 +506,15 @@ class TestContractIntegration:
     def test_discover_write_discover_roundtrip(self, tmp_path):
         """Write a contract, then discover it again."""
         test_file = tmp_path / "test.py"
-        test_file.write_text(dedent('''
+        test_file.write_text(
+            dedent(
+                '''
             def calculate(x, y):
                 """Calculate sum."""
                 return x + y
-        ''').strip())
+        '''
+            ).strip()
+        )
 
         # Write contract
         contract = ContractData(
@@ -496,7 +540,9 @@ class TestContractIntegration:
     def test_full_workflow_cpp(self, tmp_path):
         """Full workflow test for C++ file."""
         test_file = tmp_path / "processor.hpp"
-        test_file.write_text(dedent("""
+        test_file.write_text(
+            dedent(
+                """
             #pragma once
 
             /**
@@ -508,7 +554,9 @@ class TestContractIntegration:
              * @note Thread-safe
              */
             int process(const char* buffer, size_t size);
-        """).strip())
+        """
+            ).strip()
+        )
 
         # Discover from Doxygen
         discovery = ContractDiscovery(enable_llm=False)

@@ -74,7 +74,9 @@ def normalize_entry_points(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]
             normalized["file_path"] = Path(normalized["file_path"]).name
         result.append(normalized)
     # Sort by name for determinism
-    return sorted(result, key=lambda e: e.get("name", "") or e.get("qualified_name", "") or "")
+    return sorted(
+        result, key=lambda e: e.get("name", "") or e.get("qualified_name", "") or ""
+    )
 
 
 # ============================================================================
@@ -131,7 +133,9 @@ class TestPythonExtractorBaseline:
         assert "on_button_click" in names
 
         # Document count
-        assert len(entries) >= 9, f"Expected at least 9 entry points, got {len(entries)}"
+        assert (
+            len(entries) >= 9
+        ), f"Expected at least 9 entry points, got {len(entries)}"
 
     @pytest.mark.skipif(
         not Path(PYTHON_FIXTURE).exists(),
@@ -172,7 +176,9 @@ class TestPythonExtractorBaseline:
         # Document expected call chain
         expected_in_chain = {"on_button_click", "handle", "load", "process"}
         found = expected_in_chain & node_names
-        assert len(found) >= 3, f"Expected at least 3 of {expected_in_chain}, found {found}"
+        assert (
+            len(found) >= 3
+        ), f"Expected at least 3 of {expected_in_chain}, found {found}"
 
     @pytest.mark.skipif(
         not Path(PYTHON_FIXTURE).exists(),
@@ -257,9 +263,13 @@ class TestTsExtractorBaseline:
         }
 
         # Document expected functions
-        assert "main" in names or "default" in names, f"main/default not found in {names}"
+        assert (
+            "main" in names or "default" in names
+        ), f"main/default not found in {names}"
         assert "greet" in names
-        assert len(entries) >= 8, f"Expected at least 8 entry points, got {len(entries)}"
+        assert (
+            len(entries) >= 8
+        ), f"Expected at least 8 entry points, got {len(entries)}"
 
     @pytest.mark.skipif(
         not Path(TS_FIXTURE).exists(),
@@ -319,7 +329,9 @@ class TestTsExtractorBaseline:
         # Document that class methods are found
         method_names = {e.get("name") for e in calculator_methods}
         # Should find: constructor, add, internalAdd, subtract, multiply, getResult, reset
-        assert len(calculator_methods) >= 5, f"Expected Calculator methods, found {method_names}"
+        assert (
+            len(calculator_methods) >= 5
+        ), f"Expected Calculator methods, found {method_names}"
 
 
 # ============================================================================
@@ -365,7 +377,9 @@ class TestCppExtractorBaseline:
         # Document expected functions
         assert "main" in names, f"main not found in {names}"
         assert "helper_function" in names
-        assert len(entries) >= 5, f"Expected at least 5 entry points, got {len(entries)}"
+        assert (
+            len(entries) >= 5
+        ), f"Expected at least 5 entry points, got {len(entries)}"
 
     @pytest.mark.skipif(
         not Path(CPP_FIXTURE).exists(),
@@ -441,11 +455,15 @@ class TestExtractorConsistency:
 
         required_methods = ["is_available", "extract", "list_entry_points"]
 
-        for ExtractorClass in [PythonCallFlowExtractor, TsCallFlowExtractor, CppCallFlowExtractor]:
+        for ExtractorClass in [
+            PythonCallFlowExtractor,
+            TsCallFlowExtractor,
+            CppCallFlowExtractor,
+        ]:
             for method in required_methods:
-                assert hasattr(ExtractorClass, method), (
-                    f"{ExtractorClass.__name__} missing {method}"
-                )
+                assert hasattr(
+                    ExtractorClass, method
+                ), f"{ExtractorClass.__name__} missing {method}"
 
     def test_all_extractors_return_same_model_types(self):
         """Verify all extractors return CallGraph with same structure."""
@@ -462,7 +480,9 @@ class TestExtractorConsistency:
         edge_fields = {f.name for f in fields(CallEdge)}
 
         # Document expected model structure
-        assert "nodes" in graph_fields, f"CallGraph missing 'nodes', has: {graph_fields}"
+        assert (
+            "nodes" in graph_fields
+        ), f"CallGraph missing 'nodes', has: {graph_fields}"
         assert "edges" in graph_fields
         assert "entry_point" in graph_fields
         assert "ignored_calls" in graph_fields
@@ -472,7 +492,9 @@ class TestExtractorConsistency:
         assert "complexity" in node_fields
         assert "loc" in node_fields
 
-        assert "source_id" in edge_fields, f"CallEdge missing 'source_id', has: {edge_fields}"
+        assert (
+            "source_id" in edge_fields
+        ), f"CallEdge missing 'source_id', has: {edge_fields}"
         assert "target_id" in edge_fields
 
 
@@ -534,12 +556,12 @@ class TestCallFlowSnapshots:
             pytest.skip("Snapshot created, run again to verify")
         else:
             # Compare key metrics (not exact match due to path variations)
-            assert len(normalized.get("nodes", {})) == len(existing.get("nodes", {})), (
-                "Node count changed"
-            )
-            assert len(normalized.get("edges", [])) == len(existing.get("edges", [])), (
-                "Edge count changed"
-            )
+            assert len(normalized.get("nodes", {})) == len(
+                existing.get("nodes", {})
+            ), "Node count changed"
+            assert len(normalized.get("edges", [])) == len(
+                existing.get("edges", [])
+            ), "Edge count changed"
 
     @pytest.mark.skipif(
         not Path(TS_FIXTURE).exists(),

@@ -18,7 +18,12 @@ from fastapi.responses import PlainTextResponse
 from ..graph_analysis.call_flow.extractor import PythonCallFlowExtractor
 from ..graph_analysis.call_flow.cpp_extractor import CppCallFlowExtractor
 from ..graph_analysis.call_flow.ts_extractor import TsCallFlowExtractor
-from ..graph_analysis.call_flow.models import CallGraph, CallNode, CallEdge, ResolutionStatus
+from ..graph_analysis.call_flow.models import (
+    CallGraph,
+    CallNode,
+    CallEdge,
+    ResolutionStatus,
+)
 from .schemas import (
     CallFlowEntryPointSchema,
     CallFlowEntryPointsResponse,
@@ -78,7 +83,20 @@ def _get_extractor() -> PythonCallFlowExtractor:
 MAX_SOURCE_BYTES = 512 * 1024
 
 # Allowed file extensions for source code viewing
-ALLOWED_SOURCE_EXTENSIONS = {".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".c", ".cpp", ".h", ".hpp", ".go", ".rs"}
+ALLOWED_SOURCE_EXTENSIONS = {
+    ".py",
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".java",
+    ".c",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".go",
+    ".rs",
+}
 
 
 def _add_external_nodes_to_graph(graph: CallGraph) -> None:
@@ -165,8 +183,12 @@ def _add_external_nodes_to_graph(graph: CallGraph) -> None:
 @router.get("/source/{file_path:path}", response_class=PlainTextResponse)
 async def get_source_code(
     file_path: str,
-    start_line: int = Query(default=1, ge=1, description="Start line number (1-indexed)"),
-    end_line: Optional[int] = Query(default=None, ge=1, description="End line number (optional)"),
+    start_line: int = Query(
+        default=1, ge=1, description="Start line number (1-indexed)"
+    ),
+    end_line: Optional[int] = Query(
+        default=None, ge=1, description="End line number (optional)"
+    ),
 ) -> str:
     """
     Get source code from a file for call flow node details.
@@ -260,7 +282,9 @@ async def get_source_code(
     return "".join(selected_lines)
 
 
-@router.get("/entry-points/{file_path:path}", response_model=CallFlowEntryPointsResponse)
+@router.get(
+    "/entry-points/{file_path:path}", response_model=CallFlowEntryPointsResponse
+)
 async def list_entry_points(
     file_path: str,
 ) -> CallFlowEntryPointsResponse:
@@ -342,8 +366,13 @@ async def get_call_flow(
     file_path: str,
     function: str = Query(..., description="Function or method name to analyze"),
     max_depth: int = Query(default=5, ge=1, le=20, description="Maximum call depth"),
-    class_name: Optional[str] = Query(default=None, description="Class name if analyzing a method"),
-    include_external: bool = Query(default=False, description="Include external calls (builtins, stdlib, third-party) as leaf nodes"),
+    class_name: Optional[str] = Query(
+        default=None, description="Class name if analyzing a method"
+    ),
+    include_external: bool = Query(
+        default=False,
+        description="Include external calls (builtins, stdlib, third-party) as leaf nodes",
+    ),
 ) -> CallFlowResponse:
     """
     Extract call flow graph from a function or method.

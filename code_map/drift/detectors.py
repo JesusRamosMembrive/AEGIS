@@ -93,7 +93,9 @@ class StructuralDriftDetector(DriftDetector):
         items: list[DriftItem] = []
 
         if not context.contract_discovery:
-            logger.warning("No contract discovery available for structural drift detection")
+            logger.warning(
+                "No contract discovery available for structural drift detection"
+            )
             return items
 
         # Get files to analyze
@@ -203,7 +205,9 @@ class StructuralDriftDetector(DriftDetector):
 
         for precondition in contract.preconditions:
             # Extract parameter names from preconditions (simple heuristic)
-            param_match = re.search(r"\b([a-z_][a-z0-9_]*)\s*[><=!]", precondition, re.I)
+            param_match = re.search(
+                r"\b([a-z_][a-z0-9_]*)\s*[><=!]", precondition, re.I
+            )
             if param_match:
                 param_name = param_match.group(1)
                 # Check if this param appears in function signatures nearby
@@ -293,12 +297,8 @@ class WiringDriftDetector(DriftDetector):
             )
 
         # Compare edges
-        prev_edges = set(
-            (e["from"], e["to"]) for e in prev.get("edges", [])
-        )
-        curr_edges = set(
-            (e["from"], e["to"]) for e in curr.get("edges", [])
-        )
+        prev_edges = set((e["from"], e["to"]) for e in prev.get("edges", []))
+        curr_edges = set((e["from"], e["to"]) for e in curr.get("edges", []))
 
         # Detect added edges
         for from_id, to_id in curr_edges - prev_edges:
@@ -339,7 +339,9 @@ class WiringDriftDetector(DriftDetector):
                         type=DriftType.WIRING,
                         category=DriftCategory.TYPE_CHANGED,
                         severity=DriftSeverity.WARNING,
-                        file_path=Path(curr["instances"][instance_id].get("file", "unknown")),
+                        file_path=Path(
+                            curr["instances"][instance_id].get("file", "unknown")
+                        ),
                         symbol_name=instance_id,
                         title=f"Type changed: {instance_id}",
                         description=f"Instance '{instance_id}' type changed from '{prev_type}' to '{curr_type}'",
@@ -374,7 +376,9 @@ class SemanticDriftDetector(DriftDetector):
         items: list[DriftItem] = []
 
         if not context.contract_discovery:
-            logger.warning("No contract discovery available for semantic drift detection")
+            logger.warning(
+                "No contract discovery available for semantic drift detection"
+            )
             return items
 
         # Get files to analyze
@@ -443,20 +447,31 @@ class SemanticDriftDetector(DriftDetector):
 
         # Patterns indicating thread-safe implementation
         thread_safe_patterns = [
-            "mutex", "lock", "atomic", "synchronized",
-            "thread_local", "threading.lock", "asyncio.lock",
+            "mutex",
+            "lock",
+            "atomic",
+            "synchronized",
+            "thread_local",
+            "threading.lock",
+            "asyncio.lock",
         ]
 
         # Patterns indicating not thread-safe
         not_safe_patterns = [
-            "global ", "self._", "this->",  # Mutable state
+            "global ",
+            "self._",
+            "this->",  # Mutable state
         ]
 
         has_sync_primitives = any(p in source_lower for p in thread_safe_patterns)
         has_mutable_state = any(p in source_lower for p in not_safe_patterns)
 
         # Contract says safe but no sync primitives and has mutable state
-        if safety == ThreadSafety.SAFE and has_mutable_state and not has_sync_primitives:
+        if (
+            safety == ThreadSafety.SAFE
+            and has_mutable_state
+            and not has_sync_primitives
+        ):
             items.append(
                 DriftItem(
                     type=DriftType.SEMANTIC,

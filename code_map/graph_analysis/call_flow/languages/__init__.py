@@ -35,18 +35,21 @@ __all__ = [
 def get_python_extractor():
     """Get Python extractor class (lazy import)."""
     from .python import PythonCallFlowExtractor
+
     return PythonCallFlowExtractor
 
 
 def get_typescript_extractor():
     """Get TypeScript extractor class (lazy import)."""
     from .typescript import TsCallFlowExtractor
+
     return TsCallFlowExtractor
 
 
 def get_cpp_extractor():
     """Get C++ extractor class (lazy import)."""
     from .cpp import CppCallFlowExtractor
+
     return CppCallFlowExtractor
 
 

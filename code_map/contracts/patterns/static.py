@@ -131,7 +131,9 @@ class StaticAnalyzer:
                 ]
 
                 self._tree_sitter_ready = True
-                logger.debug("L4 analyzers initialized with tree-sitter support (C++, Python, TS)")
+                logger.debug(
+                    "L4 analyzers initialized with tree-sitter support (C++, Python, TS)"
+                )
             except Exception as e:
                 logger.warning(f"Failed to initialize L4 analyzers: {e}")
 
@@ -157,7 +159,9 @@ class StaticAnalyzer:
             try:
                 return self._analyze_with_ast(source, file_path, lang)
             except Exception as e:
-                logger.warning(f"AST analysis failed for {lang}, falling back to regex: {e}")
+                logger.warning(
+                    f"AST analysis failed for {lang}, falling back to regex: {e}"
+                )
 
         # Fallback to legacy regex analysis
         return self._analyze_with_regex(source, file_path)
