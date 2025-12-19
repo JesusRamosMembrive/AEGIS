@@ -776,3 +776,87 @@ def test_linters_notifications_flow(api_client: TestClient, tmp_path: Path) -> N
 
     missing_mark = api_client.post("/linters/notifications/9999/read")
     assert missing_mark.status_code == 404
+
+
+def test_notify_changes_endpoint(api_client: TestClient, tmp_path: Path) -> None:
+    """Test the notify changes endpoint for external file notifications."""
+    # Create a test file first
+    write_file(tmp_path, "test_module.py", "def foo(): pass")
+
+    # Test notify with modified file
+    response = api_client.post(
+        "/api/notify/changes",
+        json={
+            "changes": [
+                {"path": "test_module.py", "change_type": "modified"},
+            ]
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["processed"] == 1
+    assert data["skipped"] == 0
+    assert data["errors"] == 0
+    assert len(data["details"]) == 1
+    assert data["details"][0]["status"] == "processed"
+    assert "sse_broadcast" in data["handlers_triggered"]
+    assert "linters_schedule" in data["handlers_triggered"]
+    assert "insights_schedule" in data["handlers_triggered"]
+
+
+def test_notify_changes_skips_unsupported_extension(api_client: TestClient) -> None:
+    """Test that unsupported file extensions are skipped."""
+    response = api_client.post(
+        "/api/notify/changes",
+        json={
+            "changes": [
+                {"path": "readme.txt", "change_type": "modified"},
+            ]
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["processed"] == 0
+    assert data["skipped"] == 1
+    assert data["details"][0]["status"] == "skipped"
+    assert "not supported" in data["details"][0]["reason"].lower()
+
+
+def test_notify_changes_rejects_path_traversal(api_client: TestClient) -> None:
+    """Test that path traversal attempts are rejected."""
+    response = api_client.post(
+        "/api/notify/changes",
+        json={
+            "changes": [
+                {"path": "../../../etc/passwd", "change_type": "modified"},
+            ]
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["processed"] == 0
+    assert data["errors"] == 1
+    assert data["details"][0]["status"] == "error"
+    assert "fuera del root" in data["details"][0]["reason"].lower()
+
+
+def test_notify_changes_multiple_files(api_client: TestClient, tmp_path: Path) -> None:
+    """Test notifying multiple file changes at once."""
+    write_file(tmp_path, "module_a.py", "def a(): pass")
+    write_file(tmp_path, "module_b.py", "def b(): pass")
+
+    response = api_client.post(
+        "/api/notify/changes",
+        json={
+            "changes": [
+                {"path": "module_a.py", "change_type": "modified"},
+                {"path": "module_b.py", "change_type": "created"},
+                {"path": "readme.md", "change_type": "modified"},  # skipped
+            ]
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["processed"] == 2
+    assert data["skipped"] == 1
+    assert data["errors"] == 0

@@ -44,7 +44,7 @@ def main():
     # ==================================================================
     run_id = start_audit_session(
         name="Example Agent Workflow",  # <- Customize this
-        notes="Template demonstrating audit integration"  # <- Customize this
+        notes="Template demonstrating audit integration",  # <- Customize this
     )
 
     if run_id is None:
@@ -66,9 +66,7 @@ def main():
 
         with audit_context(run_id, "Analyze codebase structure", phase="plan"):
             log_thought(
-                run_id,
-                "Examining project structure and dependencies",
-                phase="plan"
+                run_id, "Examining project structure and dependencies", phase="plan"
             )
             # Your analysis logic here
             # Example:
@@ -80,14 +78,14 @@ def main():
             log_thought(
                 run_id,
                 "Identified 3 files that need updates: auth.py, config.py, tests.py",
-                phase="plan"
+                phase="plan",
             )
 
         log_phase_end(
             run_id,
             "plan",
             success=True,
-            summary="Analysis complete, ready to implement"
+            summary="Analysis complete, ready to implement",
         )
 
         # ==============================================================
@@ -107,7 +105,7 @@ def main():
                 "config.yaml",
                 "Created configuration file with default settings",
                 change_type="create",
-                phase="apply"
+                phase="apply",
             )
 
         # Example: Modify existing file
@@ -125,7 +123,7 @@ def main():
                 "src/auth.py",
                 "Fixed token validation race condition",
                 change_type="modify",
-                phase="apply"
+                phase="apply",
             )
 
         # Example: Git commit
@@ -134,14 +132,14 @@ def main():
             operation="commit",
             description="Add configuration and fix auth bug",
             phase="apply",
-            payload={"files_changed": 2, "lines_added": 45, "lines_removed": 12}
+            payload={"files_changed": 2, "lines_added": 45, "lines_removed": 12},
         )
 
         log_phase_end(
             run_id,
             "apply",
             success=True,
-            summary="All changes implemented successfully"
+            summary="All changes implemented successfully",
         )
 
         # ==============================================================
@@ -155,20 +153,16 @@ def main():
                 run_id,
                 "pytest tests/ -v",  # <- Customize this
                 phase="validate",
-                timeout=60
+                timeout=60,
             )
 
             if result and result.returncode == 0:
                 log_thought(
-                    run_id,
-                    "✅ All tests passed successfully",
-                    phase="validate"
+                    run_id, "✅ All tests passed successfully", phase="validate"
                 )
             else:
                 log_thought(
-                    run_id,
-                    "❌ Some tests failed, investigating...",
-                    phase="validate"
+                    run_id, "❌ Some tests failed, investigating...", phase="validate"
                 )
 
         # Example: Run linters
@@ -180,7 +174,7 @@ def main():
             run_id,
             "validate",
             success=True,
-            summary="All tests and quality checks passed"
+            summary="All tests and quality checks passed",
         )
 
         # ==============================================================
@@ -189,7 +183,7 @@ def main():
         end_audit_session(
             run_id,
             success=True,
-            summary="Workflow completed successfully: configured, implemented, and validated"
+            summary="Workflow completed successfully: configured, implemented, and validated",
         )
 
         print("✅ Workflow completed successfully!")
@@ -205,13 +199,13 @@ def main():
             run_id,
             error_message=str(e),
             error_type=type(e).__name__,
-            traceback=traceback.format_exc()
+            traceback=traceback.format_exc(),
         )
 
         end_audit_session(
             run_id,
             success=False,
-            summary=f"Workflow failed with error: {type(e).__name__}: {e}"
+            summary=f"Workflow failed with error: {type(e).__name__}: {e}",
         )
 
         raise  # Re-raise to preserve stack trace
@@ -220,6 +214,7 @@ def main():
 # ==================================================================
 # Helper Functions (Optional)
 # ==================================================================
+
 
 def analyze_codebase(run_id: int):
     """
@@ -234,7 +229,7 @@ def analyze_codebase(run_id: int):
         log_thought(
             run_id,
             f"Analysis complete: {result['files']} files, {result['functions']} functions",
-            phase="plan"
+            phase="plan",
         )
 
         return result
@@ -256,7 +251,7 @@ def run_implementation(run_id: int, files_to_change: list):
                 file_path,
                 "Updated according to plan",
                 change_type="modify",
-                phase="apply"
+                phase="apply",
             )
 
     log_phase_end(run_id, "apply", success=True)

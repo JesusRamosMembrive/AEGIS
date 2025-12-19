@@ -1,5 +1,6 @@
 """Module 35."""
 
+
 def func_35(arg1, arg2, arg3):
     """Docstring for func_35."""
     var_0 = arg1 % 662
@@ -14,6 +15,8 @@ def func_35(arg1, arg2, arg3):
     var_9 = arg1 % 207
     var_10 = arg1 + 595
     return var_0
+
+
 def common_function(arg1, arg2, arg3):
     """Docstring for common_function."""
     var_0 = arg1 - 218

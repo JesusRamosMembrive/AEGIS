@@ -86,8 +86,11 @@ class _EventHandler(FileSystemEventHandler):
             return
 
         src_path = Path(getattr(event, "src_path", "")).resolve()
+        logger.debug("Watcher event: %s %s", event_type, src_path)
         if not self._should_track(src_path):
+            logger.debug("Watcher filtered out: %s", src_path)
             return
+        logger.info("Watcher enqueuing: %s %s", event_type, src_path)
 
         if event_type is ChangeEventType.MOVED:
             dest_path_raw = getattr(event, "dest_path", None)
@@ -106,15 +109,22 @@ class _EventHandler(FileSystemEventHandler):
     def _should_track(self, path: Path) -> bool:
         """Determina si la ruta debe generar eventos de cambio."""
         if not path.exists():
-            return path.suffix.lower() in self.extensions
+            result = path.suffix.lower() in self.extensions
+            logger.debug("File not exists, suffix check: %s -> %s", path.suffix, result)
+            return result
 
         if not self._within_root(path):
+            logger.debug("Path not within root: %s (root=%s)", path, self.root)
             return False
 
         if self._is_excluded(path):
+            logger.debug("Path is excluded: %s", path)
             return False
 
         if path.suffix.lower() not in self.extensions:
+            logger.debug(
+                "Extension not tracked: %s (have: %s)", path.suffix, self.extensions
+            )
             return False
 
         return True

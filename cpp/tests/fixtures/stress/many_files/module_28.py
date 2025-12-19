@@ -1,5 +1,6 @@
 """Module 28."""
 
+
 def func_28(arg1, arg2, arg3):
     """Docstring for func_28."""
     var_0 = arg1 % 101

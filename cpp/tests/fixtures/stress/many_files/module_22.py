@@ -1,5 +1,6 @@
 """Module 22."""
 
+
 def func_22(arg1, arg2, arg3):
     """Docstring for func_22."""
     var_0 = arg1 + 441

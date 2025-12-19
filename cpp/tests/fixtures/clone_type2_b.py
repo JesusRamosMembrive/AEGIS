@@ -1,6 +1,7 @@
 # Test file for Type-2 clone detection (renamed variables)
 # Same structure as clone_type2_a.py but different names
 
+
 def compute_total(values, factor):
     """Calculate sum of values with factor."""
     result = 0

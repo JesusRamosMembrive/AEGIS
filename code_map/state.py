@@ -83,6 +83,7 @@ from .linters import (
     get_latest_linters_report,
     LINTER_TIMEOUT_FAST,  # Re-export for consistency
 )
+from .similarity_service import is_available, analyze_similarity, report_to_dict
 from .stage_toolkit import stage_status as compute_stage_status
 from .state_reporter import StateReporter
 from .insights import VALID_INSIGHTS_FOCUS
@@ -159,6 +160,8 @@ class AppState:
             execution (ruff, mypy, bandit, pytest).
         insights (InsightsService): Background service managing AI-powered
             code analysis via Ollama.
+        similarity_report (Optional[Dict[str, Any]]): Cached result of the last
+            similarity analysis run.
 
     Lifecycle:
         1. **Instantiation**: Create with settings and scheduler. Components
@@ -195,6 +198,7 @@ class AppState:
     reporter: StateReporter = field(init=False)
     linters: LintersService = field(init=False)
     insights: InsightsService = field(init=False)
+    similarity_report: Optional[Dict[str, Any]] = field(init=False, default=None)
 
     def __post_init__(self) -> None:
         """
@@ -330,6 +334,12 @@ class AppState:
         while not self._stop_event.is_set():
             batch = await asyncio.to_thread(self.scheduler.drain, force=True)
             if batch:
+                logger.info(
+                    "Processing batch: created=%d, modified=%d, deleted=%d",
+                    len(batch.created),
+                    len(batch.modified),
+                    len(batch.deleted),
+                )
                 changes = await asyncio.to_thread(
                     self.scanner.apply_change_batch,
                     batch,
@@ -338,6 +348,11 @@ class AppState:
                     store=self.snapshot_store,
                 )
                 payload = self._serialize_changes(changes)
+                logger.info(
+                    "Changes applied: updated=%d, deleted=%d",
+                    len(payload["updated"]),
+                    len(payload["deleted"]),
+                )
                 if payload["updated"] or payload["deleted"]:
                     self.last_event_batch = datetime.now(timezone.utc)
                     await self.event_queue.put(payload)
@@ -410,8 +425,47 @@ class AppState:
             self._recent_changes = updated[:MAX_RECENT_CHANGES_TRACKED]
         self.last_full_scan = datetime.now(timezone.utc)
         self.linters.schedule(pending_changes=self.scheduler.pending_count())
+        self.last_full_scan = datetime.now(timezone.utc)
+        self.linters.schedule(pending_changes=self.scheduler.pending_count())
         self.insights.schedule()
+
+        # Fire and forget similarity analysis if available
+        if is_available():
+            asyncio.create_task(self.run_similarity_bg())
+
         return len(summaries)
+
+    async def run_similarity_bg(
+        self,
+        extensions: Optional[List[str]] = None,
+        type3: bool = False,
+    ) -> None:
+        """
+        Run similarity analysis in a background thread and update state.
+
+        Args:
+            extensions: List of file extensions to include (default: [".py"])
+            type3: Whether to enable Type-3 (modified clone) detection
+        """
+        if not is_available():
+            logger.warning("Similarity motor not available, skipping background run")
+            return
+
+        try:
+            logger.info("Running background similarity analysis...")
+            # Run blocking C++ binding in thread pool
+            report = await asyncio.to_thread(
+                analyze_similarity,
+                root=self.settings.root_path,
+                extensions=extensions or [".py"],
+                type3=type3,
+            )
+            self.similarity_report = report_to_dict(report)
+            logger.info(
+                f"Similarity analysis updated: {report.summary.clone_pairs_found} pairs found"
+            )
+        except Exception as e:
+            logger.error(f"Background similarity analysis failed: {e}")
 
     def _compute_insights_next_run(self) -> Optional[datetime]:
         return self.insights.next_run
@@ -917,6 +971,136 @@ class AppState:
             is automatically provided to ``run_insights_now()``.
         """
         return await self._build_insights_context()
+
+    async def apply_external_changes(
+        self,
+        changes: List[Dict[str, str]],
+    ) -> Dict[str, Any]:
+        """
+        Apply externally notified file changes directly (bypasses watcher/debounce).
+
+        This method is designed for external editors (like Claude Code) that modify
+        files without triggering the file watcher. It processes changes immediately
+        and triggers registered handlers (SSE broadcast, linters, insights).
+
+        Args:
+            changes: List of change dictionaries with keys:
+                - "path": Relative path to the file
+                - "change_type": One of "created", "modified", "deleted"
+
+        Returns:
+            Dict with:
+                - "processed": Number of files successfully processed
+                - "skipped": Number of files skipped (unsupported extension, etc.)
+                - "errors": Number of errors encountered
+                - "details": List of per-file results
+                - "handlers_triggered": List of handler names that ran
+
+        Raises:
+            ValueError: If a path attempts to escape the project root.
+
+        Example:
+            >>> result = await state.apply_external_changes([
+            ...     {"path": "src/main.py", "change_type": "modified"},
+            ...     {"path": "src/new.py", "change_type": "created"},
+            ... ])
+            >>> print(result["processed"])
+            2
+        """
+        from .events import ChangeBatch, ChangeEventType
+        from .services.notify_handlers import NotifyResult, run_all_handlers
+
+        result = NotifyResult()
+        batch = ChangeBatch()
+
+        # Map change types
+        type_map = {
+            "created": ChangeEventType.CREATED,
+            "modified": ChangeEventType.MODIFIED,
+            "deleted": ChangeEventType.DELETED,
+        }
+
+        for change in changes:
+            rel_path = change.get("path", "")
+            change_type = change.get("change_type", "modified")
+            detail = {
+                "path": rel_path,
+                "change_type": change_type,
+                "status": "error",
+                "reason": None,
+            }
+
+            try:
+                # Security: validate path stays within root
+                abs_path = self.resolve_path(rel_path)
+
+                # Check if extension is supported
+                if abs_path.suffix.lower() not in self.scanner.extensions:
+                    detail["status"] = "skipped"
+                    detail["reason"] = f"Extension {abs_path.suffix} not supported"
+                    result.skipped += 1
+                    result.details.append(detail)
+                    continue
+
+                # Add to appropriate batch list
+                event_type = type_map.get(change_type)
+                if event_type is None:
+                    detail["status"] = "skipped"
+                    detail["reason"] = f"Unknown change type: {change_type}"
+                    result.skipped += 1
+                    result.details.append(detail)
+                    continue
+
+                if event_type is ChangeEventType.CREATED:
+                    batch.created.append(abs_path)
+                elif event_type is ChangeEventType.MODIFIED:
+                    batch.modified.append(abs_path)
+                elif event_type is ChangeEventType.DELETED:
+                    batch.deleted.append(abs_path)
+
+                detail["status"] = "processed"
+                result.processed += 1
+
+            except ValueError as e:
+                detail["status"] = "error"
+                detail["reason"] = str(e)
+                result.errors += 1
+
+            except Exception as e:
+                detail["status"] = "error"
+                detail["reason"] = f"Unexpected error: {e}"
+                result.errors += 1
+                logger.error("Error processing change for %s: %s", rel_path, e)
+
+            result.details.append(detail)
+
+        # Apply batch directly to scanner (bypasses debounce)
+        if batch:
+            logger.info(
+                "Applying external changes: created=%d, modified=%d, deleted=%d",
+                len(batch.created),
+                len(batch.modified),
+                len(batch.deleted),
+            )
+            await asyncio.to_thread(
+                self.scanner.apply_change_batch,
+                batch,
+                self.index,
+                persist=True,
+                store=self.snapshot_store,
+            )
+            self.last_event_batch = datetime.now(timezone.utc)
+
+        # Run all registered handlers
+        handlers_triggered = await run_all_handlers(self, result)
+
+        return {
+            "processed": result.processed,
+            "skipped": result.skipped,
+            "errors": result.errors,
+            "details": result.details,
+            "handlers_triggered": handlers_triggered,
+        }
 
     async def _cancel_background_tasks(self) -> None:
         """

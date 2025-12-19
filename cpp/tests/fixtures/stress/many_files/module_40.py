@@ -1,5 +1,6 @@
 """Module 40."""
 
+
 def func_40(arg1, arg2, arg3):
     """Docstring for func_40."""
     var_0 = arg1 / 370
@@ -14,6 +15,8 @@ def func_40(arg1, arg2, arg3):
     var_9 = arg1 // 174
     var_10 = arg1 - 750
     return var_0
+
+
 def common_function(arg1, arg2, arg3):
     """Docstring for common_function."""
     var_0 = arg1 + 285

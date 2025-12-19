@@ -134,6 +134,51 @@ export function ClassUMLView(): JSX.Element {
     setZoom(1);
   }, []);
 
+  const handleDownloadImage = useCallback(() => {
+    if (!svgMarkup) return;
+
+    // Create a canvas element to render the SVG
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Create an image from the SVG
+    const img = new Image();
+    const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      // Set canvas size to match SVG dimensions (with some padding)
+      const scale = 2; // Higher resolution
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      // Fill with white background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the SVG
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+
+      // Create download link
+      const link = document.createElement("a");
+      link.download = "class-uml-diagram.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+      // Cleanup
+      URL.revokeObjectURL(url);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      console.error("Failed to load SVG for PNG export");
+    };
+
+    img.src = url;
+  }, [svgMarkup]);
+
   return (
     <div className={`uml-view ${isGraphvizSidebarOpen ? "sidebar-open" : ""}`}>
       <div className="uml-content">
@@ -159,6 +204,8 @@ export function ClassUMLView(): JSX.Element {
           isRegenerating={query.isFetching}
           isSidebarOpen={isGraphvizSidebarOpen}
           onToggleSidebar={() => setIsGraphvizSidebarOpen((prev) => !prev)}
+          onDownloadImage={handleDownloadImage}
+          canDownload={!!svgMarkup}
         />
 
         {!query.isLoading && !query.isError && classCount > 0 && <UmlLegend />}

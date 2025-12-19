@@ -1,6 +1,7 @@
 # Test file B for Type-1 clone detection
 # Contains exact duplicate of functions from file A
 
+
 def other_function():
     """Some other function."""
     return 42

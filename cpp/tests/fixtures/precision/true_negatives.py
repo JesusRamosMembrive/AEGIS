@@ -1,10 +1,12 @@
 """True Negative Test Cases - Should NOT be detected as clones."""
 
+
 # CASE 1: Similar structure but completely different logic
 def add_numbers(a, b):
     """Add two numbers."""
     result = a + b
     return result
+
 
 def multiply_numbers(a, b):
     """Multiply two numbers."""
@@ -17,6 +19,7 @@ def sort_ascending(items):
     """Sort items ascending."""
     sorted_items = sorted(items)
     return sorted_items
+
 
 def sort_descending(items):
     """Sort items descending."""
@@ -33,6 +36,7 @@ def process_list_filter(data):
             result.append(item)
     return result
 
+
 def process_list_transform(data):
     """Transform-based processing."""
     result = []
@@ -45,13 +49,15 @@ def process_list_transform(data):
 # CASE 4: Same interface, different body
 class ReaderA:
     def read(self, path):
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return f.read()
+
 
 class ReaderB:
     def read(self, path):
         import json
-        with open(path, 'r') as f:
+
+        with open(path, "r") as f:
             return json.load(f)
 
 
@@ -59,8 +65,10 @@ class ReaderB:
 def calculate_area_circle(radius):
     """Calculate circle area."""
     import math
+
     area = math.pi * radius * radius
     return area
+
 
 def calculate_area_square(side):
     """Calculate square area."""
@@ -72,8 +80,10 @@ def calculate_area_square(side):
 def get_name(obj):
     return obj.name
 
+
 def get_value(obj):
     return obj.value
+
 
 def get_id(obj):
     return obj.id
@@ -83,11 +93,14 @@ def get_id(obj):
 def parse_date(date_str):
     """Parse date string to datetime."""
     from datetime import datetime
+
     return datetime.strptime(date_str, "%Y-%m-%d")
+
 
 def format_currency(amount):
     """Format amount as currency."""
     return f"${amount:,.2f}"
+
 
 def validate_email(email):
     """Basic email validation."""

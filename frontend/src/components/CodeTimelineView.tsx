@@ -24,7 +24,7 @@ interface TimelineMatrixResponse {
 }
 
 interface DiffModalProps {
-  commit: { hash: string; file: string };
+  commit: { hash: string; file: string; message: string };
   onClose: () => void;
 }
 
@@ -169,6 +169,10 @@ function DiffModal({ commit, onClose }: DiffModalProps) {
               <strong>Commit:</strong>
               <code>{commit.hash}</code>
             </div>
+            <div className="timeline-modal-info-row">
+              <strong>Message:</strong>
+              <span className="timeline-modal-commit-message">{commit.message}</span>
+            </div>
           </div>
 
           {isLoading && (
@@ -245,6 +249,7 @@ export default function CodeTimelineView() {
   const [selectedCommit, setSelectedCommit] = useState<{
     hash: string;
     file: string;
+    message: string;
   } | null>(null);
 
   // Refs for synchronizing horizontal scroll
@@ -484,7 +489,7 @@ export default function CodeTimelineView() {
                               }
                               onClick={() => {
                                 if (changed) {
-                                  setSelectedCommit({ hash: commit.hash, file });
+                                  setSelectedCommit({ hash: commit.hash, file, message: commit.message });
                                 }
                               }}
                             />

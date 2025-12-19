@@ -1,6 +1,7 @@
 # Type-3 Clone Test Fixture A - Original version
 # This file contains the original implementation
 
+
 def process_data(items):
     """Process a list of items and return doubled positive values."""
     result = []
@@ -23,11 +24,11 @@ def calculate_statistics(numbers):
     maximum = max(numbers)
 
     return {
-        'sum': total,
-        'count': count,
-        'average': average,
-        'min': minimum,
-        'max': maximum
+        "sum": total,
+        "count": count,
+        "average": average,
+        "min": minimum,
+        "max": maximum,
     }
 
 
