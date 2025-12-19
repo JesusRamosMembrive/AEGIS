@@ -8,7 +8,7 @@ Works with any language by accepting decision types as parameter.
 
 from __future__ import annotations
 
-from typing import Any, Set
+from typing import Any, Optional, Set
 
 
 class MetricsMixin:
@@ -67,7 +67,7 @@ class MetricsMixin:
     def _calculate_complexity(
         self,
         func_node: Any,
-        decision_types: Set[str] = None,
+        decision_types: Optional[Set[str]] = None,
     ) -> int:
         """
         Calculate cyclomatic complexity (McCabe) for a function node.

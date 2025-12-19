@@ -176,7 +176,7 @@ class ExtractorFactory:
         if language in cls._extractor_cache:
             return cls._extractor_cache[language]
 
-        extractor_class = None
+        extractor_class: Optional[Type["BaseCallFlowExtractor"]] = None
 
         try:
             if language == "python":

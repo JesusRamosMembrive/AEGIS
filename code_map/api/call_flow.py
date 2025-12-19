@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import PlainTextResponse
@@ -18,6 +18,9 @@ from fastapi.responses import PlainTextResponse
 from ..graph_analysis.call_flow.extractor import PythonCallFlowExtractor
 from ..graph_analysis.call_flow.cpp_extractor import CppCallFlowExtractor
 from ..graph_analysis.call_flow.ts_extractor import TsCallFlowExtractor
+
+# Type alias for any extractor
+ExtractorType = Union[PythonCallFlowExtractor, CppCallFlowExtractor, TsCallFlowExtractor]
 from ..graph_analysis.call_flow.models import (
     CallGraph,
     CallNode,
@@ -326,6 +329,7 @@ async def list_entry_points(
         )
 
     # Select appropriate extractor based on file type
+    extractor: ExtractorType
     if suffix in PYTHON_EXTENSIONS:
         extractor = _get_python_extractor()
         lang_name = "Python"
@@ -421,6 +425,7 @@ async def get_call_flow(
         )
 
     # Select appropriate extractor
+    extractor: ExtractorType
     if suffix in PYTHON_EXTENSIONS:
         extractor = _get_python_extractor()
         lang_name = "Python"

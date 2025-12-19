@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from ..state import AppState
@@ -38,7 +38,7 @@ class NotifyResult:
     processed: int = 0
     skipped: int = 0
     errors: int = 0
-    details: List[Dict[str, Any]] = None
+    details: Optional[List[Dict[str, Any]]] = None
 
     def __post_init__(self) -> None:
         if self.details is None:
