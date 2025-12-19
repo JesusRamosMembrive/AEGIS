@@ -64,6 +64,9 @@ export function useEventStream(): void {
         const payload = JSON.parse(event.data) as ChangeNotification;
         queryClient.invalidateQueries({ queryKey: queryKeys.tree });
 
+        // Invalidate stage status to refresh complexity metrics when files change
+        queryClient.invalidateQueries({ queryKey: queryKeys.stageStatus });
+
         payload.updated?.forEach((path) => {
           queryClient.invalidateQueries({ queryKey: queryKeys.file(path) });
           queryClient.invalidateQueries({ queryKey: queryKeys.preview(path) });

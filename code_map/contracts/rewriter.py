@@ -73,7 +73,9 @@ class ContractRewriter:
             modified_source = strategy.update_contract_block(
                 original_source, existing_block, contract
             )
-            logger.info(f"Updated existing contract at {file_path}:{existing_block.start_line}")
+            logger.info(
+                f"Updated existing contract at {file_path}:{existing_block.start_line}"
+            )
         else:
             # Insert new block
             modified_source = strategy.insert_contract_block(
@@ -82,9 +84,7 @@ class ContractRewriter:
             logger.info(f"Inserted new contract at {file_path}:{symbol_line}")
 
         # Generate diff
-        diff = self._generate_diff(
-            original_source, modified_source, str(file_path)
-        )
+        diff = self._generate_diff(original_source, modified_source, str(file_path))
 
         return modified_source, diff
 
@@ -176,9 +176,7 @@ class ContractRewriter:
 
         return diff
 
-    def _generate_diff(
-        self, original: str, modified: str, filename: str
-    ) -> str:
+    def _generate_diff(self, original: str, modified: str, filename: str) -> str:
         """Generate unified diff between two versions."""
         original_lines = original.splitlines(keepends=True)
         modified_lines = modified.splitlines(keepends=True)
@@ -221,7 +219,10 @@ class ContractRewriter:
         source = file_path.read_text(encoding="utf-8")
         lines = source.splitlines()
         if symbol_line < 1 or symbol_line > len(lines):
-            return False, f"Invalid line number: {symbol_line} (file has {len(lines)} lines)"
+            return (
+                False,
+                f"Invalid line number: {symbol_line} (file has {len(lines)} lines)",
+            )
 
         # Check we can find or create a contract location
         existing_block = strategy.find_contract_block(source, symbol_line)

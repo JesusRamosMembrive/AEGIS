@@ -1,6 +1,7 @@
 # Test file A for Type-1 clone detection
 # Contains exact duplicate function
 
+
 def validate_user(username, password):
     """Validate user credentials."""
     if not username:

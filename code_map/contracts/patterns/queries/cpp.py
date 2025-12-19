@@ -57,7 +57,15 @@ class CppQueryHelper:
     # Template types that indicate ownership
     SMART_POINTER_TYPES = {"unique_ptr", "shared_ptr", "weak_ptr"}
     ATOMIC_TYPES = {"atomic"}
-    CONTAINER_TYPES = {"vector", "map", "set", "unordered_map", "unordered_set", "list", "deque"}
+    CONTAINER_TYPES = {
+        "vector",
+        "map",
+        "set",
+        "unordered_map",
+        "unordered_set",
+        "list",
+        "deque",
+    }
 
     def __init__(self, source: str):
         """
@@ -75,7 +83,9 @@ class CppQueryHelper:
 
     def find_class_declarations(self, root: Node) -> Iterator[Node]:
         """Find all class/struct declarations in the AST."""
-        yield from self._find_nodes_by_type(root, ("class_specifier", "struct_specifier"))
+        yield from self._find_nodes_by_type(
+            root, ("class_specifier", "struct_specifier")
+        )
 
     def find_field_declarations(self, class_node: Node) -> Iterator[FieldInfo]:
         """
@@ -188,7 +198,9 @@ class CppQueryHelper:
                 # Check if qualified_identifier contains a template_type (e.g., std::unique_ptr<T>)
                 template_type = self._find_template_in_qualified(child)
                 if template_type:
-                    template_name, template_args = self._parse_template_type(template_type)
+                    template_name, template_args = self._parse_template_type(
+                        template_type
+                    )
             elif child.type in ("type_identifier", "primitive_type"):
                 type_node = child
             elif child.type == "template_type":
@@ -259,7 +271,11 @@ class CppQueryHelper:
                     if arg.type == "type_descriptor":
                         # Get the type inside the descriptor
                         for sub in arg.children:
-                            if sub.type in ("type_identifier", "primitive_type", "qualified_identifier"):
+                            if sub.type in (
+                                "type_identifier",
+                                "primitive_type",
+                                "qualified_identifier",
+                            ):
                                 template_args.append(self.get_node_text(sub))
                                 break
 
@@ -384,7 +400,9 @@ class CppQueryHelper:
             node=node,
         )
 
-    def _parse_function_declarator(self, node: Node) -> tuple[Optional[str], List[ParameterInfo], bool]:
+    def _parse_function_declarator(
+        self, node: Node
+    ) -> tuple[Optional[str], List[ParameterInfo], bool]:
         """
         Parse function_declarator to extract name, parameters, and const qualifier.
 
@@ -402,7 +420,9 @@ class CppQueryHelper:
                 name = self.get_node_text(child)
             elif child.type == "parameter_list":
                 parameters = self._parse_parameter_list(child)
-            elif child.type == "type_qualifier" and self.get_node_text(child) == "const":
+            elif (
+                child.type == "type_qualifier" and self.get_node_text(child) == "const"
+            ):
                 is_const = True
 
         return name, parameters, is_const
@@ -430,7 +450,11 @@ class CppQueryHelper:
         for child in node.children:
             if child.type == "type_qualifier" and self.get_node_text(child) == "const":
                 is_const = True
-            elif child.type in ("type_identifier", "primitive_type", "qualified_identifier"):
+            elif child.type in (
+                "type_identifier",
+                "primitive_type",
+                "qualified_identifier",
+            ):
                 type_name = self.get_node_text(child)
             elif child.type == "template_type":
                 type_name = self.get_node_text(child)

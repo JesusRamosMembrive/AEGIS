@@ -170,7 +170,9 @@ class CallEdge:
     source_id: str
     target_id: str
     call_site_line: int
-    call_type: str = "direct"  # direct | method | constructor | module_attr | super | static
+    call_type: str = (
+        "direct"  # direct | method | constructor | module_attr | super | static
+    )
     arguments: Optional[List[str]] = None
     expression: Optional[str] = None  # The call expression
     resolution_status: ResolutionStatus = ResolutionStatus.RESOLVED_PROJECT
@@ -228,7 +230,9 @@ class CallGraph:
     max_depth: int = 5
     max_depth_reached: bool = False
     ignored_calls: List[IgnoredCall] = field(default_factory=list)
-    unresolved_calls: List[str] = field(default_factory=list)  # Simple list of call expressions
+    unresolved_calls: List[str] = field(
+        default_factory=list
+    )  # Simple list of call expressions
     source_file: Optional[Path] = None
     diagnostics: Dict[str, Any] = field(default_factory=dict)
 
@@ -311,45 +315,49 @@ class CallGraph:
             y_index = depth_counts.get(depth, 0)
             depth_counts[depth] = y_index + 1
 
-            react_nodes.append({
-                "id": node.id,
-                "type": "callNode",
-                "position": {
-                    "x": depth * 280,
-                    "y": y_index * 120,
-                },
-                "data": {
-                    "label": node.name,
-                    "qualifiedName": node.qualified_name,
-                    "filePath": str(node.file_path) if node.file_path else None,
-                    "line": node.line,
-                    "column": node.column,
-                    "kind": node.kind,
-                    "isEntryPoint": node.is_entry_point,
-                    "depth": node.depth,
-                    "docstring": node.docstring,
-                    "symbolId": node.symbol_id,
-                    "resolutionStatus": node.resolution_status.value,
-                    "reasons": node.reasons,
-                    "complexity": node.complexity,
-                    "loc": node.loc,
-                },
-            })
+            react_nodes.append(
+                {
+                    "id": node.id,
+                    "type": "callNode",
+                    "position": {
+                        "x": depth * 280,
+                        "y": y_index * 120,
+                    },
+                    "data": {
+                        "label": node.name,
+                        "qualifiedName": node.qualified_name,
+                        "filePath": str(node.file_path) if node.file_path else None,
+                        "line": node.line,
+                        "column": node.column,
+                        "kind": node.kind,
+                        "isEntryPoint": node.is_entry_point,
+                        "depth": node.depth,
+                        "docstring": node.docstring,
+                        "symbolId": node.symbol_id,
+                        "resolutionStatus": node.resolution_status.value,
+                        "reasons": node.reasons,
+                        "complexity": node.complexity,
+                        "loc": node.loc,
+                    },
+                }
+            )
 
         for i, edge in enumerate(self.iter_edges()):
-            react_edges.append({
-                "id": f"e{i}",
-                "source": edge.source_id,
-                "target": edge.target_id,
-                "type": "smoothstep",
-                "animated": edge.source_id == self.entry_point,
-                "data": {
-                    "callSiteLine": edge.call_site_line,
-                    "callType": edge.call_type,
-                    "expression": edge.expression,
-                    "resolutionStatus": edge.resolution_status.value,
-                },
-            })
+            react_edges.append(
+                {
+                    "id": f"e{i}",
+                    "source": edge.source_id,
+                    "target": edge.target_id,
+                    "type": "smoothstep",
+                    "animated": edge.source_id == self.entry_point,
+                    "data": {
+                        "callSiteLine": edge.call_site_line,
+                        "callType": edge.call_type,
+                        "expression": edge.expression,
+                        "resolutionStatus": edge.resolution_status.value,
+                    },
+                }
+            )
 
         return {
             "nodes": react_nodes,

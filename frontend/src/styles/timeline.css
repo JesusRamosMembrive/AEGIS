@@ -696,6 +696,12 @@
   flex: 1;
 }
 
+.timeline-modal-commit-message {
+  color: #f6f7fb;
+  flex: 1;
+  line-height: 1.4;
+}
+
 .timeline-modal-changes {
   padding: 1.5rem;
   background: rgba(12, 14, 21, 0.8);

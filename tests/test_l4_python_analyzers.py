@@ -18,7 +18,6 @@ import pytest
 
 from code_map.contracts.patterns import (
     L4Confidence,
-    L4Finding,
     L4FindingType,
     StaticAnalyzer,
 )
@@ -57,13 +56,15 @@ class TestPythonQueryHelper:
 
     def test_find_class_definitions(self):
         """Test finding class definitions."""
-        source = dedent("""
+        source = dedent(
+            """
             class Foo:
                 pass
 
             class Bar:
                 pass
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         helper = PythonQueryHelper(source)
@@ -73,7 +74,8 @@ class TestPythonQueryHelper:
 
     def test_find_methods(self):
         """Test finding method definitions in a class."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service:
                 def __init__(self):
                     pass
@@ -83,7 +85,8 @@ class TestPythonQueryHelper:
 
                 def stop(self):
                     pass
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         helper = PythonQueryHelper(source)
@@ -98,12 +101,14 @@ class TestPythonQueryHelper:
 
     def test_find_constructor_params(self):
         """Test finding constructor parameters with type annotations."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service:
                 def __init__(self, logger: ILogger, config: Config):
                     self._logger = logger
                     self._config = config
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         helper = PythonQueryHelper(source)
@@ -121,12 +126,14 @@ class TestPythonQueryHelper:
 
     def test_find_field_assignments(self):
         """Test finding field assignments in __init__."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service:
                 def __init__(self, logger: ILogger):
                     self._logger = logger
                     self._lock = threading.Lock()
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         helper = PythonQueryHelper(source)
@@ -151,11 +158,13 @@ class TestPythonOwnershipAnalyzer:
 
     def test_threading_lock_ownership(self):
         """threading.Lock() should be detected as 'owns' with HIGH confidence."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service:
                 def __init__(self):
                     self._lock = threading.Lock()
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonOwnershipAnalyzer()
@@ -171,11 +180,13 @@ class TestPythonOwnershipAnalyzer:
 
     def test_parameter_storage(self):
         """Storing a typed parameter should be detected as 'stores'."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service:
                 def __init__(self, logger: ILogger):
                     self._logger = logger
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonOwnershipAnalyzer()
@@ -186,7 +197,10 @@ class TestPythonOwnershipAnalyzer:
             None,
         )
         assert logger_finding is not None
-        assert "stores" in logger_finding.value.lower() or "ILogger" in logger_finding.value
+        assert (
+            "stores" in logger_finding.value.lower()
+            or "ILogger" in logger_finding.value
+        )
 
 
 # =============================================================================
@@ -200,12 +214,14 @@ class TestPythonDependencyAnalyzer:
 
     def test_constructor_typed_dependency(self):
         """Constructor parameter with type annotation = dependency."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service:
                 def __init__(self, logger: ILogger, store: IStore):
                     self._logger = logger
                     self._store = store
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonDependencyAnalyzer()
@@ -225,11 +241,13 @@ class TestPythonDependencyAnalyzer:
 
     def test_setter_optional_dependency(self):
         """Setter method = optional dependency."""
-        source = dedent("""
+        source = dedent(
+            """
             class Module:
                 def set_next(self, next: IModule):
                     self._next = next
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonDependencyAnalyzer()
@@ -254,14 +272,16 @@ class TestPythonLifecycleAnalyzer:
 
     def test_start_stop_lifecycle(self):
         """start/stop methods should detect running/stopped phases."""
-        source = dedent("""
+        source = dedent(
+            """
             class Worker:
                 def start(self):
                     pass
 
                 def stop(self):
                     pass
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonLifecycleAnalyzer()
@@ -275,18 +295,23 @@ class TestPythonLifecycleAnalyzer:
             None,
         )
         assert phases_finding is not None
-        assert "running" in phases_finding.value.lower() or "stopped" in phases_finding.value.lower()
+        assert (
+            "running" in phases_finding.value.lower()
+            or "stopped" in phases_finding.value.lower()
+        )
 
     def test_context_manager(self):
         """__enter__/__exit__ should detect context manager pattern."""
-        source = dedent("""
+        source = dedent(
+            """
             class Resource:
                 def __enter__(self):
                     return self
 
                 def __exit__(self, exc_type, exc_val, exc_tb):
                     pass
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonLifecycleAnalyzer()
@@ -301,14 +326,16 @@ class TestPythonLifecycleAnalyzer:
 
     def test_async_context_manager(self):
         """__aenter__/__aexit__ should detect async context manager."""
-        source = dedent("""
+        source = dedent(
+            """
             class AsyncResource:
                 async def __aenter__(self):
                     return self
 
                 async def __aexit__(self, exc_type, exc_val, exc_tb):
                     pass
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonLifecycleAnalyzer()
@@ -332,11 +359,13 @@ class TestPythonThreadSafetyAnalyzer:
 
     def test_threading_lock_detection(self):
         """threading.Lock should detect thread safety."""
-        source = dedent("""
+        source = dedent(
+            """
             class SharedData:
                 def __init__(self):
                     self._lock = threading.Lock()
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonThreadSafetyAnalyzer()
@@ -354,11 +383,13 @@ class TestPythonThreadSafetyAnalyzer:
 
     def test_queue_detection(self):
         """queue.Queue should detect thread-safe queue."""
-        source = dedent("""
+        source = dedent(
+            """
             class Producer:
                 def __init__(self):
                     self._queue = queue.Queue()
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonThreadSafetyAnalyzer()
@@ -372,11 +403,13 @@ class TestPythonThreadSafetyAnalyzer:
 
     def test_lock_name_pattern(self):
         """Field named *_lock should suggest synchronization."""
-        source = dedent("""
+        source = dedent(
+            """
             class Cache:
                 def __init__(self):
                     self.data_lock = SomeLock()
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_python(source)
         analyzer = PythonThreadSafetyAnalyzer()
@@ -395,7 +428,8 @@ class TestPythonThreadSafetyAnalyzer:
 class TestPythonStaticAnalyzerIntegration:
     """Test full StaticAnalyzer integration for Python."""
 
-    PYTHON_SERVICE_SOURCE = dedent("""
+    PYTHON_SERVICE_SOURCE = dedent(
+        """
         import threading
         from typing import Protocol
 
@@ -419,7 +453,8 @@ class TestPythonStaticAnalyzerIntegration:
 
             def set_callback(self, callback: ICallback):
                 self._callback = callback
-    """).strip()
+    """
+    ).strip()
 
     def test_python_service_analysis(self):
         """Test Python service analysis."""

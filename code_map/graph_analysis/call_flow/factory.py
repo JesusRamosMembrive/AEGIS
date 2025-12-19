@@ -165,7 +165,9 @@ class ExtractorFactory:
         return cls._EXTENSION_MAP.get(extension)
 
     @classmethod
-    def _get_extractor_class(cls, language: str) -> Optional[Type["BaseCallFlowExtractor"]]:
+    def _get_extractor_class(
+        cls, language: str
+    ) -> Optional[Type["BaseCallFlowExtractor"]]:
         """
         Get the extractor class for a language (lazy loading).
 
@@ -174,17 +176,20 @@ class ExtractorFactory:
         if language in cls._extractor_cache:
             return cls._extractor_cache[language]
 
-        extractor_class = None
+        extractor_class: Optional[Type["BaseCallFlowExtractor"]] = None
 
         try:
             if language == "python":
                 from .languages.python import PythonCallFlowExtractor
+
                 extractor_class = PythonCallFlowExtractor
             elif language == "typescript":
                 from .languages.typescript import TsCallFlowExtractor
+
                 extractor_class = TsCallFlowExtractor
             elif language == "cpp":
                 from .languages.cpp import CppCallFlowExtractor
+
                 extractor_class = CppCallFlowExtractor
         except ImportError:
             pass

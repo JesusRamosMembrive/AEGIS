@@ -61,6 +61,132 @@ JavaScriptNormalizer::JavaScriptNormalizer() {
     };
 }
 
+// -----------------------------------------------------------------------------
+// Normalize helpers (reduce cyclomatic complexity of normalize)
+// -----------------------------------------------------------------------------
+
+void JavaScriptNormalizer::update_line_metrics(TokenizerState& state, LineMetrics& metrics) {
+    if (state.line != metrics.current_line) {
+        if (metrics.current_line > 0) {
+            if (metrics.line_has_code) {
+                metrics.code_lines++;
+            } else if (metrics.line_has_comment) {
+                metrics.comment_lines++;
+            } else {
+                metrics.blank_lines++;
+            }
+        }
+        metrics.current_line = state.line;
+        metrics.line_has_code = false;
+        metrics.line_has_comment = false;
+    }
+}
+
+bool JavaScriptNormalizer::skip_whitespace(TokenizerState& state, char c) {
+    if (c == ' ' || c == '\t' || c == '\r') {
+        state.advance();
+        return true;
+    }
+    return false;
+}
+
+bool JavaScriptNormalizer::process_newline(TokenizerState& state, char c) {
+    if (c != '\n') return false;
+    state.advance();
+    state.may_be_regex = true;
+    return true;
+}
+
+bool JavaScriptNormalizer::process_single_line_comment(TokenizerState& state, char c, LineMetrics& metrics) const {
+    if (c != '/' || state.peek_next() != '/') return false;
+    metrics.line_has_comment = true;
+    skip_single_line_comment(state);
+    return true;
+}
+
+bool JavaScriptNormalizer::process_multi_line_comment(TokenizerState& state, char c, LineMetrics& metrics) const {
+    if (c != '/' || state.peek_next() != '*') return false;
+    metrics.line_has_comment = true;
+    skip_multi_line_comment(state);
+    return true;
+}
+
+bool JavaScriptNormalizer::process_regex(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    if (c != '/' || !state.may_be_regex) return false;
+    metrics.line_has_code = true;
+    result.tokens.push_back(parse_regex(state));
+    state.may_be_regex = false;
+    return true;
+}
+
+bool JavaScriptNormalizer::process_string(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    if (c != '"' && c != '\'') return false;
+    metrics.line_has_code = true;
+    result.tokens.push_back(parse_string(state));
+    state.may_be_regex = false;
+    return true;
+}
+
+bool JavaScriptNormalizer::process_template_literal(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    if (c != '`') return false;
+    metrics.line_has_code = true;
+    result.tokens.push_back(parse_template_literal(state));
+    state.may_be_regex = false;
+    return true;
+}
+
+bool JavaScriptNormalizer::process_number(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) const {
+    if (!is_digit(c) && !(c == '.' && is_digit(state.peek_next()))) return false;
+    metrics.line_has_code = true;
+    result.tokens.push_back(parse_number(state));
+    state.may_be_regex = false;
+    return true;
+}
+
+bool JavaScriptNormalizer::process_identifier(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    if (!is_identifier_start(c)) return false;
+    metrics.line_has_code = true;
+    auto tok = parse_identifier_or_keyword(state);
+    // After keywords like 'return', 'case', etc., regex is possible
+    state.may_be_regex = (tok.type == TokenType::KEYWORD);
+    result.tokens.push_back(std::move(tok));
+    return true;
+}
+
+bool JavaScriptNormalizer::process_operator(TokenizerState& state, char c, TokenizedFile& result, LineMetrics& metrics) {
+    if (!is_operator_char(c)) return false;
+    metrics.line_has_code = true;
+    auto tok = parse_operator(state);
+    // After ( [ { , ; : = += etc., regex is possible
+    state.may_be_regex = (tok.type == TokenType::PUNCTUATION || tok.type == TokenType::OPERATOR);
+    result.tokens.push_back(std::move(tok));
+    return true;
+}
+
+void JavaScriptNormalizer::finalize_metrics(const TokenizerState& state, const LineMetrics& metrics,
+                                            std::string_view source, TokenizedFile& result) {
+    // Handle the final line
+    uint32_t final_code_lines = metrics.code_lines;
+    uint32_t final_comment_lines = metrics.comment_lines;
+    uint32_t final_blank_lines = metrics.blank_lines;
+
+    if (metrics.current_line > 0) {
+        if (metrics.line_has_code) final_code_lines++;
+        else if (metrics.line_has_comment) final_comment_lines++;
+        else final_blank_lines++;
+    }
+
+    result.total_lines = source.empty() ? 0 :
+        (state.column == 1 && state.line > 1 ? state.line - 1 : state.line);
+    result.code_lines = final_code_lines;
+    result.blank_lines = final_blank_lines;
+    result.comment_lines = final_comment_lines;
+}
+
+// -----------------------------------------------------------------------------
+// Main normalize (refactored to use helpers)
+// -----------------------------------------------------------------------------
+
 TokenizedFile JavaScriptNormalizer::normalize(std::string_view source) {
     TokenizedFile result;
     result.path = "";
@@ -68,138 +194,29 @@ TokenizedFile JavaScriptNormalizer::normalize(std::string_view source) {
     TokenizerState state;
     state.source = source;
 
-    uint32_t code_lines = 0;
-    uint32_t blank_lines = 0;
-    uint32_t comment_lines = 0;
-    uint32_t current_line = 0;
-    bool line_has_code = false;
-    bool line_has_comment = false;
+    LineMetrics metrics{};
 
     while (!state.eof()) {
-        // Track line changes
-        if (state.line != current_line) {
-            if (current_line > 0) {
-                if (line_has_code) code_lines++;
-                else if (line_has_comment) comment_lines++;
-                else blank_lines++;
-            }
-            current_line = state.line;
-            line_has_code = false;
-            line_has_comment = false;
-        }
-
+        update_line_metrics(state, metrics);
         char c = state.peek();
 
-        // Whitespace
-        if (c == ' ' || c == '\t' || c == '\r') {
-            state.advance();
-            continue;
-        }
-
-        // Newline
-        if (c == '\n') {
-            state.advance();
-            state.may_be_regex = true;
-            continue;
-        }
-
-        // Single-line comment
-        if (c == '/' && state.peek_next() == '/') {
-            line_has_comment = true;
-            skip_single_line_comment(state);
-            continue;
-        }
-
-        // Multi-line comment
-        if (c == '/' && state.peek_next() == '*') {
-            line_has_comment = true;
-            skip_multi_line_comment(state);
-            continue;
-        }
-
-        // Regex literal (must check before division operator)
-        if (c == '/' && state.may_be_regex) {
-            // Could be regex - try to parse it
-            line_has_code = true;
-            result.tokens.push_back(parse_regex(state));
-            state.may_be_regex = false;
-            continue;
-        }
-
-        // String literals
-        if (c == '"' || c == '\'') {
-            line_has_code = true;
-            result.tokens.push_back(parse_string(state));
-            state.may_be_regex = false;
-            continue;
-        }
-
-        // Template literal
-        if (c == '`') {
-            line_has_code = true;
-            result.tokens.push_back(parse_template_literal(state));
-            state.may_be_regex = false;
-            continue;
-        }
-
-        // Numbers
-        if (is_digit(c) || (c == '.' && is_digit(state.peek_next()))) {
-            line_has_code = true;
-            result.tokens.push_back(parse_number(state));
-            state.may_be_regex = false;
-            continue;
-        }
-
-        // Identifiers and keywords
-        if (is_identifier_start(c)) {
-            line_has_code = true;
-            auto tok = parse_identifier_or_keyword(state);
-
-            // Update regex expectation based on token
-            if (tok.type == TokenType::KEYWORD) {
-                // After keywords like 'return', 'case', etc., regex is possible
-                state.may_be_regex = true;
-            } else {
-                state.may_be_regex = false;
-            }
-
-            result.tokens.push_back(std::move(tok));
-            continue;
-        }
-
-        // Operators and punctuation
-        if (is_operator_char(c)) {
-            line_has_code = true;
-            auto tok = parse_operator(state);
-
-            // Update regex expectation
-            // After ( [ { , ; : = += etc., regex is possible
-            if (tok.type == TokenType::PUNCTUATION ||
-                tok.type == TokenType::OPERATOR) {
-                state.may_be_regex = true;
-            }
-
-            result.tokens.push_back(std::move(tok));
-            continue;
-        }
+        // Process each token type (early return pattern)
+        if (skip_whitespace(state, c)) continue;
+        if (process_newline(state, c)) continue;
+        if (process_single_line_comment(state, c, metrics)) continue;
+        if (process_multi_line_comment(state, c, metrics)) continue;
+        if (process_regex(state, c, result, metrics)) continue;
+        if (process_string(state, c, result, metrics)) continue;
+        if (process_template_literal(state, c, result, metrics)) continue;
+        if (process_number(state, c, result, metrics)) continue;
+        if (process_identifier(state, c, result, metrics)) continue;
+        if (process_operator(state, c, result, metrics)) continue;
 
         // Unknown - skip
         state.advance();
     }
 
-    // Handle the final line
-    if (current_line > 0) {
-        if (line_has_code) code_lines++;
-        else if (line_has_comment) comment_lines++;
-        else blank_lines++;
-    }
-
-    result.total_lines = source.empty() ? 0 :
-        (state.column == 1 && state.line > 1 ? state.line - 1 : state.line);
-    result.code_lines = code_lines;
-    result.blank_lines = blank_lines;
-    result.comment_lines = comment_lines;
-
+    finalize_metrics(state, metrics, source, result);
     return result;
 }
 
@@ -305,85 +322,129 @@ NormalizedToken JavaScriptNormalizer::parse_template_literal(TokenizerState& sta
     return tok;
 }
 
+// -----------------------------------------------------------------------------
+// Number parsing helpers (reduce cyclomatic complexity)
+// -----------------------------------------------------------------------------
+
+bool JavaScriptNormalizer::parse_hex_number(TokenizerState& state, std::string& value) {
+    if (state.peek() != '0' || state.eof()) return false;
+    const char next = state.peek_next();
+    if (next != 'x' && next != 'X') return false;
+
+    value += state.advance();  // '0'
+    value += state.advance();  // 'x' or 'X'
+    while (!state.eof() && (is_hex_digit(state.peek()) || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+    return true;
+}
+
+bool JavaScriptNormalizer::parse_binary_number(TokenizerState& state, std::string& value) {
+    if (state.peek() != '0' || state.eof()) return false;
+    const char next = state.peek_next();
+    if (next != 'b' && next != 'B') return false;
+
+    value += state.advance();  // '0'
+    value += state.advance();  // 'b' or 'B'
+    while (!state.eof() && (state.peek() == '0' || state.peek() == '1' || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+    return true;
+}
+
+bool JavaScriptNormalizer::parse_octal_number(TokenizerState& state, std::string& value) {
+    if (state.peek() != '0' || state.eof()) return false;
+    const char next = state.peek_next();
+    if (next != 'o' && next != 'O') return false;
+
+    value += state.advance();  // '0'
+    value += state.advance();  // 'o' or 'O'
+    while (!state.eof() && ((state.peek() >= '0' && state.peek() <= '7') || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+    return true;
+}
+
+void JavaScriptNormalizer::parse_integer_part(TokenizerState& state, std::string& value) {
+    // Handle leading zero without special prefix
+    if (state.peek() == '0') {
+        value += state.advance();
+        return;
+    }
+    // Regular integer digits
+    while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+}
+
+void JavaScriptNormalizer::parse_decimal_part(TokenizerState& state, std::string& value) {
+    if (state.peek() != '.' || !is_digit(state.peek_next())) return;
+
+    value += state.advance();  // '.'
+    while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+}
+
+void JavaScriptNormalizer::parse_exponent_part(TokenizerState& state, std::string& value) {
+    if (state.peek() != 'e' && state.peek() != 'E') return;
+
+    value += state.advance();  // 'e' or 'E'
+    if (state.peek() == '+' || state.peek() == '-') {
+        value += state.advance();
+    }
+    while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
+        if (state.peek() != '_') value += state.peek();
+        state.advance();
+    }
+}
+
+void JavaScriptNormalizer::skip_bigint_suffix(TokenizerState& state, std::string& value) {
+    if (state.peek() == 'n') {
+        value += state.advance();
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Main parse_number (refactored to use helpers)
+// -----------------------------------------------------------------------------
+
 NormalizedToken JavaScriptNormalizer::parse_number(TokenizerState& state) const
 {
     NormalizedToken tok{};
     tok.type = TokenType::NUMBER_LITERAL;
     tok.line = state.line;
     tok.column = state.column;
-
     std::string value;
     const size_t start_pos = state.pos;
 
-    // Check for hex, binary, octal
-    if (state.peek() == '0' && !state.eof()) {
-        if (const char next = state.peek_next(); next == 'x' || next == 'X') {
-            // Hex
-            value += state.advance();
-            value += state.advance();
-            while (!state.eof() && (is_hex_digit(state.peek()) || state.peek() == '_')) {
-                if (state.peek() != '_') value += state.peek();
-                state.advance();
-            }
-        } else if (next == 'b' || next == 'B') {
-            // Binary
-            value += state.advance();
-            value += state.advance();
-            while (!state.eof() && (state.peek() == '0' || state.peek() == '1' || state.peek() == '_')) {
-                if (state.peek() != '_') value += state.peek();
-                state.advance();
-            }
-        } else if (next == 'o' || next == 'O') {
-            // Octal
-            value += state.advance();
-            value += state.advance();
-            while (!state.eof() && ((state.peek() >= '0' && state.peek() <= '7') || state.peek() == '_')) {
-                if (state.peek() != '_') value += state.peek();
-                state.advance();
-            }
-        } else {
-            value += state.advance();
-        }
+    // Try special number formats first (hex, binary, octal)
+    const bool is_special = parse_hex_number(state, value) ||
+                            parse_binary_number(state, value) ||
+                            parse_octal_number(state, value);
+
+    // Regular number if no special format matched
+    if (!is_special) {
+        parse_integer_part(state, value);
     }
 
-    // Integer or float part
-    if (value.empty()) {
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
-            if (state.peek() != '_') value += state.peek();
-            state.advance();
-        }
+    // Decimal and exponent parts (only for regular numbers)
+    if (!is_special) {
+        parse_decimal_part(state, value);
+        parse_exponent_part(state, value);
     }
 
-    // Decimal part
-    if (state.peek() == '.' && is_digit(state.peek_next())) {
-        value += state.advance();
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
-            if (state.peek() != '_') value += state.peek();
-            state.advance();
-        }
-    }
-
-    // Exponent part
-    if (state.peek() == 'e' || state.peek() == 'E') {
-        value += state.advance();
-        if (state.peek() == '+' || state.peek() == '-') {
-            value += state.advance();
-        }
-        while (!state.eof() && (is_digit(state.peek()) || state.peek() == '_')) {
-            if (state.peek() != '_') value += state.peek();
-            state.advance();
-        }
-    }
-
-    // BigInt suffix
-    if (state.peek() == 'n') {
-        value += state.advance();
-    }
+    // BigInt suffix (n)
+    skip_bigint_suffix(state, value);
 
     tok.length = static_cast<uint16_t>(state.pos - start_pos);
     tok.original_hash = hash_string(value);
     tok.normalized_hash = hash_placeholder(TokenType::NUMBER_LITERAL);
-
     return tok;
 }
 
@@ -430,59 +491,18 @@ NormalizedToken JavaScriptNormalizer::parse_operator(TokenizerState& state) {
     std::string value;
     const size_t start_pos = state.pos;
 
-    // Try to match the longest operator first
-    // Check 4-character operators
-    if (state.pos + 3 < state.source.size()) {
-        if (std::string four(state.source.substr(state.pos, 4)); four == ">>>=") {
-            value = four;
-            for (int i = 0; i < 4; i++) state.advance();
-        }
-    }
-
-    // Check 3-character operators
-    if (value.empty() && state.pos + 2 < state.source.size()) {
-        if (const std::string three(state.source.substr(state.pos, 3)); three == "===" || three == "!==" || three == ">>>" ||
-            three == "..." || three == "<<=" || three == ">>=" ||
-            three == "**=" || three == "&&=" || three == "||=" ||
-            three == "?" "?=") {  // Split to avoid trigraph warning
-            value = three;
-            state.advance();
-            state.advance();
-            state.advance();
-        }
-    }
-
-    // Check 2-character operators
-    if (value.empty() && state.pos + 1 < state.source.size()) {
-        if (const std::string two(state.source.substr(state.pos, 2)); two == "==" || two == "!=" || two == "<=" || two == ">=" ||
-            two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
-            two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
-            two == "**" || two == "++" || two == "--" || two == "&&" ||
-            two == "||" || two == "??" || two == "?." || two == "=>" ||
-            two == "<<" || two == ">>") {
-            value = two;
-            state.advance();
-            state.advance();
-        }
-    }
-
-    // Single character operator
-    if (value.empty()) {
+    // Try to match the longest operator first (4, 3, 2, then 1 character)
+    if (!try_match_four_char_operator(state, value) &&
+        !try_match_three_char_operator(state, value) &&
+        !try_match_two_char_operator(state, value)) {
+        // Single character operator
         value = state.advance();
     }
 
     tok.length = static_cast<uint16_t>(state.pos - start_pos);
     tok.original_hash = hash_string(value);
     tok.normalized_hash = tok.original_hash;
-
-    // Classify as operator or punctuation
-    if (value == "(" || value == ")" || value == "[" || value == "]" ||
-        value == "{" || value == "}" || value == "," || value == ":" ||
-        value == ";" || value == ".") {
-        tok.type = TokenType::PUNCTUATION;
-    } else {
-        tok.type = TokenType::OPERATOR;
-    }
+    tok.type = is_punctuation(value) ? TokenType::PUNCTUATION : TokenType::OPERATOR;
 
     return tok;
 }
@@ -599,6 +619,69 @@ bool JavaScriptNormalizer::could_be_regex(const TokenType last_type) {
     return last_type == TokenType::OPERATOR ||
            last_type == TokenType::PUNCTUATION ||
            last_type == TokenType::KEYWORD;
+}
+
+// Operator parsing helper functions (extracted to reduce cyclomatic complexity)
+
+bool JavaScriptNormalizer::try_match_four_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 3 >= state.source.size()) {
+        return false;
+    }
+
+    const std::string four(state.source.substr(state.pos, 4));
+    if (four == ">>>=") {
+        value = four;
+        for (int i = 0; i < 4; i++) {
+            state.advance();
+        }
+        return true;
+    }
+    return false;
+}
+
+bool JavaScriptNormalizer::try_match_three_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 2 >= state.source.size()) {
+        return false;
+    }
+
+    const std::string three(state.source.substr(state.pos, 3));
+    if (three == "===" || three == "!==" || three == ">>>" ||
+        three == "..." || three == "<<=" || three == ">>=" ||
+        three == "**=" || three == "&&=" || three == "||=" ||
+        three == "?\?=") {  // Escaped to avoid trigraph
+        value = three;
+        for (int i = 0; i < 3; i++) {
+            state.advance();
+        }
+        return true;
+    }
+    return false;
+}
+
+bool JavaScriptNormalizer::try_match_two_char_operator(TokenizerState& state, std::string& value) {
+    if (state.pos + 1 >= state.source.size()) {
+        return false;
+    }
+
+    const std::string two(state.source.substr(state.pos, 2));
+    if (two == "==" || two == "!=" || two == "<=" || two == ">=" ||
+        two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
+        two == "%=" || two == "&=" || two == "|=" || two == "^=" ||
+        two == "**" || two == "++" || two == "--" || two == "&&" ||
+        two == "||" || two == "??" || two == "?." || two == "=>" ||
+        two == "<<" || two == ">>") {
+        value = two;
+        state.advance();
+        state.advance();
+        return true;
+    }
+    return false;
+}
+
+bool JavaScriptNormalizer::is_punctuation(const std::string& op) {
+    return op == "(" || op == ")" || op == "[" || op == "]" ||
+           op == "{" || op == "}" || op == "," || op == ":" ||
+           op == ";" || op == ".";
 }
 
 }  // namespace aegis::similarity

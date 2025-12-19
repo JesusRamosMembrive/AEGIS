@@ -4,6 +4,7 @@ import os
 import random
 import string
 
+
 def generate_function(name, num_lines=10):
     """Generate a random function."""
     lines = [f"def {name}(arg1, arg2, arg3):"]
@@ -18,6 +19,7 @@ def generate_function(name, num_lines=10):
     lines.append("    return var_0")
     lines.append("")
     return "\n".join(lines)
+
 
 def generate_class(name, num_methods=5):
     """Generate a random class."""
@@ -35,9 +37,16 @@ def generate_class(name, num_methods=5):
 
     return "\n".join(lines)
 
+
 def generate_large_file(filename, num_functions=50, num_classes=10):
     """Generate a large Python file."""
-    content = ['"""Auto-generated stress test file."""', "import os", "import sys", "import random", ""]
+    content = [
+        '"""Auto-generated stress test file."""',
+        "import os",
+        "import sys",
+        "import random",
+        "",
+    ]
 
     # Generate functions
     for i in range(num_functions):
@@ -49,6 +58,7 @@ def generate_large_file(filename, num_functions=50, num_classes=10):
 
     with open(filename, "w") as f:
         f.write("\n".join(content))
+
 
 def generate_duplicate_file(source, dest):
     """Create a file with some duplicated functions."""
@@ -62,6 +72,7 @@ def generate_duplicate_file(source, dest):
     with open(dest, "w") as f:
         f.write(modified)
 
+
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -74,7 +85,7 @@ if __name__ == "__main__":
     # Create duplicates with modifications
     generate_duplicate_file(
         os.path.join(base_dir, "large_file_0.py"),
-        os.path.join(base_dir, "large_file_0_dup.py")
+        os.path.join(base_dir, "large_file_0_dup.py"),
     )
     print("Generated duplicate file")
 

@@ -101,7 +101,14 @@ class ContractDiscovery:
         if comment:
             content = comment.content
             # Check for Doxygen/structured patterns
-            doxygen_markers = ["@pre", "@post", "@throws", "@invariant", "@param", "@return"]
+            doxygen_markers = [
+                "@pre",
+                "@post",
+                "@throws",
+                "@invariant",
+                "@param",
+                "@return",
+            ]
             if any(marker in content for marker in doxygen_markers):
                 return DocumentationType.DOXYGEN
             # Has comment but no structure
@@ -170,7 +177,9 @@ class ContractDiscovery:
                 contract.end_line = block.end_line
 
                 if not contract.is_empty():
-                    logger.debug(f"Level 1: Found @aegis-contract at {file_path}:{symbol_line}")
+                    logger.debug(
+                        f"Level 1: Found @aegis-contract at {file_path}:{symbol_line}"
+                    )
                     return contract
 
         # ─────────────────────────────────────────────────────
@@ -184,7 +193,9 @@ class ContractDiscovery:
                     contract.file_path = file_path
                     contract.start_line = comment.start_line
                     contract.end_line = comment.end_line
-                    logger.debug(f"Level 2: Found pattern-based contract at {file_path}:{symbol_line}")
+                    logger.debug(
+                        f"Level 2: Found pattern-based contract at {file_path}:{symbol_line}"
+                    )
                     return contract
 
         # ─────────────────────────────────────────────────────
@@ -194,10 +205,9 @@ class ContractDiscovery:
             if self._llm_extractor.is_available():
                 # Get context for LLM
                 code_block = self._extract_code_context(source, symbol_line)
-                documentation = ""
                 comment = strategy.find_comment_block(source, symbol_line)
                 if comment:
-                    documentation = comment.content
+                    pass
 
                 # Note: This is async, but we're in sync context
                 # For now, skip LLM in sync discover()
@@ -215,7 +225,9 @@ class ContractDiscovery:
             if not contract.is_empty():
                 contract.file_path = file_path
                 contract.start_line = symbol_line
-                logger.debug(f"Level 4: Found static-inferred contract at {file_path}:{symbol_line}")
+                logger.debug(
+                    f"Level 4: Found static-inferred contract at {file_path}:{symbol_line}"
+                )
                 return contract
 
         # ─────────────────────────────────────────────────────

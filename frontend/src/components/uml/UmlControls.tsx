@@ -16,6 +16,8 @@ interface UmlControlsProps {
     isRegenerating: boolean;
     isSidebarOpen: boolean;
     onToggleSidebar: () => void;
+    onDownloadImage: () => void;
+    canDownload: boolean;
 }
 
 export function UmlControls({
@@ -33,6 +35,8 @@ export function UmlControls({
     isRegenerating,
     isSidebarOpen,
     onToggleSidebar,
+    onDownloadImage,
+    canDownload,
 }: UmlControlsProps): JSX.Element {
     const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -136,6 +140,16 @@ export function UmlControls({
                 aria-label={isSidebarOpen ? "Hide Graphviz options" : "Show Graphviz options"}
             >
                 {isSidebarOpen ? "Hide Options" : "Show Options"}
+            </button>
+
+            <button
+                className="secondary-btn"
+                type="button"
+                onClick={onDownloadImage}
+                disabled={!canDownload}
+                aria-label="Download UML diagram as PNG image"
+            >
+                Download PNG
             </button>
         </section>
     );

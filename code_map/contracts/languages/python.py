@@ -67,7 +67,6 @@ class PythonLanguageStrategy(LanguageStrategy):
         # Find docstring start after the symbol
         docstring_start = None
         docstring_end = None
-        quote_style = None
 
         for i in range(symbol_line - 1, min(symbol_line + 5, len(lines))):
             if i >= len(lines):
@@ -77,7 +76,6 @@ class PythonLanguageStrategy(LanguageStrategy):
             # Check for docstring
             for quote in ['"""', "'''"]:
                 if quote in line:
-                    quote_style = quote
                     docstring_start = i
 
                     # Single-line docstring?
@@ -144,12 +142,13 @@ class PythonLanguageStrategy(LanguageStrategy):
 
             for quote in ['"""', "'''"]:
                 if quote in line:
-                    start_idx = i
 
                     # Single-line docstring
                     if line.count(quote) >= 2:
                         # Extract content between quotes
-                        content = line.split(quote)[1] if len(line.split(quote)) > 1 else ""
+                        content = (
+                            line.split(quote)[1] if len(line.split(quote)) > 1 else ""
+                        )
                         return CommentBlock(
                             start_line=i + 1,
                             end_line=i + 1,
@@ -192,7 +191,9 @@ class PythonLanguageStrategy(LanguageStrategy):
 
         # Note/Notes -> thread safety and other info
         if "Note" in sections or "Notes" in sections:
-            notes_content = " ".join(sections.get("Note", []) + sections.get("Notes", []))
+            notes_content = " ".join(
+                sections.get("Note", []) + sections.get("Notes", [])
+            )
             notes_lower = notes_content.lower()
 
             if "thread-safe" in notes_lower or "threadsafe" in notes_lower:
@@ -215,7 +216,9 @@ class PythonLanguageStrategy(LanguageStrategy):
             if "must be" in args_lower:
                 must_match = re.search(r"must be ([^.]+)", args_content, re.I)
                 if must_match:
-                    contract.preconditions.append(f"input must be {must_match.group(1)}")
+                    contract.preconditions.append(
+                        f"input must be {must_match.group(1)}"
+                    )
 
         # Returns -> postconditions
         if "Returns" in sections:

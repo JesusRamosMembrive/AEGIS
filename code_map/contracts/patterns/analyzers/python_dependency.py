@@ -56,9 +56,7 @@ class PythonDependencyAnalyzer:
             # Analyze setter methods
             for method in helper.find_methods(class_node):
                 if self._is_setter_method(method.name):
-                    findings.extend(
-                        self._analyze_setter(method, class_name, helper)
-                    )
+                    findings.extend(self._analyze_setter(method, class_name, helper))
 
         return findings
 
@@ -110,7 +108,9 @@ class PythonDependencyAnalyzer:
 
             # Setters indicate optional dependencies
             confidence = L4Confidence.MEDIUM if param.type_name else L4Confidence.LOW
-            is_interface = self._is_interface_type(param.type_name) if param.type_name else False
+            is_interface = (
+                self._is_interface_type(param.type_name) if param.type_name else False
+            )
 
             finding = L4Finding(
                 type=L4FindingType.DEPENDENCY,
@@ -128,7 +128,9 @@ class PythonDependencyAnalyzer:
     def _is_setter_method(self, name: str) -> bool:
         """Check if method name indicates a setter."""
         name_lower = name.lower()
-        return any(name_lower.startswith(prefix.lower()) for prefix in self.SETTER_PREFIXES)
+        return any(
+            name_lower.startswith(prefix.lower()) for prefix in self.SETTER_PREFIXES
+        )
 
     def _is_interface_type(self, type_name: str) -> bool:
         """Check if type name follows interface naming conventions."""

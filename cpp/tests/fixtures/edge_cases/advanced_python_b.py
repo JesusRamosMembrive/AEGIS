@@ -5,7 +5,8 @@ import asyncio
 from typing import TypeVar, Generic, Protocol
 from dataclasses import dataclass, field
 
-U = TypeVar('U')
+U = TypeVar("U")
+
 
 # Decorators
 @dataclass
@@ -14,7 +15,7 @@ class Coordinate:
     lon: float = 0.0
 
     def __post_init__(self):
-        self.distance = (self.lat**2 + self.lon**2)**0.5
+        self.distance = (self.lat**2 + self.lon**2) ** 0.5
 
 
 # Async functions
@@ -28,7 +29,7 @@ async def get_content(endpoint: str) -> dict:
 def transform_elements(elements: list) -> list:
     """Uses walrus operator."""
     output = []
-    while (elem := elements.pop() if elements else None):
+    while elem := elements.pop() if elements else None:
         output.append(elem * 2)
     return output
 

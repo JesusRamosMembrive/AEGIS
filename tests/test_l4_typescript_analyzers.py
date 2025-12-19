@@ -18,7 +18,6 @@ import pytest
 
 from code_map.contracts.patterns import (
     L4Confidence,
-    L4Finding,
     L4FindingType,
     StaticAnalyzer,
 )
@@ -57,13 +56,15 @@ class TestTypeScriptQueryHelper:
 
     def test_find_class_declarations(self):
         """Test finding class declarations."""
-        source = dedent("""
+        source = dedent(
+            """
             class Foo {
             }
 
             class Bar {
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         helper = TypeScriptQueryHelper(source)
@@ -73,12 +74,14 @@ class TestTypeScriptQueryHelper:
 
     def test_find_field_definitions(self):
         """Test finding field definitions in a class."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
                 private readonly logger: ILogger;
                 private config: Config;
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         helper = TypeScriptQueryHelper(source)
@@ -98,13 +101,15 @@ class TestTypeScriptQueryHelper:
 
     def test_find_methods(self):
         """Test finding method definitions."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
                 constructor(logger: ILogger) {}
                 start(): void {}
                 stop(): void {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         helper = TypeScriptQueryHelper(source)
@@ -120,14 +125,16 @@ class TestTypeScriptQueryHelper:
 
     def test_find_constructor_params(self):
         """Test finding constructor parameters."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
                 constructor(
                     private readonly logger: ILogger,
                     private config: Config
                 ) {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         helper = TypeScriptQueryHelper(source)
@@ -154,11 +161,13 @@ class TestTypeScriptOwnershipAnalyzer:
 
     def test_private_readonly_ownership(self):
         """private readonly field = owns with HIGH confidence."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
                 private readonly logger: ILogger;
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptOwnershipAnalyzer()
@@ -174,11 +183,13 @@ class TestTypeScriptOwnershipAnalyzer:
 
     def test_private_field_manages(self):
         """private (non-readonly) field = manages."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
                 private config: Config;
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptOwnershipAnalyzer()
@@ -193,11 +204,13 @@ class TestTypeScriptOwnershipAnalyzer:
 
     def test_constructor_parameter_property(self):
         """Constructor parameter property = ownership."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
                 constructor(private readonly logger: ILogger) {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptOwnershipAnalyzer()
@@ -218,11 +231,13 @@ class TestTypeScriptDependencyAnalyzer:
 
     def test_constructor_dependency(self):
         """Constructor parameter = dependency."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
                 constructor(logger: ILogger, store: IStore) {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptDependencyAnalyzer()
@@ -241,11 +256,13 @@ class TestTypeScriptDependencyAnalyzer:
 
     def test_implements_interface(self):
         """implements clause = dependency on interface."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service implements IService {
                 start(): void {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptDependencyAnalyzer()
@@ -270,12 +287,14 @@ class TestTypeScriptLifecycleAnalyzer:
 
     def test_start_stop_lifecycle(self):
         """start/stop methods should detect lifecycle phases."""
-        source = dedent("""
+        source = dedent(
+            """
             class Service {
                 start(): void {}
                 stop(): void {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptLifecycleAnalyzer()
@@ -292,12 +311,14 @@ class TestTypeScriptLifecycleAnalyzer:
 
     def test_angular_lifecycle_hooks(self):
         """Angular lifecycle hooks should be detected."""
-        source = dedent("""
+        source = dedent(
+            """
             class MyComponent {
                 ngOnInit(): void {}
                 ngOnDestroy(): void {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptLifecycleAnalyzer()
@@ -308,12 +329,14 @@ class TestTypeScriptLifecycleAnalyzer:
 
     def test_react_lifecycle_hooks(self):
         """React lifecycle methods should be detected."""
-        source = dedent("""
+        source = dedent(
+            """
             class MyComponent {
                 componentDidMount(): void {}
                 componentWillUnmount(): void {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptLifecycleAnalyzer()
@@ -324,11 +347,13 @@ class TestTypeScriptLifecycleAnalyzer:
 
     def test_dispose_method(self):
         """dispose() method should be detected."""
-        source = dedent("""
+        source = dedent(
+            """
             class Resource {
                 dispose(): void {}
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptLifecycleAnalyzer()
@@ -353,11 +378,13 @@ class TestTypeScriptThreadSafetyAnalyzer:
 
     def test_worker_detection(self):
         """Worker type should detect concurrency."""
-        source = dedent("""
+        source = dedent(
+            """
             class TaskRunner {
                 private worker: Worker;
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptThreadSafetyAnalyzer()
@@ -372,11 +399,13 @@ class TestTypeScriptThreadSafetyAnalyzer:
 
     def test_rxjs_subject_detection(self):
         """RxJS Subject types should detect thread safety."""
-        source = dedent("""
+        source = dedent(
+            """
             class DataService {
                 private data$: BehaviorSubject<Data>;
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptThreadSafetyAnalyzer()
@@ -390,11 +419,13 @@ class TestTypeScriptThreadSafetyAnalyzer:
 
     def test_lock_name_pattern(self):
         """Field named *lock* should suggest synchronization."""
-        source = dedent("""
+        source = dedent(
+            """
             class Cache {
                 private dataLock: Mutex;
             }
-        """).strip()
+        """
+        ).strip()
 
         ast = parse_typescript(source)
         analyzer = TypeScriptThreadSafetyAnalyzer()
@@ -413,7 +444,8 @@ class TestTypeScriptThreadSafetyAnalyzer:
 class TestTypeScriptStaticAnalyzerIntegration:
     """Test full StaticAnalyzer integration for TypeScript."""
 
-    TS_SERVICE_SOURCE = dedent("""
+    TS_SERVICE_SOURCE = dedent(
+        """
         interface ILogger {
             log(msg: string): void;
         }
@@ -444,7 +476,8 @@ class TestTypeScriptStaticAnalyzerIntegration:
                 this.worker.terminate();
             }
         }
-    """).strip()
+    """
+    ).strip()
 
     def test_typescript_service_analysis(self):
         """Test TypeScript service analysis."""
@@ -488,7 +521,8 @@ class TestTypeScriptStaticAnalyzerIntegration:
 
     def test_javascript_file_support(self):
         """Test .js files are also analyzed."""
-        js_source = dedent("""
+        js_source = dedent(
+            """
             class Service {
                 constructor(logger) {
                     this.logger = logger;
@@ -497,7 +531,8 @@ class TestTypeScriptStaticAnalyzerIntegration:
                 start() {}
                 stop() {}
             }
-        """).strip()
+        """
+        ).strip()
 
         analyzer = StaticAnalyzer()
         contract = analyzer.analyze(js_source, Path("service.js"))

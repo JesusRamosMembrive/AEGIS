@@ -4,7 +4,6 @@ Tests for the drift detection system.
 """
 
 import pytest
-from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import dedent
 
@@ -283,7 +282,9 @@ class TestStructuralDriftDetector:
     async def test_detect_evidence_stale(self, detector, tmp_path):
         """Should detect when evidence hasn't been run."""
         test_file = tmp_path / "module.py"
-        test_file.write_text(dedent('''
+        test_file.write_text(
+            dedent(
+                '''
             def process(data):
                 """
                 @aegis-contract-begin
@@ -293,10 +294,13 @@ class TestStructuralDriftDetector:
                 @aegis-contract-end
                 """
                 return data
-        ''').strip())
+        '''
+            ).strip()
+        )
 
         # Create contract discovery
         from code_map.contracts import ContractDiscovery
+
         context = DriftContext(
             project_root=tmp_path,
             contract_discovery=ContractDiscovery(enable_llm=False),
@@ -590,7 +594,11 @@ class TestDriftIntegration:
         initial_wiring = {
             "instances": {
                 "source": {"type": "SourceModule", "file": "main.cpp", "line": 10},
-                "processor": {"type": "ProcessorModule", "file": "main.cpp", "line": 15},
+                "processor": {
+                    "type": "ProcessorModule",
+                    "file": "main.cpp",
+                    "line": 15,
+                },
             },
             "edges": [
                 {"from": "source", "to": "processor"},
@@ -602,7 +610,11 @@ class TestDriftIntegration:
         modified_wiring = {
             "instances": {
                 "source": {"type": "SourceModule", "file": "main.cpp", "line": 10},
-                "processor": {"type": "ProcessorModule", "file": "main.cpp", "line": 15},
+                "processor": {
+                    "type": "ProcessorModule",
+                    "file": "main.cpp",
+                    "line": 15,
+                },
                 "sink": {"type": "SinkModule", "file": "main.cpp", "line": 20},
             },
             "edges": [
@@ -637,9 +649,7 @@ class TestDriftIntegration:
         test_file = tmp_path / "module.py"
         test_file.write_text("def func(): pass")
 
-        can_proceed, report = await check_drift_before_apply(
-            tmp_path, [test_file]
-        )
+        can_proceed, report = await check_drift_before_apply(tmp_path, [test_file])
 
         # No blocking drift expected for simple file
         assert can_proceed is True

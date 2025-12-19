@@ -35,23 +35,26 @@ __all__ = [
 def get_python_extractor():
     """Get Python extractor class (lazy import)."""
     from .python import PythonCallFlowExtractor
+
     return PythonCallFlowExtractor
 
 
 def get_typescript_extractor():
     """Get TypeScript extractor class (lazy import)."""
     from .typescript import TsCallFlowExtractor
+
     return TsCallFlowExtractor
 
 
 def get_cpp_extractor():
     """Get C++ extractor class (lazy import)."""
     from .cpp import CppCallFlowExtractor
+
     return CppCallFlowExtractor
 
 
 # Backward compatibility - direct imports
 # These allow: from code_map.graph_analysis.call_flow.languages import PythonCallFlowExtractor
-from .python import PythonCallFlowExtractor
-from .typescript import TsCallFlowExtractor
-from .cpp import CppCallFlowExtractor
+from .python import PythonCallFlowExtractor  # noqa: E402
+from .typescript import TsCallFlowExtractor  # noqa: E402
+from .cpp import CppCallFlowExtractor  # noqa: E402

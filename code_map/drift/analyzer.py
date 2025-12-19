@@ -17,7 +17,7 @@ from .detectors import (
     StructuralDriftDetector,
     WiringDriftDetector,
 )
-from .models import DriftReport, DriftType
+from .models import DriftReport
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,9 @@ class DriftAnalyzer:
             self._wiring,
         ]
 
-        use_semantic = include_semantic if include_semantic is not None else self.enable_semantic
+        use_semantic = (
+            include_semantic if include_semantic is not None else self.enable_semantic
+        )
         if use_semantic:
             detectors.append(self._semantic)
 

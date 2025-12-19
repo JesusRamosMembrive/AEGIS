@@ -15,7 +15,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Set
+from typing import Any, Dict, Iterator, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,9 @@ class TypeInfo:
     module: Optional[str] = None  # Module where type is defined
     file_path: Optional[Path] = None  # File where the class is defined
     confidence: float = 1.0  # 0.0-1.0 confidence in inference
-    source: str = "unknown"  # "constructor" | "annotation" | "return_type" | "parameter"
+    source: str = (
+        "unknown"  # "constructor" | "annotation" | "return_type" | "parameter"
+    )
 
 
 @dataclass
@@ -108,7 +110,9 @@ class TypeResolver:
 
         # Also extract return types from imported functions
         if imports:
-            imported_return_types = self._get_imported_return_types(imports, file_path.parent)
+            imported_return_types = self._get_imported_return_types(
+                imports, file_path.parent
+            )
             return_types.update(imported_return_types)
 
         # Extract type annotations from function body
@@ -402,7 +406,9 @@ class TypeResolver:
                 original_name = import_info.get("original_name", name)
 
                 # Get return types from the imported file
-                file_return_types = self._get_return_types_for_file(resolved_file, source)
+                file_return_types = self._get_return_types_for_file(
+                    resolved_file, source
+                )
 
                 # If the original function has a return type, add it
                 if original_name in file_return_types:

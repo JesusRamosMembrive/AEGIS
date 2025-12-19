@@ -57,27 +57,30 @@ from .languages.base_extractor import BaseCallFlowExtractor
 def get_python_extractor():
     """Get Python extractor class (lazy import)."""
     from .languages.python import PythonCallFlowExtractor
+
     return PythonCallFlowExtractor
 
 
 def get_typescript_extractor():
     """Get TypeScript extractor class (lazy import)."""
     from .languages.typescript import TsCallFlowExtractor
+
     return TsCallFlowExtractor
 
 
 def get_cpp_extractor():
     """Get C++ extractor class (lazy import)."""
     from .languages.cpp import CppCallFlowExtractor
+
     return CppCallFlowExtractor
 
 
 # Backward compatibility - import concrete classes
 # These imports make old code work without changes:
 #   from code_map.graph_analysis.call_flow import PythonCallFlowExtractor
-from .languages.python import PythonCallFlowExtractor
-from .languages.typescript import TsCallFlowExtractor
-from .languages.cpp import CppCallFlowExtractor
+from .languages.python import PythonCallFlowExtractor  # noqa: E402
+from .languages.typescript import TsCallFlowExtractor  # noqa: E402
+from .languages.cpp import CppCallFlowExtractor  # noqa: E402
 
 # Legacy imports from old locations (deprecated)
 # These are kept for backward compatibility during transition:

@@ -187,7 +187,9 @@ class ContractData:
         if self.evidence:
             data["evidence"] = [e.to_dict() for e in self.evidence]
 
-        return yaml.dump(data, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        return yaml.dump(
+            data, default_flow_style=False, sort_keys=False, allow_unicode=True
+        )
 
     @classmethod
     def from_yaml(cls, yaml_content: str) -> "ContractData":

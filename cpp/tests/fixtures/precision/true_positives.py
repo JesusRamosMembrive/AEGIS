@@ -1,5 +1,6 @@
 """True Positive Test Cases - Should be detected as clones."""
 
+
 # CASE 1: Exact duplicate functions (must detect)
 def calculate_total_a(items, tax_rate):
     """Calculate total with tax."""
@@ -7,6 +8,7 @@ def calculate_total_a(items, tax_rate):
     tax = subtotal * tax_rate
     total = subtotal + tax
     return total
+
 
 def calculate_total_b(items, tax_rate):
     """Calculate total with tax."""
@@ -25,6 +27,7 @@ def process_user_data(user_list, filter_func):
             result.append(user)
     return result
 
+
 def process_customer_data(customer_list, predicate):
     """Process user data with filter."""
     result = []
@@ -35,9 +38,10 @@ def process_customer_data(customer_list, predicate):
 
 
 # CASE 3: Whitespace and formatting differences (must detect)
-def format_output_v1(data,prefix,suffix):
-    output=prefix+str(data)+suffix
+def format_output_v1(data, prefix, suffix):
+    output = prefix + str(data) + suffix
     return output
+
 
 def format_output_v2(data, prefix, suffix):
     output = prefix + str(data) + suffix
@@ -52,6 +56,7 @@ def validate_input_a(value):
     if value < 0:
         return False
     return True
+
 
 def validate_input_b(value):
     # Different comment here
@@ -72,6 +77,7 @@ class ProcessorA:
         tokens = normalized.split()
         result = [t for t in tokens if len(t) > 2]
         return result
+
 
 class ProcessorB:
     def execute(self, input_data):

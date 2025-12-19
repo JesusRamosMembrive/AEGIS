@@ -61,9 +61,7 @@ class TypeScriptDependencyAnalyzer:
 
             # Analyze constructor parameters
             for constructor in helper.find_constructors(class_node):
-                findings.extend(
-                    self._analyze_constructor(constructor, class_name)
-                )
+                findings.extend(self._analyze_constructor(constructor, class_name))
 
             # Analyze setter methods
             for method in helper.find_methods(class_node):

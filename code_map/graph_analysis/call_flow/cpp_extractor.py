@@ -27,30 +27,102 @@ logger = logging.getLogger(__name__)
 # Common C++ stdlib functions/types to ignore
 CPP_STDLIB_FUNCTIONS: Set[str] = {
     # I/O
-    "cout", "cin", "cerr", "clog", "endl", "printf", "scanf", "puts", "gets",
-    "fprintf", "fscanf", "sprintf", "sscanf", "fopen", "fclose", "fread", "fwrite",
+    "cout",
+    "cin",
+    "cerr",
+    "clog",
+    "endl",
+    "printf",
+    "scanf",
+    "puts",
+    "gets",
+    "fprintf",
+    "fscanf",
+    "sprintf",
+    "sscanf",
+    "fopen",
+    "fclose",
+    "fread",
+    "fwrite",
     # Memory
-    "malloc", "calloc", "realloc", "free", "new", "delete",
+    "malloc",
+    "calloc",
+    "realloc",
+    "free",
+    "new",
+    "delete",
     # String
-    "strlen", "strcpy", "strncpy", "strcat", "strcmp", "strncmp", "memcpy", "memset",
+    "strlen",
+    "strcpy",
+    "strncpy",
+    "strcat",
+    "strcmp",
+    "strncmp",
+    "memcpy",
+    "memset",
     # Math
-    "abs", "sqrt", "pow", "sin", "cos", "tan", "log", "exp", "floor", "ceil",
+    "abs",
+    "sqrt",
+    "pow",
+    "sin",
+    "cos",
+    "tan",
+    "log",
+    "exp",
+    "floor",
+    "ceil",
     # STL containers common methods
-    "push_back", "pop_back", "push_front", "pop_front", "begin", "end",
-    "size", "empty", "clear", "insert", "erase", "find", "front", "back",
-    "at", "reserve", "resize", "capacity", "data",
+    "push_back",
+    "pop_back",
+    "push_front",
+    "pop_front",
+    "begin",
+    "end",
+    "size",
+    "empty",
+    "clear",
+    "insert",
+    "erase",
+    "find",
+    "front",
+    "back",
+    "at",
+    "reserve",
+    "resize",
+    "capacity",
+    "data",
     # STL algorithms
-    "sort", "find", "count", "copy", "transform", "accumulate",
+    "sort",
+    "find",
+    "count",
+    "copy",
+    "transform",
+    "accumulate",
     # Utility
-    "swap", "move", "forward", "make_pair", "make_tuple", "get",
-    "make_unique", "make_shared",
+    "swap",
+    "move",
+    "forward",
+    "make_pair",
+    "make_tuple",
+    "get",
+    "make_unique",
+    "make_shared",
     # Type traits
-    "static_cast", "dynamic_cast", "const_cast", "reinterpret_cast",
+    "static_cast",
+    "dynamic_cast",
+    "const_cast",
+    "reinterpret_cast",
 }
 
 # Common C++ stdlib namespaces/prefixes to ignore
 CPP_STDLIB_NAMESPACES: Set[str] = {
-    "std", "boost", "fmt", "spdlog", "nlohmann", "google", "absl",
+    "std",
+    "boost",
+    "fmt",
+    "spdlog",
+    "nlohmann",
+    "google",
+    "absl",
 }
 
 
@@ -59,7 +131,9 @@ class CppCallInfo:
     """Information about a C++ function/method call."""
 
     name: str  # Function/method name
-    receiver: Optional[str]  # Object (obj in obj.method()) or namespace (ns in ns::func())
+    receiver: Optional[
+        str
+    ]  # Object (obj in obj.method()) or namespace (ns in ns::func())
     qualified_name: str  # Full call expression
     line: int  # Line where call occurs
     call_type: str  # "direct" | "method" | "static" | "constructor"
@@ -141,7 +215,7 @@ class CppCallFlowExtractor:
 
     def _get_node_text(self, node: Any, source: bytes) -> str:
         """Get text content of a node."""
-        return source[node.start_byte:node.end_byte].decode("utf-8")
+        return source[node.start_byte : node.end_byte].decode("utf-8")
 
     def _get_function_name(self, node: Any, source: bytes) -> Optional[str]:
         """
@@ -295,14 +369,16 @@ class CppCallFlowExtractor:
                 # Count calls within this function
                 call_count = self._count_calls_in_node(node)
 
-                entry_points.append({
-                    "name": func_name,
-                    "qualified_name": qualified_name,
-                    "line": node.start_point[0] + 1,
-                    "kind": kind,
-                    "class_name": class_name,
-                    "node_count": call_count,
-                })
+                entry_points.append(
+                    {
+                        "name": func_name,
+                        "qualified_name": qualified_name,
+                        "line": node.start_point[0] + 1,
+                        "kind": kind,
+                        "class_name": class_name,
+                        "node_count": call_count,
+                    }
+                )
 
         return entry_points
 
@@ -414,9 +490,7 @@ class CppCallFlowExtractor:
             tree.root_node, function_name, source
         )
         if func_node is None:
-            logger.warning(
-                "Function '%s' not found in %s", function_name, file_path
-            )
+            logger.warning("Function '%s' not found in %s", function_name, file_path)
             return None
 
         # Build qualified name
@@ -429,7 +503,9 @@ class CppCallFlowExtractor:
         line = func_node.start_point[0] + 1
         col = func_node.start_point[1]
         kind = "method" if class_name else "function"
-        entry_id = self._make_symbol_id(file_path, line, col, kind, function_name, effective_root)
+        entry_id = self._make_symbol_id(
+            file_path, line, col, kind, function_name, effective_root
+        )
 
         entry_node = CallNode(
             id=entry_id,
@@ -456,7 +532,9 @@ class CppCallFlowExtractor:
         graph.add_node(entry_node)
 
         # Build index of all functions in file for resolution
-        function_index = self._build_function_index(tree.root_node, source, file_path, effective_root)
+        function_index = self._build_function_index(
+            tree.root_node, source, file_path, effective_root
+        )
 
         # Extract calls recursively
         call_stack: List[str] = [entry_id]
@@ -649,11 +727,13 @@ class CppCallFlowExtractor:
             # Per-branch cycle detection
             is_cycle = target_id in call_stack
             if is_cycle:
-                graph.diagnostics.setdefault("cycles_detected", []).append({
-                    "from": parent_id,
-                    "to": target_id,
-                    "path": list(call_stack),
-                })
+                graph.diagnostics.setdefault("cycles_detected", []).append(
+                    {
+                        "from": parent_id,
+                        "to": target_id,
+                        "path": list(call_stack),
+                    }
+                )
 
             # Add edge
             edge = CallEdge(

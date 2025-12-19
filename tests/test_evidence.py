@@ -6,8 +6,7 @@ Tests for the evidence execution and gate checking system.
 import asyncio
 import pytest
 from datetime import datetime, timezone
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 from code_map.contracts import ContractData, EvidenceItem, EvidencePolicy
 from code_map.contracts.evidence import EvidenceExecutor, GateChecker, GateResult
@@ -115,9 +114,15 @@ class TestEvidenceExecutor:
         """Should filter evidence by scope."""
         contract = ContractData(
             evidence=[
-                EvidenceItem(type="test", reference="test1.py", policy=EvidencePolicy.REQUIRED),
-                EvidenceItem(type="test", reference="test2.py", policy=EvidencePolicy.OPTIONAL),
-                EvidenceItem(type="lint", reference="ruff", policy=EvidencePolicy.REQUIRED),
+                EvidenceItem(
+                    type="test", reference="test1.py", policy=EvidencePolicy.REQUIRED
+                ),
+                EvidenceItem(
+                    type="test", reference="test2.py", policy=EvidencePolicy.OPTIONAL
+                ),
+                EvidenceItem(
+                    type="lint", reference="ruff", policy=EvidencePolicy.REQUIRED
+                ),
             ]
         )
 
@@ -136,8 +141,12 @@ class TestEvidenceExecutor:
         """Scope 'all' should run all evidence."""
         contract = ContractData(
             evidence=[
-                EvidenceItem(type="test", reference="test1.py", policy=EvidencePolicy.REQUIRED),
-                EvidenceItem(type="test", reference="test2.py", policy=EvidencePolicy.OPTIONAL),
+                EvidenceItem(
+                    type="test", reference="test1.py", policy=EvidencePolicy.REQUIRED
+                ),
+                EvidenceItem(
+                    type="test", reference="test2.py", policy=EvidencePolicy.OPTIONAL
+                ),
             ]
         )
 
@@ -164,7 +173,7 @@ class TestEvidenceExecutor:
         with patch.object(executor, "_run_command", new_callable=AsyncMock) as mock_cmd:
             mock_cmd.return_value = {"passed": True, "output": "All tests passed"}
 
-            result = await executor.run_evidence(item)
+            await executor.run_evidence(item)
 
             assert item.last_result is True
             assert item.last_run is not None

@@ -9,7 +9,6 @@ Tests type inference from:
 """
 
 import pytest
-from pathlib import Path
 from textwrap import dedent
 
 
@@ -18,7 +17,9 @@ pytest.importorskip("tree_sitter")
 pytest.importorskip("tree_sitter_languages")
 
 
-from code_map.graph_analysis.call_flow.type_resolver import TypeResolver, TypeInfo, ScopeInfo
+from code_map.graph_analysis.call_flow.type_resolver import (  # noqa: E402
+    TypeResolver,
+)
 
 
 @pytest.fixture
@@ -48,11 +49,13 @@ class TestConstructorAssignments:
 
     def test_simple_constructor(self, resolver, parser, tmp_path):
         """loader = FileLoader() -> loader is FileLoader."""
-        source = dedent("""
+        source = dedent(
+            """
             def process():
                 loader = FileLoader()
                 loader.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -65,11 +68,13 @@ class TestConstructorAssignments:
 
     def test_constructor_with_args(self, resolver, parser, tmp_path):
         """client = HttpClient("https://api.example.com") -> client is HttpClient."""
-        source = dedent("""
+        source = dedent(
+            """
             def connect():
                 client = HttpClient("https://api.example.com")
                 client.get("/users")
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "connect")
@@ -81,10 +86,12 @@ class TestConstructorAssignments:
 
     def test_lowercase_call_not_constructor(self, resolver, parser, tmp_path):
         """result = process_data() should NOT be inferred (not PascalCase)."""
-        source = dedent("""
+        source = dedent(
+            """
             def main():
                 result = process_data()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "main")
@@ -95,11 +102,13 @@ class TestConstructorAssignments:
 
     def test_builtin_type_excluded(self, resolver, parser, tmp_path):
         """data = dict() should NOT create a TypeInfo for dict."""
-        source = dedent("""
+        source = dedent(
+            """
             def init():
                 data = dict()
                 items = list()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "init")
@@ -131,10 +140,12 @@ class TestTypeAnnotations:
 
     def test_annotated_parameter(self, resolver, parser, tmp_path):
         """def foo(loader: FileLoader) -> loader is FileLoader."""
-        source = dedent("""
+        source = dedent(
+            """
             def process(loader: FileLoader):
                 loader.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -147,11 +158,13 @@ class TestTypeAnnotations:
 
     def test_annotated_parameter_with_default(self, resolver, parser, tmp_path):
         """def foo(loader: FileLoader = None) -> loader is FileLoader."""
-        source = dedent("""
+        source = dedent(
+            """
             def process(loader: FileLoader = None):
                 if loader:
                     loader.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -163,10 +176,12 @@ class TestTypeAnnotations:
 
     def test_self_parameter_excluded(self, resolver, parser, tmp_path):
         """self should not be tracked as a typed parameter."""
-        source = dedent("""
+        source = dedent(
+            """
             def process(self, data: DataLoader):
                 data.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -178,11 +193,13 @@ class TestTypeAnnotations:
 
     def test_optional_type_extracts_base(self, resolver, parser, tmp_path):
         """def foo(x: Optional[FileLoader]) -> x is FileLoader (base type)."""
-        source = dedent("""
+        source = dedent(
+            """
             def process(loader: Optional[FileLoader]):
                 if loader:
                     loader.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -213,32 +230,34 @@ class TestReturnTypeInference:
 
     def test_return_type_extraction(self, resolver, parser, tmp_path):
         """def get_loader() -> FileLoader should be extracted."""
-        source = dedent("""
+        source = dedent(
+            """
             def get_loader() -> FileLoader:
                 return FileLoader()
 
             def process():
                 loader = get_loader()
                 loader.load()
-        """)
-
-        return_types = resolver._get_return_types_for_file(
-            tmp_path / "test.py", source
+        """
         )
+
+        return_types = resolver._get_return_types_for_file(tmp_path / "test.py", source)
 
         assert "get_loader" in return_types
         assert return_types["get_loader"] == "FileLoader"
 
     def test_return_type_assignment_inference(self, resolver, parser, tmp_path):
         """result = get_loader() where get_loader() -> FileLoader."""
-        source = dedent("""
+        source = dedent(
+            """
             def get_loader() -> FileLoader:
                 return FileLoader()
 
             def process():
                 loader = get_loader()
                 loader.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -251,17 +270,17 @@ class TestReturnTypeInference:
 
     def test_return_type_optional(self, resolver, parser, tmp_path):
         """def get_data() -> Optional[DataLoader] extracts DataLoader."""
-        source = dedent("""
+        source = dedent(
+            """
             def get_data() -> Optional[DataLoader]:
                 return None
 
             def process():
                 data = get_data()
-        """)
-
-        return_types = resolver._get_return_types_for_file(
-            tmp_path / "test.py", source
+        """
         )
+
+        return_types = resolver._get_return_types_for_file(tmp_path / "test.py", source)
 
         assert "get_data" in return_types
         # The return type should be the full annotation
@@ -288,11 +307,13 @@ class TestTypePriority:
 
     def test_annotation_overrides_constructor(self, resolver, parser, tmp_path):
         """If annotation exists, it should win over constructor inference."""
-        source = dedent("""
+        source = dedent(
+            """
             def process():
                 loader: BaseLoader = FileLoader()
                 loader.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -306,11 +327,13 @@ class TestTypePriority:
 
     def test_parameter_takes_highest_priority(self, resolver, parser, tmp_path):
         """Parameters should take priority over local variables."""
-        source = dedent("""
+        source = dedent(
+            """
             def process(loader: ParamLoader):
                 loader = FileLoader()
                 loader.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -343,11 +366,13 @@ class TestResolveType:
 
     def test_resolve_type_found(self, resolver, parser, tmp_path):
         """resolve_type returns TypeInfo when type is known."""
-        source = dedent("""
+        source = dedent(
+            """
             def process():
                 loader = FileLoader()
                 loader.load()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")
@@ -360,10 +385,12 @@ class TestResolveType:
 
     def test_resolve_type_not_found(self, resolver, parser, tmp_path):
         """resolve_type returns None when type is unknown."""
-        source = dedent("""
+        source = dedent(
+            """
             def process():
                 result = unknown_function()
-        """)
+        """
+        )
 
         tree = parser.parse(bytes(source, "utf-8"))
         func_node = self._find_function(tree.root_node, "process")

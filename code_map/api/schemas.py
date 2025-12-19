@@ -23,6 +23,62 @@ class HealthResponse(BaseModel):
     status: str = "ok"
 
 
+# -----------------------------------------------------------------------------
+# Notify Changes Schemas
+# -----------------------------------------------------------------------------
+
+
+class FileChangeType(str, Enum):
+    """Tipo de cambio en un archivo."""
+
+    CREATED = "created"
+    MODIFIED = "modified"
+    DELETED = "deleted"
+
+
+class FileChangeItem(BaseModel):
+    """Representa un cambio individual en un archivo."""
+
+    path: str = Field(..., description="Ruta relativa del archivo cambiado")
+    change_type: FileChangeType = Field(
+        default=FileChangeType.MODIFIED,
+        description="Tipo de cambio: created, modified, deleted",
+    )
+
+
+class NotifyChangesRequest(BaseModel):
+    """Petición para notificar cambios externos."""
+
+    changes: List[FileChangeItem] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Lista de cambios a procesar (máximo 100)",
+    )
+
+
+class ProcessedChangeItem(BaseModel):
+    """Resultado del procesamiento de un cambio individual."""
+
+    path: str
+    change_type: FileChangeType
+    status: str = Field(description="processed, skipped, error")
+    reason: Optional[str] = None
+
+
+class NotifyChangesResponse(BaseModel):
+    """Respuesta del endpoint de notificación de cambios."""
+
+    processed: int = Field(description="Número de archivos procesados")
+    skipped: int = Field(description="Número de archivos omitidos")
+    errors: int = Field(description="Número de errores")
+    details: List[ProcessedChangeItem] = Field(default_factory=list)
+    handlers_triggered: List[str] = Field(
+        default_factory=list,
+        description="Lista de handlers ejecutados",
+    )
+
+
 class AnalysisErrorSchema(BaseModel):
     """Esquema para un error de análisis."""
 
@@ -644,7 +700,8 @@ class ListFilesResponse(BaseModel):
         default_factory=list, description="Lista de subdirectorios"
     )
     files: List[FileItem] = Field(
-        default_factory=list, description="Lista de archivos que coinciden con el filtro"
+        default_factory=list,
+        description="Lista de archivos que coinciden con el filtro",
     )
 
 
@@ -728,6 +785,7 @@ class CallFlowResolutionStatus(str, Enum):
         unresolved: Could not resolve (unknown symbol)
         ambiguous: Multiple possible targets
     """
+
     RESOLVED_PROJECT = "resolved_project"
     IGNORED_BUILTIN = "ignored_builtin"
     IGNORED_STDLIB = "ignored_stdlib"
@@ -747,6 +805,7 @@ class CallFlowIgnoredCallSchema(BaseModel):
         module_hint: Module name if known
         caller_id: ID of the node that made this call
     """
+
     expression: str
     status: CallFlowResolutionStatus
     call_site_line: int
@@ -785,7 +844,9 @@ class CallFlowNodeSchema(BaseModel):
     depth: int = 0
     docstring: Optional[str] = None
     symbol_id: Optional[str] = None
-    resolution_status: CallFlowResolutionStatus = CallFlowResolutionStatus.RESOLVED_PROJECT
+    resolution_status: CallFlowResolutionStatus = (
+        CallFlowResolutionStatus.RESOLVED_PROJECT
+    )
     reasons: Optional[str] = None
 
 
@@ -809,7 +870,9 @@ class CallFlowEdgeSchema(BaseModel):
     call_site_line: int
     call_type: str = "direct"
     expression: Optional[str] = None
-    resolution_status: CallFlowResolutionStatus = CallFlowResolutionStatus.RESOLVED_PROJECT
+    resolution_status: CallFlowResolutionStatus = (
+        CallFlowResolutionStatus.RESOLVED_PROJECT
+    )
 
 
 class CallFlowReactFlowNodeSchema(BaseModel):

@@ -19,9 +19,7 @@ from ..exceptions import (
 from ..similarity_service import (
     DEFAULT_EXCLUDE_PATTERNS,
     SimilarityServiceError,
-    analyze_similarity,
     is_available,
-    report_to_dict,
 )
 from ..state import AppState
 from .deps import get_app_state
@@ -30,8 +28,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/similarity", tags=["similarity"])
 
+
 # In-memory cache for the latest report
-_latest_report: Optional[dict[str, Any]] = None
+# _latest_report: Optional[dict[str, Any]] = None
 
 
 # Request/Response schemas
@@ -97,9 +96,11 @@ async def get_similarity_status() -> SimilarityStatusResponse:
 
 
 @router.get("/latest")
-async def get_latest_report() -> Optional[dict[str, Any]]:
+async def get_latest_report(
+    state: AppState = Depends(get_app_state),
+) -> Optional[dict[str, Any]]:
     """Get the latest similarity analysis report."""
-    return _latest_report
+    return state.similarity_report
 
 
 @router.post("/analyze")
@@ -129,25 +130,17 @@ async def run_analysis(
             f"with extensions={request.extensions}, type3={request.type3}"
         )
 
-        report = analyze_similarity(
-            root=state.settings.root_path,
-            extensions=request.extensions,
-            exclude_patterns=request.exclude_patterns,
-            min_tokens=request.min_tokens,
-            min_similarity=request.min_similarity,
-            type3=request.type3,
-            max_gap=request.max_gap,
-            threads=request.threads,
+        # Trigger background run logic but wait for it here for the POST response
+        # or we could reimplement just the blocking call here.
+        # To reuse logic, we can call the function we added to state,
+        # but state.run_similarity_bg is async wrapping a blocking call.
+
+        # Explicit call to update state
+        await state.run_similarity_bg(
+            extensions=request.extensions, type3=request.type3
         )
 
-        _latest_report = report_to_dict(report)
-
-        logger.info(
-            f"Similarity analysis complete: {report.summary.clone_pairs_found} clones found, "
-            f"duplication={report.summary.estimated_duplication}"
-        )
-
-        return _latest_report
+        return state.similarity_report or {}
 
     except SimilarityServiceError as e:
         logger.error(f"Similarity analysis failed: {e}")
@@ -169,11 +162,9 @@ async def get_hotspots(
 
     Returns the top N files sorted by duplication score.
     """
-    global _latest_report
-
-    # If we have a cached report, use it
-    if _latest_report:
-        hotspots = _latest_report.get("hotspots", [])
+    # If we have a cached report in state, use it
+    if state.similarity_report:
+        hotspots = state.similarity_report.get("hotspots", [])
         sorted_hotspots = sorted(
             hotspots, key=lambda h: h.get("duplication_score", 0), reverse=True
         )
@@ -188,10 +179,10 @@ async def get_hotspots(
 
     try:
         ext_list = extensions.split(",") if extensions else [".py"]
-        report = analyze_similarity(root=state.settings.root_path, extensions=ext_list)
-        _latest_report = report_to_dict(report)
+        # Trigger update in state
+        await state.run_similarity_bg(extensions=ext_list)
 
-        hotspots = _latest_report.get("hotspots", [])
+        hotspots = (state.similarity_report or {}).get("hotspots", [])
         sorted_hotspots = sorted(
             hotspots, key=lambda h: h.get("duplication_score", 0), reverse=True
         )
