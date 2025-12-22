@@ -216,6 +216,9 @@ interface UmlEditorState {
 
   // Template actions
   applyTemplate: (template: DesignPatternTemplate) => string[];
+
+  // Merge actions (for AI generation)
+  mergeProject: (project: UmlProjectDef) => void;
 }
 
 export const useUmlEditorStore = create<UmlEditorState>()(
@@ -1006,6 +1009,122 @@ export const useUmlEditorStore = create<UmlEditorState>()(
           }));
 
           return Array.from(keyToId.values());
+        },
+
+        // Merge actions - add entities from another project without replacing
+        mergeProject: (importedProject) => {
+          const state = get();
+          const moduleId = state.currentModuleId;
+          if (!moduleId) return;
+
+          const currentModule = state.project.modules.find((m) => m.id === moduleId);
+          if (!currentModule) return;
+
+          // Get imported module (use first module from imported project)
+          const importedModule = importedProject.modules[0];
+          if (!importedModule) return;
+
+          // Collect existing positions to find empty area
+          const existingPositions = [
+            ...currentModule.classes.map((c) => c.position),
+            ...currentModule.interfaces.map((i) => i.position),
+            ...currentModule.enums.map((e) => e.position),
+            ...currentModule.structs.map((s) => s.position),
+          ];
+
+          // Calculate offset for imported entities
+          const startPos = findEmptyArea(existingPositions, { rows: 3, cols: 3 });
+
+          // Map old IDs to new IDs for relationships
+          const idMap = new Map<string, string>();
+
+          // Process classes - generate new IDs and offset positions
+          const newClasses: UmlClassDef[] = importedModule.classes.map((cls) => {
+            const newId = generateId();
+            idMap.set(cls.id, newId);
+            return {
+              ...cls,
+              id: newId,
+              position: {
+                x: startPos.x + (cls.position?.x ?? 0),
+                y: startPos.y + (cls.position?.y ?? 0),
+              },
+              attributes: cls.attributes.map((a) => ({ ...a, id: generateId() })),
+              methods: cls.methods.map((m) => ({ ...m, id: generateId() })),
+            };
+          });
+
+          // Process interfaces
+          const newInterfaces: UmlInterfaceDef[] = importedModule.interfaces.map((iface) => {
+            const newId = generateId();
+            idMap.set(iface.id, newId);
+            return {
+              ...iface,
+              id: newId,
+              position: {
+                x: startPos.x + (iface.position?.x ?? 0),
+                y: startPos.y + (iface.position?.y ?? 0),
+              },
+              methods: iface.methods.map((m) => ({ ...m, id: generateId() })),
+            };
+          });
+
+          // Process enums
+          const newEnums: UmlEnumDef[] = importedModule.enums.map((enm) => {
+            const newId = generateId();
+            idMap.set(enm.id, newId);
+            return {
+              ...enm,
+              id: newId,
+              position: {
+                x: startPos.x + (enm.position?.x ?? 0),
+                y: startPos.y + (enm.position?.y ?? 0),
+              },
+            };
+          });
+
+          // Process structs
+          const newStructs: UmlStructDef[] = importedModule.structs.map((struct) => {
+            const newId = generateId();
+            idMap.set(struct.id, newId);
+            return {
+              ...struct,
+              id: newId,
+              position: {
+                x: startPos.x + (struct.position?.x ?? 0),
+                y: startPos.y + (struct.position?.y ?? 0),
+              },
+              attributes: struct.attributes.map((a) => ({ ...a, id: generateId() })),
+            };
+          });
+
+          // Process relationships - remap IDs
+          const newRelationships: UmlRelationshipDef[] = importedModule.relationships.map((rel) => ({
+            ...rel,
+            id: generateId(),
+            from: idMap.get(rel.from) ?? rel.from,
+            to: idMap.get(rel.to) ?? rel.to,
+          }));
+
+          // Apply the merge
+          set((currentState) => ({
+            project: {
+              ...currentState.project,
+              modules: currentState.project.modules.map((m) =>
+                m.id === moduleId
+                  ? {
+                      ...m,
+                      classes: [...m.classes, ...newClasses],
+                      interfaces: [...m.interfaces, ...newInterfaces],
+                      enums: [...m.enums, ...newEnums],
+                      structs: [...m.structs, ...newStructs],
+                      relationships: [...m.relationships, ...newRelationships],
+                    }
+                  : m
+              ),
+            },
+            isDirty: true,
+          }));
         },
       };
       },

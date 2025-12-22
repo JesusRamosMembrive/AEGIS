@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml-project name="Math Operations test" version="1.0.0" language="python">
+  <module name="main">
+    <classes>
+      <class name="MathOperations">
+        <description>Class with static classes for basic math operations</description>
+        <methods>
+          <method name="Sum" visibility="public" static="true">
+            <description>return sum of two numbers</description>
+            <parameters>
+              <param name="num1" type="int, double, float" />
+              <param name="num2" type="int, double, float" />
+            </parameters>
+            <returns type="float" />
+          </method>
+          <method name="subtract" visibility="public" static="true">
+            <description>return subtract of two numbers</description>
+            <parameters>
+              <param name="param1" type="int, double or float" />
+              <param name="param2" type="int, double or float" />
+            </parameters>
+            <returns type="float" />
+          </method>
+        </methods>
+      </class>
+    </classes>
+  </module>
+</uml-project>
