@@ -60,6 +60,7 @@ See Also:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import os
 from dataclasses import dataclass, field
@@ -777,8 +778,16 @@ class AppState:
         )
         self.index = SymbolIndex(self.settings.root_path)
         # Use alternative cache directory if specified (for Docker with read-only mounts)
+        # When using cache_dir, create a unique subdirectory per project to avoid conflicts
         cache_dir = os.getenv(ENV_CACHE_DIR)
-        cache_dir_path = Path(cache_dir) if cache_dir else None
+        if cache_dir:
+            # Create unique subdirectory based on project path hash
+            project_hash = hashlib.md5(
+                str(self.settings.root_path).encode()
+            ).hexdigest()[:12]
+            cache_dir_path = Path(cache_dir) / project_hash
+        else:
+            cache_dir_path = None
         self.snapshot_store = SnapshotStore(
             self.settings.root_path, cache_dir=cache_dir_path
         )

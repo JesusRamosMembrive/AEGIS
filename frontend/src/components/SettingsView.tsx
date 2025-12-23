@@ -71,11 +71,18 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
     mutationFn: updateSettings,
     onSuccess: (result) => {
       queryClient.setQueryData(queryKeys.settings, result.settings);
-      queryClient.invalidateQueries({ queryKey: queryKeys.tree });
-      queryClient.invalidateQueries({ queryKey: queryKeys.status });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stageStatus });
+
       if (result.updated.includes("root_path")) {
+        // Project changed - invalidate ALL cached queries since they belong to old project
+        queryClient.invalidateQueries();
+        // Restore the settings we just received
+        queryClient.setQueryData(queryKeys.settings, result.settings);
         useSelectionStore.getState().clearSelection();
+      } else {
+        // Only specific settings changed - selective invalidation
+        queryClient.invalidateQueries({ queryKey: queryKeys.tree });
+        queryClient.invalidateQueries({ queryKey: queryKeys.status });
+        queryClient.invalidateQueries({ queryKey: queryKeys.stageStatus });
       }
       if (result.updated.includes("backend_url")) {
         // Update Zustand store when backend_url changes
