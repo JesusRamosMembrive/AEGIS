@@ -513,10 +513,14 @@ Preview XML: Vista en tiempo real de cómo el agente recibirá esta entidad.
 - [ ] Exportador JSON → XML
 - [ ] Preview del XML generado
 
-### Fase 4: Integración con Agente
-- [ ] Interface de comunicación con Claude Code
-- [ ] Generación incremental
-- [ ] Feedback loop (errores del agente → editor)
+### Fase 4: Integración con Agente (Documentación)
+- [x] Documentar flujo de trabajo con Claude Code (ver `AEGIS_AGENT_WORKFLOW.md`)
+- [x] Crear prompt templates para diferentes escenarios
+- [x] Guía de mejores prácticas para descripciones y hints
+
+> **Nota**: Se decidió NO implementar un agente embebido. El XML exportado es el contrato
+> entre arquitecto y agente. Usar Claude Code desde terminal proporciona máximo control
+> sobre la generación y permite feedback loop natural mediante conversación.
 
 ---
 
