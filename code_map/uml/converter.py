@@ -275,13 +275,32 @@ def _analyze_typescript(
     interfaces: List[Dict[str, Any]] = []
 
     excluded_dirs = {
+        # Package managers / dependencies
         "node_modules",
-        ".next",
+        ".venv",
+        "venv",
+        "env",
+        # Build outputs
         "dist",
         "build",
+        "out",
+        ".next",
+        ".nuxt",
+        "coverage",
+        # Tests
+        "tests",
+        "test",
+        "__tests__",
+        "spec",
+        "specs",
+        # Version control / cache
         ".git",
         "__pycache__",
-        ".venv",
+        ".cache",
+        ".turbo",
+        # IDE / editor
+        ".idea",
+        ".vscode",
     }
 
     # Find all .ts and .tsx files
@@ -448,15 +467,37 @@ def _analyze_cpp(
     structs: List[Dict[str, Any]] = []
 
     excluded_dirs = {
+        # Package managers / dependencies
         "node_modules",
-        ".next",
-        "dist",
-        "build",
-        ".git",
-        "__pycache__",
         ".venv",
+        "venv",
+        "env",
         "vendor",
         "third_party",
+        "external",
+        # Build outputs
+        "dist",
+        "build",
+        "out",
+        "bin",
+        "obj",
+        ".next",
+        "cmake-build-debug",
+        "cmake-build-release",
+        "coverage",
+        # Tests
+        "tests",
+        "test",
+        "__tests__",
+        "spec",
+        "specs",
+        # Version control / cache
+        ".git",
+        "__pycache__",
+        ".cache",
+        # IDE / editor
+        ".idea",
+        ".vscode",
     }
 
     # Find all C++ files
