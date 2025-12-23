@@ -314,6 +314,15 @@ def _analyze_typescript(
             if path.name.endswith(".d.ts"):
                 continue
 
+            # Skip test files (*.test.ts, *.spec.ts, *.test.tsx, *.spec.tsx)
+            filename = path.name
+            if (
+                ".test." in filename
+                or ".spec." in filename
+                or filename.startswith("test.")
+            ):
+                continue
+
             is_tsx = path.suffix == ".tsx"
             module_name = ".".join(path.relative_to(root).with_suffix("").parts)
 
@@ -506,6 +515,17 @@ def _analyze_cpp(
         for path in root.glob(pattern):
             # Skip excluded directories
             if any(part in excluded_dirs for part in path.relative_to(root).parts):
+                continue
+
+            # Skip test files (test_*, *_test.*, *Test.*)
+            filename = path.name
+            stem = path.stem  # filename without extension
+            if (
+                filename.startswith("test_")
+                or stem.endswith("_test")
+                or stem.endswith("Test")
+                or stem.endswith("_tests")
+            ):
                 continue
 
             module_name = ".".join(path.relative_to(root).with_suffix("").parts)

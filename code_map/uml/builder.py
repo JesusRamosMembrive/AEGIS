@@ -109,6 +109,7 @@ def _analyze(
     """
     if excluded_dirs is None:
         excluded_dirs = {
+            # Version control / cache
             "__pycache__",
             ".git",
             ".hg",
@@ -117,19 +118,47 @@ def _analyze(
             ".ruff_cache",
             ".svn",
             ".tox",
+            ".cache",
+            ".code-map",
+            # Virtual environments
             ".venv",
             "venv",
             "env",
-            ".code-map",
+            # Package managers / dependencies
             "node_modules",
+            # Build outputs
             ".next",
+            ".nuxt",
             "dist",
             "build",
+            "out",
+            "coverage",
+            # Tests (not relevant for UML diagrams)
+            "tests",
+            "test",
+            "__tests__",
+            "spec",
+            "specs",
+            # IDE / editor
+            ".idea",
+            ".vscode",
         }
+
+    # Test file patterns to exclude
+    test_file_patterns = {"test_", "_test.py", "conftest.py"}
 
     for path in root.rglob("*.py"):
         # Check if any part of the path is in excluded_dirs
         if any(part in excluded_dirs for part in path.relative_to(root).parts):
+            continue
+
+        # Skip test files (test_*.py, *_test.py, conftest.py)
+        filename = path.name
+        if (
+            filename.startswith("test_")
+            or filename.endswith("_test.py")
+            or filename == "conftest.py"
+        ):
             continue
 
         try:

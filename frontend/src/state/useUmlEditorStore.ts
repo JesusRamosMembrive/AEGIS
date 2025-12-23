@@ -28,6 +28,14 @@ import { calculatePositions, findEmptyArea, getTemplateBounds } from "../utils/t
 // Storage key for localStorage persistence
 const STORAGE_KEY = "aegis-uml-editor-project";
 
+/**
+ * Clear the UML Editor localStorage data.
+ * Call this when the project root changes to avoid mixing data from different projects.
+ */
+export function clearUmlEditorStorage(): void {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
 // Helper to generate unique IDs
 const generateId = () => crypto.randomUUID();
 

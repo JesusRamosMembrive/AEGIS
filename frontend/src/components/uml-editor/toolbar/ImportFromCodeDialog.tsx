@@ -42,7 +42,7 @@ export function ImportFromCodeDialog({
   isOpen,
   onClose,
 }: ImportFromCodeDialogProps): JSX.Element | null {
-  const { project, mergeProject } = useUmlEditorStore();
+  const { project, mergeProject, setProject } = useUmlEditorStore();
   const settingsQuery = useSettingsQuery();
   const projectRoot = settingsQuery.data?.root_path ?? "";
 
@@ -59,6 +59,7 @@ export function ImportFromCodeDialog({
   // Existing options
   const [modulePrefixes, setModulePrefixes] = useState("");
   const [includeExternal, setIncludeExternal] = useState(false);
+  const [importMode, setImportMode] = useState<"replace" | "merge">("replace");
   const [status, setStatus] = useState<ImportStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -132,12 +133,18 @@ export function ImportFromCodeDialog({
 
   const handleImport = useCallback(() => {
     if (scanResult?.project) {
-      mergeProject(scanResult.project);
+      if (importMode === "replace") {
+        // Replace the entire project with the scanned one
+        setProject(scanResult.project);
+      } else {
+        // Merge with existing project
+        mergeProject(scanResult.project);
+      }
       onClose();
       setStatus("idle");
       setScanResult(null);
     }
-  }, [scanResult, mergeProject, onClose]);
+  }, [scanResult, importMode, setProject, mergeProject, onClose]);
 
   const handleClose = useCallback(() => {
     if (status !== "scanning") {
@@ -434,6 +441,75 @@ export function ImportFromCodeDialog({
                 />
                 Include external dependencies
               </label>
+            </div>
+
+            {/* Import Mode Section */}
+            <div style={{ marginBottom: "16px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: colors.text.muted,
+                  marginBottom: "10px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Import Mode
+              </label>
+              <div style={{ display: "flex", gap: "16px" }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "13px",
+                    color: colors.text.secondary,
+                    cursor: status === "scanning" ? "not-allowed" : "pointer",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="importMode"
+                    checked={importMode === "replace"}
+                    onChange={() => setImportMode("replace")}
+                    disabled={status === "scanning"}
+                    style={{ cursor: "pointer" }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500 }}>Replace</div>
+                    <div style={{ fontSize: "11px", color: colors.text.muted }}>
+                      Clear canvas and import fresh
+                    </div>
+                  </div>
+                </label>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "13px",
+                    color: colors.text.secondary,
+                    cursor: status === "scanning" ? "not-allowed" : "pointer",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="importMode"
+                    checked={importMode === "merge"}
+                    onChange={() => setImportMode("merge")}
+                    disabled={status === "scanning"}
+                    style={{ cursor: "pointer" }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500 }}>Merge</div>
+                    <div style={{ fontSize: "11px", color: colors.text.muted }}>
+                      Add to existing entities
+                    </div>
+                  </div>
+                </label>
+              </div>
             </div>
 
             {/* Status Messages */}

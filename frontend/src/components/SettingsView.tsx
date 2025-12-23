@@ -9,6 +9,7 @@ import { DEFAULT_EXCLUDED_DIRS } from "../config/defaultExcludes";
 import { useActivityStore } from "../state/useActivityStore";
 import { useSelectionStore } from "../state/useSelectionStore";
 import { useBackendStore } from "../state/useBackendStore";
+import { clearUmlEditorStorage } from "../state/useUmlEditorStore";
 import { useStatusQuery } from "../hooks/useStatusQuery";
 import { DocstringsSection } from "./settings/DocstringsSection";
 import { ExcludeDirsSection } from "./settings/ExcludeDirsSection";
@@ -78,6 +79,8 @@ export function SettingsView({ settingsQuery }: SettingsViewProps): JSX.Element 
         // Restore the settings we just received
         queryClient.setQueryData(queryKeys.settings, result.settings);
         useSelectionStore.getState().clearSelection();
+        // Clear UML Editor localStorage to avoid mixing data from different projects
+        clearUmlEditorStorage();
       } else {
         // Only specific settings changed - selective invalidation
         queryClient.invalidateQueries({ queryKey: queryKeys.tree });
