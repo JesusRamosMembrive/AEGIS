@@ -969,33 +969,77 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
         }
 
     def _find_first_decision_point(self, body: Any) -> Optional[Any]:
-        """Find the first decision point in a function body (direct children only).
+        """Find the first decision point in a function body.
 
+        Searches recursively through loops (for/while) to find decisions inside them.
         Returns the AST node of the first decision point, or None.
         """
+        # Loop types to search inside (not decision points themselves)
+        loop_types = {"for_statement", "while_statement"}
+
         for child in body.children:
+            # Direct decision point found
             if child.type in self._decision_point_types:
                 return child
+
+            # Search inside loops for nested decision points
+            if child.type in loop_types:
+                # Find the body of the loop
+                loop_body = None
+                for sub in child.children:
+                    if sub.type == "block":
+                        loop_body = sub
+                        break
+
+                if loop_body:
+                    nested = self._find_first_decision_point(loop_body)
+                    if nested:
+                        return nested
+
         return None
 
     def _extract_calls_before_decision(
         self, body: Any, decision_node: Any, source: str
     ) -> List[CallInfo]:
-        """Extract calls that occur before a decision point in the body."""
+        """Extract calls that occur before a decision point in the body.
+
+        Handles decision points nested inside loops by extracting calls from
+        the containing structure up to the decision point.
+        """
         calls: List[CallInfo] = []
         decision_line = decision_node.start_point[0]
+        loop_types = {"for_statement", "while_statement"}
 
         for child in body.children:
-            # Stop when we reach the decision point
-            if child.start_point[0] >= decision_line:
-                break
+            child_start = child.start_point[0]
+            child_end = child.end_point[0]
 
-            # Extract calls from this statement
-            for node in self._walk_tree(child):
-                if node.type == "call":
-                    call_info = self._parse_call(node, source)
-                    if call_info:
-                        calls.append(call_info)
+            # If decision is after this child entirely, extract all calls from child
+            if decision_line > child_end:
+                for node in self._walk_tree(child):
+                    if node.type == "call":
+                        call_info = self._parse_call(node, source)
+                        if call_info:
+                            calls.append(call_info)
+
+            # If decision is inside this child (nested in a loop)
+            elif child_start <= decision_line <= child_end:
+                if child.type in loop_types:
+                    # Extract calls from loop header (e.g., range() call in for)
+                    for node in self._walk_tree(child):
+                        # Stop before the block (loop body)
+                        if node.type == "block":
+                            break
+                        if node.type == "call":
+                            call_info = self._parse_call(node, source)
+                            if call_info:
+                                calls.append(call_info)
+                    # Note: calls inside the loop body before the decision
+                    # would be executed multiple times, so we don't include them
+                break
+            else:
+                # Decision is before this child, stop
+                break
 
         return calls
 

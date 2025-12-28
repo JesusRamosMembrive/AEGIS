@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
-import { getCallFlow, getCallFlowEntryPoints } from "../api/client";
+import { getCallFlow, getCallFlowEntryPoints, expandCallFlowBranch } from "../api/client";
 import { queryKeys } from "../api/queryKeys";
+import type { CallFlowBranchExpansionResponse } from "../api/types";
 
 interface EntryPointsOptions {
   filePath: string;
@@ -25,16 +26,49 @@ interface CallFlowOptions {
   maxDepth?: number;
   className?: string | null;
   includeExternal?: boolean;
+  extractionMode?: "full" | "lazy";
   enabled?: boolean;
 }
 
 export function useCallFlowQuery(options: CallFlowOptions) {
-  const { filePath, functionName, maxDepth = 5, className, includeExternal = false, enabled = true } = options;
+  const { filePath, functionName, maxDepth = 5, className, includeExternal = false, extractionMode = "lazy", enabled = true } = options;
 
   return useQuery({
-    queryKey: [...queryKeys.callFlow(filePath, functionName, maxDepth), includeExternal],
-    queryFn: () => getCallFlow(filePath, functionName, maxDepth, className, includeExternal),
+    queryKey: [...queryKeys.callFlow(filePath, functionName, maxDepth), includeExternal, extractionMode],
+    queryFn: () => getCallFlow(filePath, functionName, maxDepth, className, includeExternal, extractionMode),
     enabled: enabled && !!filePath.trim() && !!functionName.trim(),
     staleTime: 60_000,
+  });
+}
+
+interface ExpandBranchOptions {
+  filePath: string;
+  functionName: string;
+  maxDepth?: number;
+  onSuccess?: (data: CallFlowBranchExpansionResponse) => void;
+  onError?: (error: Error) => void;
+}
+
+/**
+ * Mutation hook for expanding a branch in lazy extraction mode.
+ *
+ * Usage:
+ *   const expandMutation = useExpandBranchMutation({
+ *     filePath: "/path/to/file.py",
+ *     functionName: "main",
+ *     onSuccess: (data) => { // merge new nodes/edges into state }
+ *   });
+ *
+ *   // Then call:
+ *   expandMutation.mutate(branchId);
+ */
+export function useExpandBranchMutation(options: ExpandBranchOptions) {
+  const { filePath, functionName, maxDepth = 5, onSuccess, onError } = options;
+
+  return useMutation({
+    mutationFn: (branchId: string) =>
+      expandCallFlowBranch(filePath, branchId, functionName, maxDepth),
+    onSuccess,
+    onError,
   });
 }

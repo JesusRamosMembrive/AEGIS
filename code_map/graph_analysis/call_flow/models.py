@@ -581,7 +581,8 @@ class CallGraph:
                 }
             )
 
-        for i, edge in enumerate(self.iter_edges()):
+        edge_index = 0
+        for edge in self.iter_edges():
             edge_data: Dict[str, Any] = {
                 "callSiteLine": edge.call_site_line,
                 "callType": edge.call_type,
@@ -596,7 +597,7 @@ class CallGraph:
 
             react_edges.append(
                 {
-                    "id": f"e{i}",
+                    "id": f"e{edge_index}",
                     "source": edge.source_id,
                     "target": edge.target_id,
                     "type": "smoothstep",
@@ -604,6 +605,27 @@ class CallGraph:
                     "data": edge_data,
                 }
             )
+            edge_index += 1
+
+        # Create edges from parent call nodes to decision nodes
+        for decision_node in self.iter_decision_nodes():
+            if decision_node.parent_call_id:
+                react_edges.append(
+                    {
+                        "id": f"e{edge_index}",
+                        "source": decision_node.parent_call_id,
+                        "target": decision_node.id,
+                        "type": "smoothstep",
+                        "animated": False,
+                        "style": {"strokeDasharray": "5,5"},  # Dashed line for decision edges
+                        "data": {
+                            "callSiteLine": decision_node.line,
+                            "callType": "decision",
+                            "decisionType": decision_node.decision_type.value,
+                        },
+                    }
+                )
+                edge_index += 1
 
         result = {
             "nodes": react_nodes,

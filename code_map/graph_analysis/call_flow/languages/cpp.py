@@ -972,6 +972,7 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
 
         Checks direct children for if/switch/try statements, and also
         searches within declarations for ternary expressions.
+        Searches recursively inside loops (for/while) for nested decisions.
 
         Args:
             body: compound_statement node (function body)
@@ -979,6 +980,9 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
         Returns:
             First decision point AST node, or None if not found
         """
+        # Loop types to search inside (not decision points themselves)
+        loop_types = {"for_statement", "while_statement", "for_range_loop"}
+
         for child in body.children:
             # Check if child is directly a decision point
             if child.type in self._decision_point_types:
@@ -990,6 +994,20 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
                     if node.type == "conditional_expression":
                         return node
 
+            # Search inside loops for nested decision points
+            if child.type in loop_types:
+                # Find the body of the loop (compound_statement)
+                loop_body = None
+                for sub in child.children:
+                    if sub.type == "compound_statement":
+                        loop_body = sub
+                        break
+
+                if loop_body:
+                    nested = self._find_first_decision_point(loop_body)
+                    if nested:
+                        return nested
+
         return None
 
     def _extract_calls_before_decision(
@@ -997,6 +1015,9 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
     ) -> List[CppCallInfo]:
         """
         Extract calls that occur before a decision point in the body.
+
+        Handles decision points nested inside loops by extracting calls from
+        the containing structure up to the decision point.
 
         Args:
             body: compound_statement node (function body)
@@ -1008,18 +1029,38 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
         """
         calls: List[CppCallInfo] = []
         decision_line = decision_node.start_point[0]
+        loop_types = {"for_statement", "while_statement", "for_range_loop"}
 
         for child in body.children:
-            # Stop when we reach the decision point
-            if child.start_point[0] >= decision_line:
-                break
+            child_start = child.start_point[0]
+            child_end = child.end_point[0]
 
-            # Extract calls from this statement
-            for node in self._walk_tree(child):
-                if node.type == "call_expression":
-                    call_info = self._parse_call(node, source)
-                    if call_info:
-                        calls.append(call_info)
+            # If decision is after this child entirely, extract all calls from child
+            if decision_line > child_end:
+                for node in self._walk_tree(child):
+                    if node.type == "call_expression":
+                        call_info = self._parse_call(node, source)
+                        if call_info:
+                            calls.append(call_info)
+
+            # If decision is inside this child (nested in a loop)
+            elif child_start <= decision_line <= child_end:
+                if child.type in loop_types:
+                    # Extract calls from loop header/initialization
+                    for node in self._walk_tree(child):
+                        # Stop before the compound_statement (loop body)
+                        if node.type == "compound_statement":
+                            break
+                        if node.type == "call_expression":
+                            call_info = self._parse_call(node, source)
+                            if call_info:
+                                calls.append(call_info)
+                    # Note: calls inside the loop body before the decision
+                    # would be executed multiple times, so we don't include them
+                break
+            else:
+                # Decision is before this child, stop
+                break
 
         return calls
 

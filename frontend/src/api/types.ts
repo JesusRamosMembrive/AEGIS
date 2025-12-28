@@ -669,12 +669,53 @@ export interface CallFlowMetadata {
   edge_count: number;
   external_calls: string[];
   external_calls_count: number;
+  decision_node_count?: number;
+}
+
+// Decision point support for lazy/interactive extraction
+export interface CallFlowBranchInfo {
+  branch_id: string;
+  label: string;
+  condition_text: string;
+  is_expanded: boolean;
+  call_count: number;
+  start_line: number;
+  end_line: number;
+}
+
+export interface CallFlowDecisionNode {
+  id: string;
+  type: "decisionNode";
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    decisionType: "if_else" | "match_case" | "try_except" | "ternary" | "switch_case" | "try_catch";
+    conditionText: string;
+    filePath: string;
+    line: number;
+    column: number;
+    parentCallId: string;
+    depth: number;
+    branches: CallFlowBranchInfo[];
+  };
 }
 
 export interface CallFlowResponse {
   nodes: CallFlowNode[];
   edges: CallFlowEdge[];
   metadata: CallFlowMetadata;
+  decision_nodes?: CallFlowDecisionNode[];
+  unexpanded_branches?: string[];
+  extraction_mode?: "full" | "lazy";
+}
+
+// Branch expansion response for lazy extraction mode
+export interface CallFlowBranchExpansionResponse {
+  new_nodes: CallFlowNode[];
+  new_edges: CallFlowEdge[];
+  new_decision_nodes: CallFlowDecisionNode[];
+  new_unexpanded_branches: string[];
+  expanded_branch_id: string;
 }
 
 // =============================================================================

@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 
-import { useCallFlowEntryPointsQuery, useCallFlowQuery } from "../hooks/useCallFlowQuery";
+import { useCallFlowEntryPointsQuery, useCallFlowQuery, useExpandBranchMutation } from "../hooks/useCallFlowQuery";
 import { useSettingsQuery } from "../hooks/useSettingsQuery";
 import { CallFlowGraph } from "./call-flow/CallFlowGraph";
 import { FileBrowserModal } from "./settings/FileBrowserModal";
 import { getCallFlowSource } from "../api/client";
-import type { CallFlowEntryPoint } from "../api/types";
+import type { CallFlowEntryPoint, CallFlowNode, CallFlowEdge, CallFlowDecisionNode } from "../api/types";
 import { DESIGN_TOKENS } from "../theme/designTokens";
 
 const { colors, borders } = DESIGN_TOKENS;
@@ -35,6 +35,12 @@ export function CallFlowView(): JSX.Element {
   const [nodeSourceCode, setNodeSourceCode] = useState<string | null>(null);
   const [sourceCodeLoading, setSourceCodeLoading] = useState(false);
 
+  // State for incrementally expanded branches (merged with initial query data)
+  const [expandedNodes, setExpandedNodes] = useState<CallFlowNode[]>([]);
+  const [expandedEdges, setExpandedEdges] = useState<CallFlowEdge[]>([]);
+  const [expandedDecisionNodes, setExpandedDecisionNodes] = useState<CallFlowDecisionNode[]>([]);
+  const [expandedBranchIds, setExpandedBranchIds] = useState<Set<string>>(new Set());
+
   // Query entry points when file is selected
   const entryPointsQuery = useCallFlowEntryPointsQuery({
     filePath,
@@ -50,6 +56,52 @@ export function CallFlowView(): JSX.Element {
     includeExternal,
     enabled: !!filePath && !!selectedFunction,
   });
+
+  // Mutation for expanding branches
+  const expandBranchMutation = useExpandBranchMutation({
+    filePath,
+    functionName: selectedFunction?.name || "",
+    maxDepth,
+    onSuccess: (data) => {
+      // Merge new nodes (avoiding duplicates by id)
+      setExpandedNodes((prev) => {
+        const existingIds = new Set(prev.map((n) => n.id));
+        const newNodes = data.new_nodes.filter((n) => !existingIds.has(n.id));
+        return [...prev, ...newNodes];
+      });
+
+      // Merge new edges (avoiding duplicates by id)
+      setExpandedEdges((prev) => {
+        const existingIds = new Set(prev.map((e) => e.id));
+        const newEdges = data.new_edges.filter((e) => !existingIds.has(e.id));
+        return [...prev, ...newEdges];
+      });
+
+      // Merge new decision nodes (avoiding duplicates by id)
+      setExpandedDecisionNodes((prev) => {
+        const existingIds = new Set(prev.map((d) => d.id));
+        const newDecisions = data.new_decision_nodes.filter((d) => !existingIds.has(d.id));
+        return [...prev, ...newDecisions];
+      });
+
+      // Mark branch as expanded
+      setExpandedBranchIds((prev) => new Set([...prev, data.expanded_branch_id]));
+    },
+    onError: (error) => {
+      console.error("Failed to expand branch:", error);
+    },
+  });
+
+  // Handler for branch expansion from decision nodes
+  const handleBranchExpand = useCallback(
+    (branchId: string) => {
+      if (expandedBranchIds.has(branchId) || expandBranchMutation.isPending) {
+        return; // Already expanded or loading
+      }
+      expandBranchMutation.mutate(branchId);
+    },
+    [expandedBranchIds, expandBranchMutation]
+  );
 
   const handleFileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,10 +122,46 @@ export function CallFlowView(): JSX.Element {
     setSelectedFunction(ep);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
+    // Reset expansion state when selecting a new function
+    setExpandedNodes([]);
+    setExpandedEdges([]);
+    setExpandedDecisionNodes([]);
+    setExpandedBranchIds(new Set());
   };
 
-  const nodes = useMemo(() => callFlowQuery.data?.nodes || [], [callFlowQuery.data?.nodes]);
-  const edges = useMemo(() => callFlowQuery.data?.edges || [], [callFlowQuery.data?.edges]);
+  // Combine initial query data with expanded data
+  const nodes = useMemo(() => {
+    const initial = callFlowQuery.data?.nodes || [];
+    const initialIds = new Set(initial.map((n) => n.id));
+    const uniqueExpanded = expandedNodes.filter((n) => !initialIds.has(n.id));
+    return [...initial, ...uniqueExpanded];
+  }, [callFlowQuery.data?.nodes, expandedNodes]);
+
+  const edges = useMemo(() => {
+    const initial = callFlowQuery.data?.edges || [];
+    const initialIds = new Set(initial.map((e) => e.id));
+    const uniqueExpanded = expandedEdges.filter((e) => !initialIds.has(e.id));
+    return [...initial, ...uniqueExpanded];
+  }, [callFlowQuery.data?.edges, expandedEdges]);
+
+  const decisionNodes = useMemo(() => {
+    const initial = callFlowQuery.data?.decision_nodes || [];
+    const initialIds = new Set(initial.map((d) => d.id));
+    const uniqueExpanded = expandedDecisionNodes.filter((d) => !initialIds.has(d.id));
+    // Mark branches as expanded in the decision nodes data
+    const allDecisions = [...initial, ...uniqueExpanded];
+    return allDecisions.map((dn) => ({
+      ...dn,
+      data: {
+        ...dn.data,
+        branches: dn.data.branches.map((branch) => ({
+          ...branch,
+          is_expanded: expandedBranchIds.has(branch.branch_id) || branch.is_expanded,
+        })),
+      },
+    }));
+  }, [callFlowQuery.data?.decision_nodes, expandedDecisionNodes, expandedBranchIds]);
+
   const metadata = callFlowQuery.data?.metadata;
 
   const entryPoints = entryPointsQuery.data?.entry_points || [];
@@ -670,8 +758,10 @@ export function CallFlowView(): JSX.Element {
               <CallFlowGraph
                 nodes={nodes}
                 edges={edges}
+                decisionNodes={decisionNodes}
                 onNodeSelect={setSelectedNodeId}
                 onEdgeSelect={setSelectedEdgeId}
+                onBranchExpand={handleBranchExpand}
               />
             </div>
           )}

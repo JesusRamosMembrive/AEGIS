@@ -19,30 +19,36 @@ import { DESIGN_TOKENS } from "../../theme/designTokens";
 
 const { colors, borders } = DESIGN_TOKENS;
 
-interface DecisionNodeData {
+// Decision node from API (already in React Flow format)
+interface DecisionNodeFromAPI {
   id: string;
-  decision_type: string;
-  condition_text: string;
-  file_path?: string | null;
-  line: number;
-  column: number;
-  parent_call_id: string;
-  branches: Array<{
-    branch_id: string;
+  type: "decisionNode";
+  position: { x: number; y: number };
+  data: {
     label: string;
-    condition_text: string;
-    is_expanded: boolean;
-    call_count: number;
-    start_line: number;
-    end_line: number;
-  }>;
-  depth: number;
+    decisionType: string;
+    conditionText: string;
+    filePath: string;
+    line: number;
+    column: number;
+    parentCallId: string;
+    depth: number;
+    branches: Array<{
+      branch_id: string;
+      label: string;
+      condition_text: string;
+      is_expanded: boolean;
+      call_count: number;
+      start_line: number;
+      end_line: number;
+    }>;
+  };
 }
 
 interface CallFlowGraphProps {
   nodes: Node[];
   edges: Edge[];
-  decisionNodes?: DecisionNodeData[];
+  decisionNodes?: DecisionNodeFromAPI[];
   onNodeSelect?: (nodeId: string | null) => void;
   onEdgeSelect?: (edgeId: string | null) => void;
   onBranchExpand?: (branchId: string) => void;
@@ -76,23 +82,14 @@ export function CallFlowGraph({
     [nodes]
   );
 
-  // Map decision nodes to React Flow format
+  // Map decision nodes - they come from API already in React Flow format
+  // Just need to add the onBranchExpand callback to their data
   const mappedDecisionNodes = useMemo(
     () =>
-      decisionNodes.map((dn, index) => ({
-        id: dn.id,
-        type: "decisionNode",
-        position: { x: 0, y: 0 }, // Will be laid out by React Flow
+      decisionNodes.map((dn) => ({
+        ...dn,
         data: {
-          id: dn.id,
-          decisionType: dn.decision_type,
-          conditionText: dn.condition_text,
-          filePath: dn.file_path,
-          line: dn.line,
-          column: dn.column,
-          parentCallId: dn.parent_call_id,
-          branches: dn.branches,
-          depth: dn.depth,
+          ...dn.data,
           onBranchExpand: onBranchExpand,
         },
       })),

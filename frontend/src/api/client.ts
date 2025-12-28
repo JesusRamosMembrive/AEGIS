@@ -42,6 +42,7 @@ import type {
   SymbolSearchResult,
   CallFlowEntryPointsResponse,
   CallFlowResponse,
+  CallFlowBranchExpansionResponse,
 } from "./types";
 import type {
   SimilarityReport,
@@ -1027,11 +1028,13 @@ export function getCallFlow(
   functionName: string,
   maxDepth = 5,
   className?: string | null,
-  includeExternal = false
+  includeExternal = false,
+  extractionMode: "full" | "lazy" = "lazy"
 ): Promise<CallFlowResponse> {
   const params = new URLSearchParams({
     function: functionName,
     max_depth: String(maxDepth),
+    extraction_mode: extractionMode,
   });
   if (className) {
     params.set("class_name", className);
@@ -1082,4 +1085,38 @@ export async function getCallFlowSource(
     throw new Error(`Source code request failed (${response.status}): ${detail || "Unknown error"}`);
   }
   return response.text();
+}
+
+/**
+ * Expand a specific branch in lazy extraction mode.
+ *
+ * Args:
+ *     filePath: Absolute path to Python file
+ *     branchId: ID of the branch to expand (from unexpanded_branches or decision node branches)
+ *     functionName: Entry point function name (same as initial extraction)
+ *     maxDepth: Maximum call depth to follow (default 5)
+ *
+ * Returns:
+ *     Promise with new nodes, edges, decision nodes discovered in the expanded branch
+ *
+ * Notes:
+ *     - Endpoint: POST /api/call-flow/{filePath}/expand-branch
+ *     - Currently only supported for Python files
+ *     - The response contains only the NEW elements to add to the existing graph
+ */
+export function expandCallFlowBranch(
+  filePath: string,
+  branchId: string,
+  functionName: string,
+  maxDepth = 5
+): Promise<CallFlowBranchExpansionResponse> {
+  const params = new URLSearchParams({
+    branch_id: branchId,
+    function: functionName,
+    max_depth: String(maxDepth),
+  });
+  return fetchJson<CallFlowBranchExpansionResponse>(
+    `/call-flow/${encodeURIComponent(filePath)}/expand-branch?${params.toString()}`,
+    { method: "POST" }
+  );
 }
