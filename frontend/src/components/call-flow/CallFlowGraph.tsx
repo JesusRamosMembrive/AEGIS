@@ -20,6 +20,7 @@ import { CallFlowNode } from "./CallFlowNode";
 import { CallFlowEdge } from "./CallFlowEdge";
 import { DecisionFlowNode } from "./DecisionFlowNode";
 import { BranchFlowEdge } from "./BranchFlowEdge";
+import { ReturnFlowNode } from "./ReturnFlowNode";
 import { DESIGN_TOKENS } from "../../theme/designTokens";
 import { useElkLayout, type LayoutDirection } from "../../hooks/useElkLayout";
 
@@ -51,10 +52,29 @@ interface DecisionNodeFromAPI {
   };
 }
 
+// Return node from API (already in React Flow format)
+interface ReturnNodeFromAPI {
+  id: string;
+  type: "returnNode";
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    returnValue: string;
+    filePath: string | null;
+    line: number;
+    column: number;
+    parentCallId: string;
+    branchId?: string;
+    decisionId?: string;
+    depth: number;
+  };
+}
+
 interface CallFlowGraphProps {
   nodes: Node[];
   edges: Edge[];
   decisionNodes?: DecisionNodeFromAPI[];
+  returnNodes?: ReturnNodeFromAPI[];
   onNodeSelect?: (nodeId: string | null) => void;
   onEdgeSelect?: (edgeId: string | null) => void;
   onBranchExpand?: (branchId: string) => void;
@@ -63,6 +83,7 @@ interface CallFlowGraphProps {
 const nodeTypes: NodeTypes = {
   callFlowNode: CallFlowNode,
   decisionNode: DecisionFlowNode,
+  returnNode: ReturnFlowNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -75,6 +96,7 @@ function CallFlowGraphInner({
   nodes,
   edges,
   decisionNodes = [],
+  returnNodes = [],
   onNodeSelect,
   onEdgeSelect,
   onBranchExpand,
@@ -121,10 +143,20 @@ function CallFlowGraphInner({
     [decisionNodes, stableOnBranchExpand]
   );
 
+  // Map return nodes - they come from API already in React Flow format
+  const mappedReturnNodes = useMemo(
+    () =>
+      returnNodes.map((rn) => ({
+        ...rn,
+        draggable: true,
+      })),
+    [returnNodes]
+  );
+
   // Combine all nodes from props
   const propsNodes = useMemo(
-    () => [...mappedCallNodes, ...mappedDecisionNodes],
-    [mappedCallNodes, mappedDecisionNodes]
+    () => [...mappedCallNodes, ...mappedDecisionNodes, ...mappedReturnNodes],
+    [mappedCallNodes, mappedDecisionNodes, mappedReturnNodes]
   );
 
   // Map edges - detect branch edges by checking if target is a decision node

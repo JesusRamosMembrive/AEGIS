@@ -163,6 +163,59 @@ class DecisionNode:
 
 
 @dataclass
+class ReturnNode:
+    """
+    Represents a return statement in the call graph.
+
+    Return nodes show where execution exits a branch, making it clear
+    to users why clicking a branch button didn't expand into more calls
+    (because it just returns a value).
+    """
+
+    id: str  # Unique ID: "return:{file}:{line}"
+    return_value: str  # The return expression (e.g., "True", "result + 1", "None")
+    file_path: Optional[Path] = None  # Source file
+    line: int = 0  # Line number
+    column: int = 0  # Column number
+    parent_call_id: str = ""  # ID of the CallNode containing this return
+    branch_id: Optional[str] = None  # Which branch this return is in
+    decision_id: Optional[str] = None  # Parent decision node
+    depth: int = 0  # Depth in call graph
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        result = {
+            "id": self.id,
+            "return_value": self.return_value,
+            "file_path": str(self.file_path) if self.file_path else None,
+            "line": self.line,
+            "column": self.column,
+            "parent_call_id": self.parent_call_id,
+            "depth": self.depth,
+        }
+        if self.branch_id is not None:
+            result["branch_id"] = self.branch_id
+        if self.decision_id is not None:
+            result["decision_id"] = self.decision_id
+        return result
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ReturnNode":
+        """Create from dictionary."""
+        return cls(
+            id=data["id"],
+            return_value=data["return_value"],
+            file_path=Path(data["file_path"]) if data.get("file_path") else None,
+            line=data.get("line", 0),
+            column=data.get("column", 0),
+            parent_call_id=data.get("parent_call_id", ""),
+            branch_id=data.get("branch_id"),
+            decision_id=data.get("decision_id"),
+            depth=data.get("depth", 0),
+        )
+
+
+@dataclass
 class IgnoredCall:
     """
     Represents a call that was intentionally not expanded.
@@ -367,6 +420,7 @@ class CallGraph:
         decision_nodes: Dictionary of decision_id -> DecisionNode (for lazy extraction)
         unexpanded_branches: List of branch IDs not yet explored
         extraction_mode: Mode used for extraction ("full" or "lazy")
+        return_nodes: Dictionary of return_id -> ReturnNode (for showing return statements)
     """
 
     entry_point: str
@@ -384,6 +438,8 @@ class CallGraph:
     decision_nodes: Dict[str, DecisionNode] = field(default_factory=dict)
     unexpanded_branches: List[str] = field(default_factory=list)
     extraction_mode: str = "full"  # "full" | "lazy"
+    # Return statement tracking
+    return_nodes: Dict[str, ReturnNode] = field(default_factory=dict)
 
     def add_node(self, node: CallNode) -> None:
         """Add a node to the graph."""
@@ -456,6 +512,22 @@ class CallGraph:
                     return branch
         return None
 
+    def add_return_node(self, node: ReturnNode) -> None:
+        """Add a return node to the graph."""
+        self.return_nodes[node.id] = node
+
+    def get_return_node(self, node_id: str) -> Optional[ReturnNode]:
+        """Get a return node by ID."""
+        return self.return_nodes.get(node_id)
+
+    def iter_return_nodes(self) -> Iterator[ReturnNode]:
+        """Iterate over all return nodes."""
+        yield from self.return_nodes.values()
+
+    def return_node_count(self) -> int:
+        """Get number of return nodes."""
+        return len(self.return_nodes)
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         result = {
@@ -476,6 +548,11 @@ class CallGraph:
                 did: d.to_dict() for did, d in self.decision_nodes.items()
             }
             result["unexpanded_branches"] = self.unexpanded_branches
+        # Only include return nodes if there are any
+        if self.return_nodes:
+            result["return_nodes"] = {
+                rid: r.to_dict() for rid, r in self.return_nodes.items()
+            }
         return result
 
     @classmethod
@@ -500,6 +577,9 @@ class CallGraph:
         for did, ddata in data.get("decision_nodes", {}).items():
             graph.decision_nodes[did] = DecisionNode.from_dict(ddata)
         graph.unexpanded_branches = list(data.get("unexpanded_branches", []))
+        # Load return nodes if present
+        for rid, rdata in data.get("return_nodes", {}).items():
+            graph.return_nodes[rid] = ReturnNode.from_dict(rdata)
         return graph
 
     def to_react_flow(self) -> Dict[str, Any]:
@@ -581,6 +661,39 @@ class CallGraph:
                 }
             )
 
+        # Add return nodes to React Flow format
+        react_return_nodes = []
+        for return_node in self.iter_return_nodes():
+            depth = return_node.depth
+            y_index = depth_counts.get(depth, 0)
+            depth_counts[depth] = y_index + 1
+
+            react_return_nodes.append(
+                {
+                    "id": return_node.id,
+                    "type": "returnNode",
+                    "position": {
+                        "x": depth * 350 + 175,
+                        "y": y_index * 140,
+                    },
+                    "data": {
+                        "label": "return",
+                        "returnValue": return_node.return_value,
+                        "filePath": (
+                            str(return_node.file_path)
+                            if return_node.file_path
+                            else None
+                        ),
+                        "line": return_node.line,
+                        "column": return_node.column,
+                        "parentCallId": return_node.parent_call_id,
+                        "branchId": return_node.branch_id,
+                        "decisionId": return_node.decision_id,
+                        "depth": return_node.depth,
+                    },
+                }
+            )
+
         # Track which targets already have edges from decision nodes
         # to avoid duplicates (key: decision_id:target_id)
         decision_to_target_edges: set[str] = set()
@@ -656,6 +769,26 @@ class CallGraph:
                     }
                 )
 
+        # Create edges from decision nodes to return nodes
+        for return_node in self.iter_return_nodes():
+            if return_node.decision_id:
+                return_edge_id = f"er:{return_node.decision_id}->{return_node.id}"
+                react_edges.append(
+                    {
+                        "id": return_edge_id,
+                        "source": return_node.decision_id,
+                        "target": return_node.id,
+                        "type": "smoothstep",
+                        "animated": False,
+                        "data": {
+                            "callSiteLine": return_node.line,
+                            "callType": "return",
+                            "branchId": return_node.branch_id,
+                            "decisionId": return_node.decision_id,
+                        },
+                    }
+                )
+
         result = {
             "nodes": react_nodes,
             "edges": react_edges,
@@ -670,6 +803,7 @@ class CallGraph:
                 "unresolved_calls_count": len(self.unresolved_calls),
                 "diagnostics": self.diagnostics,
                 "extraction_mode": self.extraction_mode,
+                "return_node_count": self.return_node_count(),
             },
         }
 
@@ -677,5 +811,9 @@ class CallGraph:
         if self.decision_nodes:
             result["decision_nodes"] = react_decision_nodes
             result["unexpanded_branches"] = self.unexpanded_branches
+
+        # Include return nodes if present
+        if self.return_nodes:
+            result["return_nodes"] = react_return_nodes
 
         return result

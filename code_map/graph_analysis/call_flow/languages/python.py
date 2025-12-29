@@ -32,6 +32,7 @@ from ..models import (
     ExtractionMode,
     IgnoredCall,
     ResolutionStatus,
+    ReturnNode,
 )
 from ..type_resolver import TypeResolver, ScopeInfo
 
@@ -1106,6 +1107,54 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
             branch_id=branch.branch_id,
             decision_id=decision_node.id,
         )
+
+        # Extract return statements from the branch
+        # This is especially important for branches that only have returns
+        returns = self._extract_returns_from_body(branch_block, source)
+        for ret_info in returns:
+            return_node = ReturnNode(
+                id=f"return:{file_path}:{ret_info['line']}",
+                return_value=ret_info["value"],
+                file_path=file_path,
+                line=ret_info["line"],
+                column=ret_info["column"],
+                parent_call_id=graph.entry_point,
+                branch_id=branch.branch_id,
+                decision_id=decision_node.id,
+                depth=depth + 1,
+            )
+            graph.add_return_node(return_node)
+
+    def _extract_returns_from_body(
+        self, body: Any, source: str
+    ) -> List[Dict[str, Any]]:
+        """Extract return statements from a code block.
+
+        Returns a list of dicts with 'line', 'column', and 'value' keys.
+        """
+        returns = []
+        if body is None:
+            return returns
+
+        for child in body.children:
+            if child.type == "return_statement":
+                line = child.start_point[0] + 1
+                column = child.start_point[1]
+
+                # Extract the return value
+                value = "None"  # Default for bare return
+                for sub in child.children:
+                    if sub.type not in ("return",):  # Skip the 'return' keyword
+                        value = source[sub.start_byte : sub.end_byte]
+                        break
+
+                returns.append({
+                    "line": line,
+                    "column": column,
+                    "value": value,
+                })
+
+        return returns
 
     def _find_branch_block(self, decision_ast: Any, branch: BranchInfo) -> Optional[Any]:
         """Find the AST block node for a specific branch.

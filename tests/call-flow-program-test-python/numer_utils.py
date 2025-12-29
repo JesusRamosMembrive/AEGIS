@@ -123,6 +123,55 @@ def _fallback_strategy(bucket: str, number: int) -> Handler:
     return _handle_odd
 
 
+def evaluate_chunk_for_side_effects(chunk: List[int], tracker: BucketMap) -> None:
+    """Iterate with a while loop to add more control flow variety."""
+    position = 0
+    while position < len(chunk):
+        candidate = chunk[position]
+        _maybe_trigger_followup(candidate, tracker)
+        position += 1
+
+
+def _maybe_trigger_followup(number: int, tracker: BucketMap) -> None:
+    if number == 0:
+        _invoke_followup_chain("zero", number, tracker)
+    elif number % 5 == 0:
+        _invoke_followup_chain("noise", number, tracker)
+    else:
+        _invoke_nested_alternative(number, tracker)
+
+
+def _invoke_followup_chain(kind: str, number: int, tracker: BucketMap) -> None:
+    _log_followup(kind, number)
+    if kind == "zero":
+        _handle_zero(number, tracker)
+    elif kind == "noise":
+        _store("noise", -number, tracker)
+    else:
+        _store(kind, number, tracker)
+
+
+def _log_followup(kind: str, number: int) -> None:
+    print(f"Follow-up for {number} classified as {kind}")
+
+
+def _invoke_nested_alternative(number: int, tracker: BucketMap) -> None:
+    if is_negative(number):
+        if is_even(number):
+            _handle_even(number, tracker)
+        else:
+            _handle_negative(number, tracker)
+    else:
+        if number % 3 == 0:
+            _handle_odd(number, tracker)
+        else:
+            _handle_even(number + 1, tracker)
+    if number % 7 == 0:
+        _store("noise", number, tracker)
+    elif number > 10:
+        _store("odd", number, tracker)
+
+
 def dispatch(handler: Handler, number: int, tracker: BucketMap) -> None:
     _log_dispatch(handler, number)
     handler(number, tracker)
@@ -157,6 +206,32 @@ def finalize_tracker(tracker: BucketMap) -> BucketMap:
         tracker[bucket] = _apply_bucket_postprocessing(bucket, values)
     _summarize_tracker(tracker)
     return tracker
+
+
+def enforce_balance(tracker: BucketMap) -> None:
+    """Run a compact while loop that shuffles entries based on simple heuristics."""
+    iteration = 0
+    while iteration < 2:
+        for bucket in ("even", "odd"):
+            _rebalance_bucket(bucket, tracker, iteration)
+        iteration += 1
+
+
+def _rebalance_bucket(bucket: str, tracker: BucketMap, iteration: int) -> None:
+    values = tracker.get(bucket, [])
+    if not values:
+        return
+    pivot = values[iteration % len(values)]
+    if bucket == "even":
+        if iteration == 0:
+            _store("even", pivot, tracker)
+        else:
+            _store("noise", pivot, tracker)
+    else:
+        if pivot % 3 == 0:
+            _store("odd", pivot, tracker)
+        else:
+            _store("noise", -pivot, tracker)
 
 
 def _apply_bucket_postprocessing(bucket: str, values: List[int]) -> List[int]:
@@ -207,6 +282,8 @@ def classify_numbers(numbers: Iterable[int]) -> BucketMap:
             bucket = describe_number(number)
             handler = resolve_strategy(bucket, number)
             dispatch(handler, number, tracker)
+        evaluate_chunk_for_side_effects(chunk, tracker)
+    enforce_balance(tracker)
     return finalize_tracker(tracker)
 
 

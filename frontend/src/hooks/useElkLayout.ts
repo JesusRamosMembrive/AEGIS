@@ -33,6 +33,8 @@ const DEFAULT_NODE_WIDTH = 180;
 const DEFAULT_NODE_HEIGHT = 60;
 const DECISION_NODE_WIDTH = 200;
 const DECISION_NODE_HEIGHT = 120;
+const RETURN_NODE_WIDTH = 140;
+const RETURN_NODE_HEIGHT = 80;
 
 interface LayoutResult {
   nodes: Node[];
@@ -74,8 +76,19 @@ export function useElkLayout() {
           children: nodes.map((node) => {
             // Determine node dimensions based on type
             const isDecision = node.type === "decisionNode";
-            const width = node.width || (isDecision ? DECISION_NODE_WIDTH : DEFAULT_NODE_WIDTH);
-            const height = node.height || (isDecision ? DECISION_NODE_HEIGHT : DEFAULT_NODE_HEIGHT);
+            const isReturn = node.type === "returnNode";
+            let width = DEFAULT_NODE_WIDTH;
+            let height = DEFAULT_NODE_HEIGHT;
+            if (isDecision) {
+              width = DECISION_NODE_WIDTH;
+              height = DECISION_NODE_HEIGHT;
+            } else if (isReturn) {
+              width = RETURN_NODE_WIDTH;
+              height = RETURN_NODE_HEIGHT;
+            }
+            // Allow explicit node dimensions to override defaults
+            width = node.width || width;
+            height = node.height || height;
 
             return {
               id: node.id,

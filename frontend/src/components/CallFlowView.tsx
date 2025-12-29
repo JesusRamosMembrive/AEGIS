@@ -5,7 +5,7 @@ import { useSettingsQuery } from "../hooks/useSettingsQuery";
 import { CallFlowGraph } from "./call-flow/CallFlowGraph";
 import { FileBrowserModal } from "./settings/FileBrowserModal";
 import { getCallFlowSource } from "../api/client";
-import type { CallFlowEntryPoint, CallFlowNode, CallFlowEdge, CallFlowDecisionNode } from "../api/types";
+import type { CallFlowEntryPoint, CallFlowNode, CallFlowEdge, CallFlowDecisionNode, CallFlowReturnNode } from "../api/types";
 import { DESIGN_TOKENS } from "../theme/designTokens";
 
 const { colors, borders } = DESIGN_TOKENS;
@@ -39,15 +39,17 @@ export function CallFlowView(): JSX.Element {
   const [expandedNodes, setExpandedNodes] = useState<CallFlowNode[]>([]);
   const [expandedEdges, setExpandedEdges] = useState<CallFlowEdge[]>([]);
   const [expandedDecisionNodes, setExpandedDecisionNodes] = useState<CallFlowDecisionNode[]>([]);
+  const [expandedReturnNodes, setExpandedReturnNodes] = useState<CallFlowReturnNode[]>([]);
   // Track which branches have been loaded (fetched from API)
   const [loadedBranchIds, setLoadedBranchIds] = useState<Set<string>>(new Set());
   // Track which branches are currently visible (can toggle on/off)
   const [visibleBranchIds, setVisibleBranchIds] = useState<Set<string>>(new Set());
-  // Cache: maps branchId -> { nodes, edges, decisionNodes } for toggle functionality
+  // Cache: maps branchId -> { nodes, edges, decisionNodes, returnNodes } for toggle functionality
   const [branchDataCache, setBranchDataCache] = useState<Map<string, {
     nodes: CallFlowNode[];
     edges: CallFlowEdge[];
     decisionNodes: CallFlowDecisionNode[];
+    returnNodes: CallFlowReturnNode[];
   }>>(new Map());
 
   // Query entry points when file is selected
@@ -81,6 +83,7 @@ export function CallFlowView(): JSX.Element {
           nodes: data.new_nodes,
           edges: data.new_edges,
           decisionNodes: data.new_decision_nodes,
+          returnNodes: data.new_return_nodes || [],
         });
         return newCache;
       });
@@ -104,6 +107,13 @@ export function CallFlowView(): JSX.Element {
         const existingIds = new Set(prev.map((d) => d.id));
         const newDecisions = data.new_decision_nodes.filter((d) => !existingIds.has(d.id));
         return [...prev, ...newDecisions];
+      });
+
+      // Merge new return nodes (avoiding duplicates by id)
+      setExpandedReturnNodes((prev) => {
+        const existingIds = new Set(prev.map((r) => r.id));
+        const newReturns = (data.new_return_nodes || []).filter((r) => !existingIds.has(r.id));
+        return [...prev, ...newReturns];
       });
 
       // Mark branch as loaded and visible
@@ -165,6 +175,7 @@ export function CallFlowView(): JSX.Element {
     setExpandedNodes([]);
     setExpandedEdges([]);
     setExpandedDecisionNodes([]);
+    setExpandedReturnNodes([]);
     setLoadedBranchIds(new Set());
     setVisibleBranchIds(new Set());
     setBranchDataCache(new Map());
@@ -202,6 +213,17 @@ export function CallFlowView(): JSX.Element {
       }
     }
     return decisionIds;
+  }, [visibleBranchIds, branchDataCache]);
+
+  const visibleBranchReturnNodes = useMemo(() => {
+    const returnIds = new Set<string>();
+    for (const branchId of visibleBranchIds) {
+      const cached = branchDataCache.get(branchId);
+      if (cached) {
+        cached.returnNodes.forEach((r) => returnIds.add(r.id));
+      }
+    }
+    return returnIds;
   }, [visibleBranchIds, branchDataCache]);
 
   // Combine initial query data with visible expanded data
@@ -248,6 +270,16 @@ export function CallFlowView(): JSX.Element {
       },
     }));
   }, [callFlowQuery.data?.decision_nodes, expandedDecisionNodes, visibleBranchDecisionNodes, visibleBranchIds, loadedBranchIds]);
+
+  const returnNodes = useMemo(() => {
+    const initial = callFlowQuery.data?.return_nodes || [];
+    const initialIds = new Set(initial.map((r) => r.id));
+    // Only include expanded return nodes that are in a visible branch
+    const uniqueExpanded = expandedReturnNodes.filter(
+      (r) => !initialIds.has(r.id) && visibleBranchReturnNodes.has(r.id)
+    );
+    return [...initial, ...uniqueExpanded];
+  }, [callFlowQuery.data?.return_nodes, expandedReturnNodes, visibleBranchReturnNodes]);
 
   const metadata = callFlowQuery.data?.metadata;
 
@@ -846,6 +878,7 @@ export function CallFlowView(): JSX.Element {
                 nodes={nodes}
                 edges={edges}
                 decisionNodes={decisionNodes}
+                returnNodes={returnNodes}
                 onNodeSelect={setSelectedNodeId}
                 onEdgeSelect={setSelectedEdgeId}
                 onBranchExpand={handleBranchToggle}

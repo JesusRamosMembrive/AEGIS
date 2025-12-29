@@ -700,11 +700,29 @@ export interface CallFlowDecisionNode {
   };
 }
 
+export interface CallFlowReturnNode {
+  id: string;
+  type: "returnNode";
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    returnValue: string;
+    filePath: string | null;
+    line: number;
+    column: number;
+    parentCallId: string;
+    branchId?: string;
+    decisionId?: string;
+    depth: number;
+  };
+}
+
 export interface CallFlowResponse {
   nodes: CallFlowNode[];
   edges: CallFlowEdge[];
   metadata: CallFlowMetadata;
   decision_nodes?: CallFlowDecisionNode[];
+  return_nodes?: CallFlowReturnNode[];
   unexpanded_branches?: string[];
   extraction_mode?: "full" | "lazy";
 }
@@ -714,6 +732,7 @@ export interface CallFlowBranchExpansionResponse {
   new_nodes: CallFlowNode[];
   new_edges: CallFlowEdge[];
   new_decision_nodes: CallFlowDecisionNode[];
+  new_return_nodes: CallFlowReturnNode[];
   new_unexpanded_branches: string[];
   expanded_branch_id: string;
 }

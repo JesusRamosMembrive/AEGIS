@@ -1074,6 +1074,10 @@ class CallFlowResponse(BaseModel):
         default_factory=list,
         description="Decision point nodes (if/else, match/case, try/except)",
     )
+    return_nodes: List[CallFlowReactFlowReturnNodeSchema] = Field(
+        default_factory=list,
+        description="Return statement nodes for branches that just return values",
+    )
     unexpanded_branches: List[str] = Field(
         default_factory=list,
         description="Branch IDs available for expansion (lazy mode)",
@@ -1206,6 +1210,15 @@ class CallFlowReactFlowDecisionNodeSchema(BaseModel):
     data: Dict[str, Any]
 
 
+class CallFlowReactFlowReturnNodeSchema(BaseModel):
+    """React Flow formatted node for return statement visualization."""
+
+    id: str
+    type: str = "returnNode"  # Return node type for frontend rendering
+    position: Dict[str, float]
+    data: Dict[str, Any]
+
+
 class CallFlowBranchExpansionRequest(BaseModel):
     """Request to expand a specific branch in lazy extraction mode.
 
@@ -1223,13 +1236,14 @@ class CallFlowBranchExpansionRequest(BaseModel):
 class CallFlowBranchExpansionResponse(BaseModel):
     """Response from expanding a branch.
 
-    Contains the new nodes, edges, and decision nodes discovered
+    Contains the new nodes, edges, decision nodes, and return nodes discovered
     when expanding the branch.
 
     Attributes:
         new_nodes: Newly discovered call nodes
         new_edges: Newly discovered call edges
         new_decision_nodes: Newly discovered decision points
+        new_return_nodes: Newly discovered return statement nodes
         new_unexpanded_branches: Branch IDs still available for expansion
         expanded_branch_id: The branch that was expanded
     """
@@ -1238,6 +1252,10 @@ class CallFlowBranchExpansionResponse(BaseModel):
     new_edges: List[CallFlowReactFlowEdgeSchema] = Field(default_factory=list)
     new_decision_nodes: List[CallFlowReactFlowDecisionNodeSchema] = Field(
         default_factory=list
+    )
+    new_return_nodes: List[CallFlowReactFlowReturnNodeSchema] = Field(
+        default_factory=list,
+        description="Return statement nodes for branches that just return values",
     )
     new_unexpanded_branches: List[str] = Field(default_factory=list)
     expanded_branch_id: str
