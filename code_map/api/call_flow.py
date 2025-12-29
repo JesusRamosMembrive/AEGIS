@@ -572,19 +572,25 @@ async def expand_branch(
 
     suffix = path.suffix.lower()
 
-    # Only Python supports lazy mode / branch expansion currently
-    if suffix not in PYTHON_EXTENSIONS:
+    # Select appropriate extractor based on file type
+    # Both Python and C++ support lazy mode / branch expansion
+    extractor: ExtractorType
+    if suffix in PYTHON_EXTENSIONS:
+        extractor = _get_python_extractor()
+        lang_name = "Python"
+    elif suffix in CPP_EXTENSIONS:
+        extractor = _get_cpp_extractor()
+        lang_name = "C++"
+    else:
         raise HTTPException(
             status_code=400,
-            detail=f"Branch expansion only supported for Python files. Got: {path.suffix}",
+            detail=f"Branch expansion only supported for Python and C++ files. Got: {path.suffix}",
         )
-
-    extractor = _get_python_extractor()
 
     if not extractor.is_available():
         raise HTTPException(
             status_code=503,
-            detail="tree-sitter for Python not available. "
+            detail=f"tree-sitter for {lang_name} not available. "
             "Install tree_sitter and tree_sitter_languages packages.",
         )
 

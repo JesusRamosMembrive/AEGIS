@@ -1,9 +1,11 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useEffect, useState } from "react";
 import ReactFlow, {
   Background,
   Controls,
   MiniMap,
   MarkerType,
+  useNodesState,
+  useEdgesState,
   type Node,
   type Edge,
   type NodeTypes,
@@ -72,12 +74,25 @@ export function CallFlowGraph({
   onEdgeSelect,
   onBranchExpand,
 }: CallFlowGraphProps) {
-  // Map regular call nodes
+  // Use ref to keep a stable reference to onBranchExpand
+  // This prevents stale closure issues with React Flow's internal caching
+  const onBranchExpandRef = useRef(onBranchExpand);
+  useEffect(() => {
+    onBranchExpandRef.current = onBranchExpand;
+  }, [onBranchExpand]);
+
+  // Stable callback that always uses the latest onBranchExpand
+  const stableOnBranchExpand = useCallback((branchId: string) => {
+    onBranchExpandRef.current?.(branchId);
+  }, []);
+
+  // Map regular call nodes - add draggable property
   const mappedCallNodes = useMemo(
     () =>
       nodes.map((node) => ({
         ...node,
         type: "callFlowNode",
+        draggable: true,
       })),
     [nodes]
   );
@@ -88,22 +103,23 @@ export function CallFlowGraph({
     () =>
       decisionNodes.map((dn) => ({
         ...dn,
+        draggable: true,
         data: {
           ...dn.data,
-          onBranchExpand: onBranchExpand,
+          onBranchExpand: stableOnBranchExpand,
         },
       })),
-    [decisionNodes, onBranchExpand]
+    [decisionNodes, stableOnBranchExpand]
   );
 
-  // Combine all nodes
-  const allNodes = useMemo(
+  // Combine all nodes from props
+  const propsNodes = useMemo(
     () => [...mappedCallNodes, ...mappedDecisionNodes],
     [mappedCallNodes, mappedDecisionNodes]
   );
 
   // Map edges - detect branch edges by checking if target is a decision node
-  const mappedEdges = useMemo(
+  const propsEdges = useMemo(
     () =>
       edges.map((edge) => {
         const isBranchEdge = edge.data?.branchId != null;
@@ -121,6 +137,19 @@ export function CallFlowGraph({
       }),
     [edges]
   );
+
+  // Use React Flow's state management for draggable nodes
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(propsNodes);
+  const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(propsEdges);
+
+  // Sync with props when they change (new nodes/edges from parent)
+  useEffect(() => {
+    setFlowNodes(propsNodes);
+  }, [propsNodes, setFlowNodes]);
+
+  useEffect(() => {
+    setFlowEdges(propsEdges);
+  }, [propsEdges, setFlowEdges]);
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -163,10 +192,12 @@ export function CallFlowGraph({
   return (
     <div style={{ width: "100%", height: "100%", backgroundColor: colors.base.panel }}>
       <ReactFlow
-        nodes={allNodes}
-        edges={mappedEdges}
+        nodes={flowNodes}
+        edges={flowEdges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         onEdgeClick={handleEdgeClick}
         onPaneClick={handlePaneClick}

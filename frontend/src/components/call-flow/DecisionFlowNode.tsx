@@ -13,7 +13,8 @@ interface BranchInfo {
   branch_id: string;
   label: string;
   condition_text: string;
-  is_expanded: boolean;
+  is_expanded: boolean; // Currently visible
+  is_loaded?: boolean;  // Data has been fetched (can be toggled)
   call_count: number;
   start_line: number;
   end_line: number;
@@ -59,14 +60,15 @@ const getBranchColor = (label: string, isExpanded: boolean): string => {
   return colors.callFlow.branchUnexpanded;
 };
 
-export const DecisionFlowNode = memo(({ data }: NodeProps<DecisionFlowNodeData>) => {
+export const DecisionFlowNode = memo(
+  ({ data }: NodeProps<DecisionFlowNodeData>) => {
   const typeLabel = DECISION_TYPE_LABELS[data.decisionType] || data.decisionType.toUpperCase();
   const typeIcon = DECISION_TYPE_ICONS[data.decisionType] || "?";
 
-  const handleBranchClick = (branchId: string, isExpanded: boolean) => {
-    if (!isExpanded && data.onBranchExpand) {
-      data.onBranchExpand(branchId);
-    }
+  const handleBranchClick = (e: React.MouseEvent, branchId: string) => {
+    e.stopPropagation(); // Prevent ReactFlow from capturing the click as node selection
+    // Always call the handler - it now supports toggle (expand/collapse)
+    data.onBranchExpand?.(branchId);
   };
 
   return (
@@ -185,13 +187,28 @@ export const DecisionFlowNode = memo(({ data }: NodeProps<DecisionFlowNodeData>)
             }}
           >
             {data.branches.map((branch) => {
-              const branchColor = getBranchColor(branch.label, branch.is_expanded);
-              const isClickable = !branch.is_expanded;
+              const isVisible = branch.is_expanded;
+              const isLoaded = branch.is_loaded ?? false;
+              const branchColor = getBranchColor(branch.label, isVisible);
+
+              // Determine icon and tooltip based on state
+              let icon: string;
+              let tooltip: string;
+              if (isVisible) {
+                icon = "−"; // Minus sign to indicate "click to collapse"
+                tooltip = `Click to hide: ${branch.condition_text}`;
+              } else if (isLoaded) {
+                icon = "+"; // Plus sign, but already loaded
+                tooltip = `Click to show: ${branch.condition_text}`;
+              } else {
+                icon = "+"; // Plus sign, needs to load
+                tooltip = `Click to expand: ${branch.condition_text}`;
+              }
 
               return (
                 <div
                   key={branch.branch_id}
-                  onClick={() => handleBranchClick(branch.branch_id, branch.is_expanded)}
+                  onClick={(e) => handleBranchClick(e, branch.branch_id)}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -200,15 +217,11 @@ export const DecisionFlowNode = memo(({ data }: NodeProps<DecisionFlowNodeData>)
                     background: `${branchColor}20`,
                     border: `1px solid ${branchColor}`,
                     borderRadius: "4px",
-                    cursor: isClickable ? "pointer" : "default",
+                    cursor: "pointer",
                     transition: "all 0.2s ease",
-                    opacity: isClickable ? 1 : 0.7,
+                    opacity: isVisible ? 1 : 0.8,
                   }}
-                  title={
-                    isClickable
-                      ? `Click to expand: ${branch.condition_text}`
-                      : `Expanded: ${branch.condition_text}`
-                  }
+                  title={tooltip}
                 >
                   <span
                     style={{
@@ -231,13 +244,19 @@ export const DecisionFlowNode = memo(({ data }: NodeProps<DecisionFlowNodeData>)
                     {branch.call_count > 0 && (
                       <span>{branch.call_count} calls</span>
                     )}
-                    {branch.is_expanded ? (
-                      <span style={{ color: colors.callFlow.branchExpanded }}>
-
-                      </span>
-                    ) : (
-                      <span style={{ color: colors.text.muted }}>+</span>
-                    )}
+                    <span
+                      style={{
+                        color: isVisible
+                          ? colors.callFlow.branchExpanded
+                          : isLoaded
+                          ? colors.primary.main
+                          : colors.text.muted,
+                        fontWeight: 700,
+                        fontSize: "12px",
+                      }}
+                    >
+                      {icon}
+                    </span>
                   </span>
                 </div>
               );

@@ -1116,7 +1116,7 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
         line: int,
         column: int,
     ) -> DecisionNode:
-        """Parse an if/else statement into a DecisionNode."""
+        """Parse an if/else/else-if statement into a DecisionNode."""
         # Extract condition text from condition_clause
         condition_node = self._find_child_by_type(node, "condition_clause")
         if condition_node:
@@ -1126,14 +1126,15 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
 
         decision_id = f"decision:{file_path}:{line}:if_else"
         branches: List[BranchInfo] = []
+        branch_index = 0
 
-        # Find the main if block (TRUE branch)
+        # Find the main if block (first TRUE branch)
         if_block = self._find_child_by_type(node, "compound_statement")
         if if_block:
             branches.append(
                 BranchInfo(
-                    branch_id=f"{decision_id}:branch:0",
-                    label="TRUE",
+                    branch_id=f"{decision_id}:branch:{branch_index}",
+                    label=f"if {condition_text[:15]}",
                     condition_text=condition_text,
                     is_expanded=False,
                     call_count=self._count_calls_in_node(if_block),
@@ -1141,16 +1142,55 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
                     end_line=if_block.end_point[0] + 1,
                 )
             )
+            branch_index += 1
 
-        # Find else clause (FALSE branch)
-        for child in node.children:
-            if child.type == "else_clause":
-                else_block = self._find_child_by_type(child, "compound_statement")
+        # Process else/else-if chain recursively
+        current_node = node
+        while True:
+            else_clause = None
+            for child in current_node.children:
+                if child.type == "else_clause":
+                    else_clause = child
+                    break
+
+            if else_clause is None:
+                break
+
+            # Check if this else contains another if (else if)
+            nested_if = self._find_child_by_type(else_clause, "if_statement")
+            if nested_if:
+                # This is an "else if" - get its condition and block
+                nested_condition = self._find_child_by_type(nested_if, "condition_clause")
+                if nested_condition:
+                    nested_cond_text = self._get_node_text(nested_condition, source)
+                else:
+                    nested_cond_text = "???"
+
+                nested_block = self._find_child_by_type(nested_if, "compound_statement")
+                if nested_block:
+                    branches.append(
+                        BranchInfo(
+                            branch_id=f"{decision_id}:branch:{branch_index}",
+                            label=f"elif {nested_cond_text[:12]}",
+                            condition_text=nested_cond_text,
+                            is_expanded=False,
+                            call_count=self._count_calls_in_node(nested_block),
+                            start_line=nested_block.start_point[0] + 1,
+                            end_line=nested_block.end_point[0] + 1,
+                        )
+                    )
+                    branch_index += 1
+
+                # Continue to check for more else/else-if in the nested if
+                current_node = nested_if
+            else:
+                # This is a plain "else" - final branch
+                else_block = self._find_child_by_type(else_clause, "compound_statement")
                 if else_block:
                     branches.append(
                         BranchInfo(
-                            branch_id=f"{decision_id}:branch:1",
-                            label="FALSE",
+                            branch_id=f"{decision_id}:branch:{branch_index}",
+                            label="else",
                             condition_text="else",
                             is_expanded=False,
                             call_count=self._count_calls_in_node(else_block),
@@ -1392,12 +1432,33 @@ class CppCallFlowExtractor(BaseCallFlowExtractor):
             if main_block and main_block.start_point[0] + 1 == target_line:
                 return main_block
 
-            # Check else clause
-            for child in decision_ast.children:
-                if child.type == "else_clause":
-                    else_block = self._find_child_by_type(child, "compound_statement")
+            # Check else/else-if chain recursively
+            current_node = decision_ast
+            while True:
+                else_clause = None
+                for child in current_node.children:
+                    if child.type == "else_clause":
+                        else_clause = child
+                        break
+
+                if else_clause is None:
+                    break
+
+                # Check if this else contains another if (else if)
+                nested_if = self._find_child_by_type(else_clause, "if_statement")
+                if nested_if:
+                    # Check the else-if's block
+                    nested_block = self._find_child_by_type(nested_if, "compound_statement")
+                    if nested_block and nested_block.start_point[0] + 1 == target_line:
+                        return nested_block
+                    # Continue searching in nested if
+                    current_node = nested_if
+                else:
+                    # Plain else - check its block
+                    else_block = self._find_child_by_type(else_clause, "compound_statement")
                     if else_block and else_block.start_point[0] + 1 == target_line:
                         return else_block
+                    break
 
         elif decision_ast.type == "switch_statement":
             body = self._find_child_by_type(decision_ast, "compound_statement")

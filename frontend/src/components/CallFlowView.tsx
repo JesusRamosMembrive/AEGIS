@@ -39,7 +39,16 @@ export function CallFlowView(): JSX.Element {
   const [expandedNodes, setExpandedNodes] = useState<CallFlowNode[]>([]);
   const [expandedEdges, setExpandedEdges] = useState<CallFlowEdge[]>([]);
   const [expandedDecisionNodes, setExpandedDecisionNodes] = useState<CallFlowDecisionNode[]>([]);
-  const [expandedBranchIds, setExpandedBranchIds] = useState<Set<string>>(new Set());
+  // Track which branches have been loaded (fetched from API)
+  const [loadedBranchIds, setLoadedBranchIds] = useState<Set<string>>(new Set());
+  // Track which branches are currently visible (can toggle on/off)
+  const [visibleBranchIds, setVisibleBranchIds] = useState<Set<string>>(new Set());
+  // Cache: maps branchId -> { nodes, edges, decisionNodes } for toggle functionality
+  const [branchDataCache, setBranchDataCache] = useState<Map<string, {
+    nodes: CallFlowNode[];
+    edges: CallFlowEdge[];
+    decisionNodes: CallFlowDecisionNode[];
+  }>>(new Map());
 
   // Query entry points when file is selected
   const entryPointsQuery = useCallFlowEntryPointsQuery({
@@ -63,6 +72,19 @@ export function CallFlowView(): JSX.Element {
     functionName: selectedFunction?.name || "",
     maxDepth,
     onSuccess: (data) => {
+      const branchId = data.expanded_branch_id;
+
+      // Cache the data for this branch (for toggle functionality)
+      setBranchDataCache((prev) => {
+        const newCache = new Map(prev);
+        newCache.set(branchId, {
+          nodes: data.new_nodes,
+          edges: data.new_edges,
+          decisionNodes: data.new_decision_nodes,
+        });
+        return newCache;
+      });
+
       // Merge new nodes (avoiding duplicates by id)
       setExpandedNodes((prev) => {
         const existingIds = new Set(prev.map((n) => n.id));
@@ -84,23 +106,40 @@ export function CallFlowView(): JSX.Element {
         return [...prev, ...newDecisions];
       });
 
-      // Mark branch as expanded
-      setExpandedBranchIds((prev) => new Set([...prev, data.expanded_branch_id]));
+      // Mark branch as loaded and visible
+      setLoadedBranchIds((prev) => new Set([...prev, branchId]));
+      setVisibleBranchIds((prev) => new Set([...prev, branchId]));
     },
     onError: (error) => {
       console.error("Failed to expand branch:", error);
     },
   });
 
-  // Handler for branch expansion from decision nodes
-  const handleBranchExpand = useCallback(
+  // Handler for branch toggle (expand/collapse) from decision nodes
+  const handleBranchToggle = useCallback(
     (branchId: string) => {
-      if (expandedBranchIds.has(branchId) || expandBranchMutation.isPending) {
-        return; // Already expanded or loading
+      // If already visible, collapse it (hide nodes)
+      if (visibleBranchIds.has(branchId)) {
+        setVisibleBranchIds((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(branchId);
+          return newSet;
+        });
+        return;
       }
-      expandBranchMutation.mutate(branchId);
+
+      // If already loaded but not visible, just show it
+      if (loadedBranchIds.has(branchId)) {
+        setVisibleBranchIds((prev) => new Set([...prev, branchId]));
+        return;
+      }
+
+      // Not loaded yet, fetch from API
+      if (!expandBranchMutation.isPending) {
+        expandBranchMutation.mutate(branchId);
+      }
     },
-    [expandedBranchIds, expandBranchMutation]
+    [visibleBranchIds, loadedBranchIds, expandBranchMutation]
   );
 
   const handleFileSubmit = (e: React.FormEvent) => {
@@ -126,29 +165,74 @@ export function CallFlowView(): JSX.Element {
     setExpandedNodes([]);
     setExpandedEdges([]);
     setExpandedDecisionNodes([]);
-    setExpandedBranchIds(new Set());
+    setLoadedBranchIds(new Set());
+    setVisibleBranchIds(new Set());
+    setBranchDataCache(new Map());
   };
 
-  // Combine initial query data with expanded data
+  // Compute visible nodes from branches that are currently expanded
+  const visibleBranchNodes = useMemo(() => {
+    const nodeIds = new Set<string>();
+    for (const branchId of visibleBranchIds) {
+      const cached = branchDataCache.get(branchId);
+      if (cached) {
+        cached.nodes.forEach((n) => nodeIds.add(n.id));
+      }
+    }
+    return nodeIds;
+  }, [visibleBranchIds, branchDataCache]);
+
+  const visibleBranchEdges = useMemo(() => {
+    const edgeIds = new Set<string>();
+    for (const branchId of visibleBranchIds) {
+      const cached = branchDataCache.get(branchId);
+      if (cached) {
+        cached.edges.forEach((e) => edgeIds.add(e.id));
+      }
+    }
+    return edgeIds;
+  }, [visibleBranchIds, branchDataCache]);
+
+  const visibleBranchDecisionNodes = useMemo(() => {
+    const decisionIds = new Set<string>();
+    for (const branchId of visibleBranchIds) {
+      const cached = branchDataCache.get(branchId);
+      if (cached) {
+        cached.decisionNodes.forEach((d) => decisionIds.add(d.id));
+      }
+    }
+    return decisionIds;
+  }, [visibleBranchIds, branchDataCache]);
+
+  // Combine initial query data with visible expanded data
   const nodes = useMemo(() => {
     const initial = callFlowQuery.data?.nodes || [];
     const initialIds = new Set(initial.map((n) => n.id));
-    const uniqueExpanded = expandedNodes.filter((n) => !initialIds.has(n.id));
+    // Only include expanded nodes that are in a visible branch
+    const uniqueExpanded = expandedNodes.filter(
+      (n) => !initialIds.has(n.id) && visibleBranchNodes.has(n.id)
+    );
     return [...initial, ...uniqueExpanded];
-  }, [callFlowQuery.data?.nodes, expandedNodes]);
+  }, [callFlowQuery.data?.nodes, expandedNodes, visibleBranchNodes]);
 
   const edges = useMemo(() => {
     const initial = callFlowQuery.data?.edges || [];
     const initialIds = new Set(initial.map((e) => e.id));
-    const uniqueExpanded = expandedEdges.filter((e) => !initialIds.has(e.id));
+    // Only include expanded edges that are in a visible branch
+    const uniqueExpanded = expandedEdges.filter(
+      (e) => !initialIds.has(e.id) && visibleBranchEdges.has(e.id)
+    );
     return [...initial, ...uniqueExpanded];
-  }, [callFlowQuery.data?.edges, expandedEdges]);
+  }, [callFlowQuery.data?.edges, expandedEdges, visibleBranchEdges]);
 
   const decisionNodes = useMemo(() => {
     const initial = callFlowQuery.data?.decision_nodes || [];
     const initialIds = new Set(initial.map((d) => d.id));
-    const uniqueExpanded = expandedDecisionNodes.filter((d) => !initialIds.has(d.id));
-    // Mark branches as expanded in the decision nodes data
+    // Only include expanded decision nodes that are in a visible branch
+    const uniqueExpanded = expandedDecisionNodes.filter(
+      (d) => !initialIds.has(d.id) && visibleBranchDecisionNodes.has(d.id)
+    );
+    // Mark branches based on visibility state (not just loaded state)
     const allDecisions = [...initial, ...uniqueExpanded];
     return allDecisions.map((dn) => ({
       ...dn,
@@ -156,11 +240,14 @@ export function CallFlowView(): JSX.Element {
         ...dn.data,
         branches: dn.data.branches.map((branch) => ({
           ...branch,
-          is_expanded: expandedBranchIds.has(branch.branch_id) || branch.is_expanded,
+          // is_expanded now means "currently visible"
+          is_expanded: visibleBranchIds.has(branch.branch_id),
+          // is_loaded indicates if data has been fetched (for UI feedback)
+          is_loaded: loadedBranchIds.has(branch.branch_id),
         })),
       },
     }));
-  }, [callFlowQuery.data?.decision_nodes, expandedDecisionNodes, expandedBranchIds]);
+  }, [callFlowQuery.data?.decision_nodes, expandedDecisionNodes, visibleBranchDecisionNodes, visibleBranchIds, loadedBranchIds]);
 
   const metadata = callFlowQuery.data?.metadata;
 
@@ -761,7 +848,7 @@ export function CallFlowView(): JSX.Element {
                 decisionNodes={decisionNodes}
                 onNodeSelect={setSelectedNodeId}
                 onEdgeSelect={setSelectedEdgeId}
-                onBranchExpand={handleBranchExpand}
+                onBranchExpand={handleBranchToggle}
               />
             </div>
           )}

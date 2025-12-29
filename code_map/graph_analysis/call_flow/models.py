@@ -527,8 +527,8 @@ class CallGraph:
                     "id": node.id,
                     "type": "callNode",
                     "position": {
-                        "x": depth * 280,
-                        "y": y_index * 120,
+                        "x": depth * 350,
+                        "y": y_index * 140,
                     },
                     "data": {
                         "label": node.name,
@@ -560,8 +560,8 @@ class CallGraph:
                     "id": decision_node.id,
                     "type": "decisionNode",
                     "position": {
-                        "x": depth * 280 + 140,  # Offset slightly from call nodes
-                        "y": y_index * 120,
+                        "x": depth * 350 + 175,  # Offset slightly from call nodes
+                        "y": y_index * 140,
                     },
                     "data": {
                         "label": decision_node.decision_type.value,
@@ -581,7 +581,10 @@ class CallGraph:
                 }
             )
 
-        edge_index = 0
+        # Track which targets already have edges from decision nodes
+        # to avoid duplicates (key: decision_id:target_id)
+        decision_to_target_edges: set[str] = set()
+
         for edge in self.iter_edges():
             edge_data: Dict[str, Any] = {
                 "callSiteLine": edge.call_site_line,
@@ -595,24 +598,51 @@ class CallGraph:
             if edge.decision_id:
                 edge_data["decisionId"] = edge.decision_id
 
-            react_edges.append(
-                {
-                    "id": f"e{edge_index}",
-                    "source": edge.source_id,
-                    "target": edge.target_id,
-                    "type": "smoothstep",
-                    "animated": edge.source_id == self.entry_point,
-                    "data": edge_data,
-                }
-            )
-            edge_index += 1
+            # If this edge belongs to a branch, create edge from decision node
+            # instead of from the original source (parent function)
+            if edge.decision_id and edge.branch_id:
+                edge_key = f"{edge.decision_id}:{edge.target_id}"
+                if edge_key not in decision_to_target_edges:
+                    decision_to_target_edges.add(edge_key)
+                    # Stable ID for branch edges
+                    branch_edge_id = f"eb:{edge.decision_id}->{edge.target_id}"
+                    react_edges.append(
+                        {
+                            "id": branch_edge_id,
+                            "source": edge.decision_id,
+                            "target": edge.target_id,
+                            "type": "smoothstep",
+                            "animated": False,
+                            "data": {
+                                "callSiteLine": edge.call_site_line,
+                                "callType": "branch_call",
+                                "branchId": edge.branch_id,
+                                "decisionId": edge.decision_id,
+                            },
+                        }
+                    )
+            else:
+                # Regular edge (not in a branch) - connect from source to target
+                edge_id = f"e:{edge.source_id}->{edge.target_id}@{edge.call_site_line}"
+                react_edges.append(
+                    {
+                        "id": edge_id,
+                        "source": edge.source_id,
+                        "target": edge.target_id,
+                        "type": "smoothstep",
+                        "animated": edge.source_id == self.entry_point,
+                        "data": edge_data,
+                    }
+                )
 
         # Create edges from parent call nodes to decision nodes
         for decision_node in self.iter_decision_nodes():
             if decision_node.parent_call_id:
+                # Stable ID for decision edges
+                decision_edge_id = f"ed:{decision_node.parent_call_id}->{decision_node.id}"
                 react_edges.append(
                     {
-                        "id": f"e{edge_index}",
+                        "id": decision_edge_id,
                         "source": decision_node.parent_call_id,
                         "target": decision_node.id,
                         "type": "smoothstep",
@@ -625,7 +655,6 @@ class CallGraph:
                         },
                     }
                 )
-                edge_index += 1
 
         result = {
             "nodes": react_nodes,
