@@ -3,9 +3,12 @@ import ReactFlow, {
   Background,
   Controls,
   MiniMap,
+  Panel,
   MarkerType,
   useNodesState,
   useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
   type Node,
   type Edge,
   type NodeTypes,
@@ -18,6 +21,7 @@ import { CallFlowEdge } from "./CallFlowEdge";
 import { DecisionFlowNode } from "./DecisionFlowNode";
 import { BranchFlowEdge } from "./BranchFlowEdge";
 import { DESIGN_TOKENS } from "../../theme/designTokens";
+import { useElkLayout, type LayoutDirection } from "../../hooks/useElkLayout";
 
 const { colors, borders } = DESIGN_TOKENS;
 
@@ -66,7 +70,8 @@ const edgeTypes: EdgeTypes = {
   branchFlow: BranchFlowEdge,
 };
 
-export function CallFlowGraph({
+// Inner component that uses useReactFlow (must be inside ReactFlowProvider)
+function CallFlowGraphInner({
   nodes,
   edges,
   decisionNodes = [],
@@ -74,6 +79,10 @@ export function CallFlowGraph({
   onEdgeSelect,
   onBranchExpand,
 }: CallFlowGraphProps) {
+  const { fitView } = useReactFlow();
+  const { getLayoutedElements, isLayouting } = useElkLayout();
+  const [layoutDirection, setLayoutDirection] = useState<LayoutDirection>("DOWN");
+
   // Use ref to keep a stable reference to onBranchExpand
   // This prevents stale closure issues with React Flow's internal caching
   const onBranchExpandRef = useRef(onBranchExpand);
@@ -142,14 +151,51 @@ export function CallFlowGraph({
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(propsNodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(propsEdges);
 
-  // Sync with props when they change (new nodes/edges from parent)
-  useEffect(() => {
-    setFlowNodes(propsNodes);
-  }, [propsNodes, setFlowNodes]);
+  // Track if we've done initial layout
+  const hasInitialLayout = useRef(false);
+  // Track the last nodes/edges count to detect significant changes
+  const lastLayoutKey = useRef("");
 
+  // Apply ELK layout when nodes/edges change significantly
+  const applyLayout = useCallback(
+    async (direction: LayoutDirection, nodesToLayout: Node[], edgesToLayout: Edge[]) => {
+      if (nodesToLayout.length === 0) return;
+
+      const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(
+        nodesToLayout,
+        edgesToLayout,
+        direction
+      );
+
+      setFlowNodes(layoutedNodes);
+      setFlowEdges(layoutedEdges);
+
+      // Fit view after layout with a small delay to let React render
+      setTimeout(() => fitView({ padding: 0.2, maxZoom: 1 }), 50);
+    },
+    [getLayoutedElements, setFlowNodes, setFlowEdges, fitView]
+  );
+
+  // Auto-layout on initial load and when nodes/edges change significantly
   useEffect(() => {
-    setFlowEdges(propsEdges);
-  }, [propsEdges, setFlowEdges]);
+    // Create a key based on node/edge IDs to detect actual changes
+    const currentKey = `${propsNodes.map((n) => n.id).sort().join(",")}|${propsEdges.map((e) => e.id).sort().join(",")}`;
+
+    if (currentKey !== lastLayoutKey.current && propsNodes.length > 0) {
+      lastLayoutKey.current = currentKey;
+      applyLayout(layoutDirection, propsNodes, propsEdges);
+      hasInitialLayout.current = true;
+    }
+  }, [propsNodes, propsEdges, layoutDirection, applyLayout]);
+
+  // Handler for manual layout button
+  const handleLayout = useCallback(
+    (direction: LayoutDirection) => {
+      setLayoutDirection(direction);
+      applyLayout(direction, flowNodes, flowEdges);
+    },
+    [flowNodes, flowEdges, applyLayout]
+  );
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -188,6 +234,29 @@ export function CallFlowGraph({
     };
     return kindColors[kind] || colors.callFlow.function;
   }, []);
+
+  const buttonStyle = {
+    padding: "6px 12px",
+    fontSize: "12px",
+    fontWeight: 500,
+    border: `1px solid ${borders.default}`,
+    borderRadius: "4px",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  };
+
+  const activeButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: colors.primary.main,
+    color: "#fff",
+    borderColor: colors.primary.main,
+  };
+
+  const inactiveButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: colors.base.card,
+    color: colors.text.main,
+  };
 
   return (
     <div style={{ width: "100%", height: "100%", backgroundColor: colors.base.panel }}>
@@ -237,7 +306,50 @@ export function CallFlowGraph({
           }}
           maskColor={`${colors.base.panel}B3`} // B3 = 70% opacity
         />
+        {/* Layout controls panel */}
+        <Panel
+          position="top-right"
+          style={{
+            display: "flex",
+            gap: "8px",
+            padding: "8px",
+            backgroundColor: colors.base.card,
+            border: `1px solid ${borders.default}`,
+            borderRadius: "8px",
+          }}
+        >
+          <button
+            onClick={() => handleLayout("DOWN")}
+            disabled={isLayouting}
+            style={layoutDirection === "DOWN" ? activeButtonStyle : inactiveButtonStyle}
+            title="Vertical layout (top to bottom)"
+          >
+            Vertical
+          </button>
+          <button
+            onClick={() => handleLayout("RIGHT")}
+            disabled={isLayouting}
+            style={layoutDirection === "RIGHT" ? activeButtonStyle : inactiveButtonStyle}
+            title="Horizontal layout (left to right)"
+          >
+            Horizontal
+          </button>
+          {isLayouting && (
+            <span style={{ fontSize: "12px", color: colors.text.muted, alignSelf: "center" }}>
+              Layouting...
+            </span>
+          )}
+        </Panel>
       </ReactFlow>
     </div>
+  );
+}
+
+// Main export - wraps inner component with ReactFlowProvider
+export function CallFlowGraph(props: CallFlowGraphProps) {
+  return (
+    <ReactFlowProvider>
+      <CallFlowGraphInner {...props} />
+    </ReactFlowProvider>
   );
 }
