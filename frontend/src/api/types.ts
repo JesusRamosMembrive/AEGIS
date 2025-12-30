@@ -970,3 +970,194 @@ export interface UmlGenerateResponse {
   testCode: string | null;
   errors: string[];
 }
+
+// =============================================================================
+// Activity Diagram Types (Method Flow Designer - AEGIS v2)
+// =============================================================================
+
+export type ActivityNodeType =
+  | "initial"        // Starting point (filled circle)
+  | "final"          // End point (circle with inner circle)
+  | "action"         // Simple action block
+  | "decision"       // Diamond - if/else, switch
+  | "merge"          // Diamond - merge point after decision
+  | "fork"           // Horizontal bar - split to parallel
+  | "join"           // Horizontal bar - sync parallel paths
+  | "loop"           // Loop construct (for/while)
+  | "call"           // Call to another method
+  | "signal_send"    // Send event/signal
+  | "signal_receive" // Receive/wait for signal
+  | "try_block"      // Try/catch container
+  | "catch_block"    // Exception handler
+  | "note";          // Comment/annotation
+
+export type ActivityEdgeType = "flow" | "branch" | "exception" | "signal";
+
+export type ActivityDetailLevel = "simple" | "detailed" | "pseudocode";
+
+export type LoopType = "for" | "while" | "do_while" | "foreach";
+
+// Base interface for all activity nodes
+export interface ActivityNodeBase {
+  id: string;
+  type: ActivityNodeType;
+  position: { x: number; y: number };
+  label: string;
+  description?: string;
+  swimlaneId?: string;  // Optional swimlane assignment
+}
+
+// Initial node - entry point
+export interface ActivityInitialNode extends ActivityNodeBase {
+  type: "initial";
+}
+
+// Final node - exit point
+export interface ActivityFinalNode extends ActivityNodeBase {
+  type: "final";
+  returnValue?: string;  // What value is returned
+}
+
+// Action node - simple statement/operation
+export interface ActivityActionNode extends ActivityNodeBase {
+  type: "action";
+  actionText: string;       // The action description
+  pseudocode?: string;      // Optional pseudocode hint for agent
+  variables?: string[];     // Variables this action modifies
+}
+
+// Decision branch definition
+export interface ActivityDecisionBranch {
+  id: string;
+  label: string;           // "true", "false", "case A", etc.
+  condition?: string;      // Optional refined condition
+}
+
+// Decision node - conditional branching
+export interface ActivityDecisionNode extends ActivityNodeBase {
+  type: "decision";
+  conditionText: string;   // The condition (e.g., "user.isActive?")
+  branches: ActivityDecisionBranch[];
+}
+
+// Merge node - joins branches back together
+export interface ActivityMergeNode extends ActivityNodeBase {
+  type: "merge";
+}
+
+// Fork node - start parallel execution
+export interface ActivityForkNode extends ActivityNodeBase {
+  type: "fork";
+  parallelPaths: number;   // How many parallel paths
+}
+
+// Join node - synchronize parallel paths
+export interface ActivityJoinNode extends ActivityNodeBase {
+  type: "join";
+}
+
+// Loop node - iteration construct
+export interface ActivityLoopNode extends ActivityNodeBase {
+  type: "loop";
+  loopType: LoopType;
+  iteratorName?: string;   // e.g., "item" in "for item in items"
+  collection?: string;     // e.g., "items" for foreach
+  condition?: string;      // For while loops
+  initValue?: string;      // For classic for loops
+  stepValue?: string;      // For classic for loops
+}
+
+// Call node - method invocation
+export interface ActivityCallNode extends ActivityNodeBase {
+  type: "call";
+  targetMethod: string;    // Method name to call
+  targetClass?: string;    // Optional: class if external
+  arguments?: string[];    // Argument descriptions
+  assignTo?: string;       // Variable to assign result to
+}
+
+// Signal send node - emit event
+export interface ActivitySignalSendNode extends ActivityNodeBase {
+  type: "signal_send";
+  signalName: string;
+  payload?: string;
+}
+
+// Signal receive node - wait for event
+export interface ActivitySignalReceiveNode extends ActivityNodeBase {
+  type: "signal_receive";
+  signalName: string;
+  timeout?: string;        // Optional timeout
+}
+
+// Try block node - exception handling container
+export interface ActivityTryBlockNode extends ActivityNodeBase {
+  type: "try_block";
+}
+
+// Catch block node - exception handler
+export interface ActivityCatchBlockNode extends ActivityNodeBase {
+  type: "catch_block";
+  exceptionType: string;   // e.g., "ValueError", "Exception"
+  variableName?: string;   // e.g., "e" in "except Exception as e"
+}
+
+// Note node - annotation/comment
+export interface ActivityNoteNode extends ActivityNodeBase {
+  type: "note";
+  noteText: string;
+  attachedTo?: string;     // ID of node this note is attached to
+}
+
+// Union type for all activity nodes
+export type ActivityNode =
+  | ActivityInitialNode
+  | ActivityFinalNode
+  | ActivityActionNode
+  | ActivityDecisionNode
+  | ActivityMergeNode
+  | ActivityForkNode
+  | ActivityJoinNode
+  | ActivityLoopNode
+  | ActivityCallNode
+  | ActivitySignalSendNode
+  | ActivitySignalReceiveNode
+  | ActivityTryBlockNode
+  | ActivityCatchBlockNode
+  | ActivityNoteNode;
+
+// Activity edge connecting nodes
+export interface ActivityEdge {
+  id: string;
+  source: string;          // Source node ID
+  target: string;          // Target node ID
+  type: ActivityEdgeType;
+  label?: string;          // e.g., "true", "false", "ValueError"
+  guard?: string;          // Guard condition
+  priority?: number;       // For ordering branches
+}
+
+// Swimlane for responsibility separation
+export interface ActivitySwimlane {
+  id: string;
+  name: string;            // e.g., "Controller", "Service", "Repository"
+  description?: string;
+  color?: string;
+  nodeIds: string[];       // Nodes belonging to this swimlane
+}
+
+// Complete Activity Diagram for a method
+export interface ActivityDiagram {
+  methodId: string;        // Links to UmlMethodDef.id
+  nodes: ActivityNode[];
+  edges: ActivityEdge[];
+  swimlanes?: ActivitySwimlane[];
+  detailLevel: ActivityDetailLevel;
+  lastModified?: string;   // ISO timestamp
+}
+
+// Extended UmlMethodDef with activity diagram support
+export interface UmlMethodDefWithFlow extends UmlMethodDef {
+  activityDiagram?: ActivityDiagram;
+  hasFlowDesign: boolean;
+}

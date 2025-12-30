@@ -9,9 +9,21 @@
 ## 📍 ESTADO ACTUAL
 
 **En progreso:**
-- **UML Editor (AEGIS v2)** - Phase 5 pendiente (Agent Loop integration)
+- **Method Flow Designer** - Activity Diagram integration para definir flujos internos de métodos
+  - Phase 1 completada (infraestructura)
+  - Próximo: Phase 2 (nodos básicos: Action, Decision, Initial, Final)
 
 **Completado recientemente:**
+- **Method Flow Designer - Phase 1 Infrastructure** (2025-12-30)
+  - Tipos Activity Diagram en `frontend/src/api/types.ts`:
+    - `ActivityNodeType`, `ActivityNode`, `ActivityEdge`, `ActivitySwimlane`, `ActivityDiagram`
+    - 14 tipos de nodos: initial, final, action, decision, merge, fork, join, loop, call, signal_send, signal_receive, try_block, catch_block, note
+  - Store Zustand extendido con acciones para flow editor
+  - `FlowEditorDrawer.tsx` - Drawer desde abajo (60% viewport, redimensionable)
+  - Botón "Design Flow" en MethodEditor
+  - Integrado en UmlEditorView
+
+
 - **Call Flow Statement Nodes** (2025-12-30)
   - `StatementNode` model for break, continue, pass, raise statements
   - `StatementFlowNode.tsx` - Frontend component with color-coded icons
@@ -55,24 +67,34 @@
 
 ## 🎯 PRÓXIMOS PASOS
 
-1. **Inmediato** (Próxima sesión):
-   - **Phase 5: Agent Loop** - Integración con Claude para generación de código
-     - Backend endpoint: `POST /uml-editor/generate`
-     - UI de generación en ExportDialog
-     - Mostrar código generado
+1. **Inmediato** - Method Flow Designer Phase 2:
+   - `ActivityCanvas.tsx` - Canvas React Flow para edición
+   - `FlowEditorToolbar.tsx` - Paleta de nodos
+   - Nodos básicos: `InitialFlowNode`, `FinalFlowNode`, `ActionFlowNode`, `DecisionFlowNode`
+   - Edges: `FlowEdge`, `BranchEdge`
 
-2. **Corto plazo** (Próximas 1-3 sesiones):
-   - Mejorar UX del canvas (zoom, pan, grid snap)
-   - Atajos de teclado (Delete para eliminar, Ctrl+S para guardar)
-   - Mejorar análisis TypeScript (tree-sitter más completo)
+2. **Corto plazo** (Próximas 2-3 sesiones):
+   - Phase 3: Loop y Call nodes
+   - Phase 4: Fork/Join, Signal, Try/Catch
+   - Phase 5: Swimlanes
+   - Phase 6: Export XML con activity-flow
 
 3. **Mediano plazo**:
-   - Phase 8: Agent integration (plan→patch→gates workflow)
-   - Integrar drift detection con frontend UI
+   - Validación de flujos
+   - Agent Loop integration (UML + Flow → Code generation)
 
 ---
 
 ## 📝 DECISIONES RECIENTES
+
+### Method Flow Designer - "El Santo Grial" (2025-12-30)
+**Objetivo**: Unificar diseño UML con pipeline de ejecución
+**Interfaz**: Drawer desde abajo (60% viewport), UML visible arriba
+**Nodos**: Activity Diagram completo (14 tipos)
+**XML Output**: Sección `<activity-flow>` dentro de cada método
+**Filosofía**: El humano define estructura + comportamiento + flujo, el agente implementa
+
+**Plan**: [.claude/plans/wondrous-sparking-flamingo.md](.claude/plans/wondrous-sparking-flamingo.md)
 
 ### UML Editor Multi-Language (2025-12-22)
 **Qué**: Soporte para Python, TypeScript y C++ con nombres específicos

@@ -21,6 +21,11 @@ import type {
   UmlAttributeDef,
   UmlTargetLanguage,
   UmlInterfaceMethodDef,
+  ActivityDiagram,
+  ActivityNode,
+  ActivityEdge,
+  ActivitySwimlane,
+  ActivityDetailLevel,
 } from "../api/types";
 import type { DesignPatternTemplate } from "../config/designPatternTemplates";
 import { calculatePositions, findEmptyArea, getTemplateBounds } from "../utils/templateLayoutEngine";
@@ -235,6 +240,48 @@ interface UmlEditorState {
   // Layout actions
   updateEntityPosition: (entityId: string, position: { x: number; y: number }) => void;
   batchUpdatePositions: (positions: Map<string, { x: number; y: number }>) => void;
+
+  // ============================================================================
+  // Flow Editor State (Activity Diagram)
+  // ============================================================================
+
+  // Flow editor state
+  isFlowDrawerOpen: boolean;
+  flowEditorClassId: string | null;
+  flowEditorMethodId: string | null;
+  selectedFlowNodeId: string | null;
+  selectedFlowEdgeId: string | null;
+
+  // Flow editor actions
+  openFlowEditor: (classId: string, methodId: string) => void;
+  closeFlowEditor: () => void;
+
+  // Activity diagram actions
+  getActivityDiagram: (classId: string, methodId: string) => ActivityDiagram | null;
+  initializeActivityDiagram: (classId: string, methodId: string) => void;
+  setActivityDiagram: (classId: string, methodId: string, diagram: ActivityDiagram) => void;
+
+  // Activity node actions
+  addActivityNode: (classId: string, methodId: string, node: ActivityNode) => void;
+  updateActivityNode: (classId: string, methodId: string, nodeId: string, updates: Partial<ActivityNode>) => void;
+  deleteActivityNode: (classId: string, methodId: string, nodeId: string) => void;
+  updateActivityNodePosition: (classId: string, methodId: string, nodeId: string, position: { x: number; y: number }) => void;
+
+  // Activity edge actions
+  addActivityEdge: (classId: string, methodId: string, edge: ActivityEdge) => void;
+  updateActivityEdge: (classId: string, methodId: string, edgeId: string, updates: Partial<ActivityEdge>) => void;
+  deleteActivityEdge: (classId: string, methodId: string, edgeId: string) => void;
+
+  // Swimlane actions
+  addSwimlane: (classId: string, methodId: string, swimlane: ActivitySwimlane) => void;
+  updateSwimlane: (classId: string, methodId: string, swimlaneId: string, updates: Partial<ActivitySwimlane>) => void;
+  deleteSwimlane: (classId: string, methodId: string, swimlaneId: string) => void;
+  assignNodeToSwimlane: (classId: string, methodId: string, nodeId: string, swimlaneId: string | null) => void;
+
+  // Flow selection
+  selectFlowNode: (nodeId: string | null) => void;
+  selectFlowEdge: (edgeId: string | null) => void;
+  clearFlowSelection: () => void;
 }
 
 export const useUmlEditorStore = create<UmlEditorState>()(
@@ -251,6 +298,13 @@ export const useUmlEditorStore = create<UmlEditorState>()(
         selectedEdgeId: null,
         isDirty: false,
         activeComponentId: null,
+
+        // Flow editor initial state
+        isFlowDrawerOpen: false,
+        flowEditorClassId: null,
+        flowEditorMethodId: null,
+        selectedFlowNodeId: null,
+        selectedFlowEdgeId: null,
 
         // Project actions
         setProject: (project) =>
@@ -1201,6 +1255,477 @@ export const useUmlEditorStore = create<UmlEditorState>()(
               },
             };
           }),
+
+        // ============================================================================
+        // Flow Editor Actions (Activity Diagram)
+        // ============================================================================
+
+        openFlowEditor: (classId, methodId) =>
+          set({
+            isFlowDrawerOpen: true,
+            flowEditorClassId: classId,
+            flowEditorMethodId: methodId,
+            selectedFlowNodeId: null,
+            selectedFlowEdgeId: null,
+          }),
+
+        closeFlowEditor: () =>
+          set({
+            isFlowDrawerOpen: false,
+            flowEditorClassId: null,
+            flowEditorMethodId: null,
+            selectedFlowNodeId: null,
+            selectedFlowEdgeId: null,
+          }),
+
+        getActivityDiagram: (classId, methodId) => {
+          const state = get();
+          for (const module of state.project.modules) {
+            const cls = module.classes.find((c) => c.id === classId);
+            if (cls) {
+              const method = cls.methods.find((m) => m.id === methodId);
+              if (method) {
+                // ActivityDiagram is stored as extended property
+                return (method as any).activityDiagram ?? null;
+              }
+            }
+          }
+          return null;
+        },
+
+        initializeActivityDiagram: (classId, methodId) => {
+          const state = get();
+          const existingDiagram = state.getActivityDiagram(classId, methodId);
+          if (existingDiagram) return; // Already initialized
+
+          const initialDiagram: ActivityDiagram = {
+            methodId,
+            nodes: [
+              {
+                id: generateId(),
+                type: "initial",
+                position: { x: 250, y: 50 },
+                label: "Start",
+              },
+            ],
+            edges: [],
+            swimlanes: [],
+            detailLevel: "detailed",
+            lastModified: new Date().toISOString(),
+          };
+
+          set((currentState) => ({
+            project: {
+              ...currentState.project,
+              modules: currentState.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) =>
+                          method.id === methodId
+                            ? { ...method, activityDiagram: initialDiagram }
+                            : method
+                        ),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          }));
+        },
+
+        setActivityDiagram: (classId, methodId, diagram) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) =>
+                          method.id === methodId
+                            ? { ...method, activityDiagram: { ...diagram, lastModified: new Date().toISOString() } }
+                            : method
+                        ),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        addActivityNode: (classId, methodId, node) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              nodes: [...diagram.nodes, node],
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        updateActivityNode: (classId, methodId, nodeId, updates) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              nodes: diagram.nodes.map((n) =>
+                                n.id === nodeId ? { ...n, ...updates } : n
+                              ),
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        deleteActivityNode: (classId, methodId, nodeId) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              nodes: diagram.nodes.filter((n) => n.id !== nodeId),
+                              edges: diagram.edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            selectedFlowNodeId: state.selectedFlowNodeId === nodeId ? null : state.selectedFlowNodeId,
+            isDirty: true,
+          })),
+
+        updateActivityNodePosition: (classId, methodId, nodeId, position) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              nodes: diagram.nodes.map((n) =>
+                                n.id === nodeId ? { ...n, position } : n
+                              ),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+          })),
+
+        addActivityEdge: (classId, methodId, edge) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              edges: [...diagram.edges, edge],
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        updateActivityEdge: (classId, methodId, edgeId, updates) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              edges: diagram.edges.map((e) =>
+                                e.id === edgeId ? { ...e, ...updates } : e
+                              ),
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        deleteActivityEdge: (classId, methodId, edgeId) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              edges: diagram.edges.filter((e) => e.id !== edgeId),
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            selectedFlowEdgeId: state.selectedFlowEdgeId === edgeId ? null : state.selectedFlowEdgeId,
+            isDirty: true,
+          })),
+
+        addSwimlane: (classId, methodId, swimlane) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              swimlanes: [...(diagram.swimlanes ?? []), swimlane],
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        updateSwimlane: (classId, methodId, swimlaneId, updates) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              swimlanes: (diagram.swimlanes ?? []).map((sl) =>
+                                sl.id === swimlaneId ? { ...sl, ...updates } : sl
+                              ),
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        deleteSwimlane: (classId, methodId, swimlaneId) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              swimlanes: (diagram.swimlanes ?? []).filter((sl) => sl.id !== swimlaneId),
+                              // Remove swimlane assignment from nodes
+                              nodes: diagram.nodes.map((n) =>
+                                n.swimlaneId === swimlaneId ? { ...n, swimlaneId: undefined } : n
+                              ),
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        assignNodeToSwimlane: (classId, methodId, nodeId, swimlaneId) =>
+          set((state) => ({
+            project: {
+              ...state.project,
+              modules: state.project.modules.map((m) => ({
+                ...m,
+                classes: m.classes.map((c) =>
+                  c.id === classId
+                    ? {
+                        ...c,
+                        methods: c.methods.map((method) => {
+                          if (method.id !== methodId) return method;
+                          const diagram = (method as any).activityDiagram as ActivityDiagram | undefined;
+                          if (!diagram) return method;
+                          return {
+                            ...method,
+                            activityDiagram: {
+                              ...diagram,
+                              nodes: diagram.nodes.map((n) =>
+                                n.id === nodeId
+                                  ? { ...n, swimlaneId: swimlaneId ?? undefined }
+                                  : n
+                              ),
+                              lastModified: new Date().toISOString(),
+                            },
+                          };
+                        }),
+                      }
+                    : c
+                ),
+              })),
+            },
+            isDirty: true,
+          })),
+
+        selectFlowNode: (nodeId) =>
+          set({ selectedFlowNodeId: nodeId, selectedFlowEdgeId: null }),
+
+        selectFlowEdge: (edgeId) =>
+          set({ selectedFlowEdgeId: edgeId, selectedFlowNodeId: null }),
+
+        clearFlowSelection: () =>
+          set({ selectedFlowNodeId: null, selectedFlowEdgeId: null }),
       };
       },
       {
