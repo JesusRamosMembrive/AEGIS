@@ -67,9 +67,10 @@ export function BranchFlowEdge({
     borderRadius: 8,
   });
 
-  // Statement/external edges should look like regular call edges (solid line)
+  // Statement/external edges: dashed lines with animation (blue color)
+  // Regular branch edges: dashed when unexpanded, solid when expanded
   const strokeWidth = isStatementOrExternalEdge ? 2 : (isExpanded ? 2 : 1.5);
-  const strokeDasharray = isStatementOrExternalEdge ? "none" : (isExpanded ? "none" : "5,5");
+  const strokeDasharray = isStatementOrExternalEdge ? "5,5" : (isExpanded ? "none" : "5,5");
 
   return (
     <>
