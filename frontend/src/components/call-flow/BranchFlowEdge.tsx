@@ -111,12 +111,13 @@ export function BranchFlowEdge({
             <div
               style={{
                 padding: "2px 8px",
-                background: `${edgeColor}20`,
+                background: colors.base.card,
                 border: `1px solid ${edgeColor}`,
                 borderRadius: "4px",
                 fontSize: "9px",
                 fontWeight: 600,
-                color: edgeColor,
+                // Use edgeLabel color (white/light) for statement/external, edgeColor for branch labels
+                color: isStatementOrExternalEdge ? colors.callFlow.edgeLabel : edgeColor,
                 whiteSpace: "nowrap",
                 display: "flex",
                 alignItems: "center",
