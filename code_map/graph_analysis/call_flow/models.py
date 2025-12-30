@@ -229,6 +229,8 @@ class IgnoredCall:
     call_site_line: int  # Line where the call occurs
     module_hint: Optional[str] = None  # Module name if known (e.g., "json")
     caller_id: Optional[str] = None  # ID of the node that made this call
+    branch_id: Optional[str] = None  # Branch ID if this call is inside a branch
+    decision_id: Optional[str] = None  # Decision node ID if inside a branch
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -238,6 +240,8 @@ class IgnoredCall:
             "call_site_line": self.call_site_line,
             "module_hint": self.module_hint,
             "caller_id": self.caller_id,
+            "branch_id": self.branch_id,
+            "decision_id": self.decision_id,
         }
 
     @classmethod
@@ -249,6 +253,8 @@ class IgnoredCall:
             call_site_line=data["call_site_line"],
             module_hint=data.get("module_hint"),
             caller_id=data.get("caller_id"),
+            branch_id=data.get("branch_id"),
+            decision_id=data.get("decision_id"),
         )
 
 
@@ -290,6 +296,8 @@ class CallNode:
     reasons: Optional[str] = None  # Why UNRESOLVED/AMBIGUOUS
     complexity: Optional[int] = None  # Cyclomatic complexity (McCabe)
     loc: Optional[int] = None  # Lines of code
+    branch_id: Optional[str] = None  # Branch ID if inside a decision branch
+    decision_id: Optional[str] = None  # Decision node ID if inside a branch
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -309,6 +317,8 @@ class CallNode:
             "reasons": self.reasons,
             "complexity": self.complexity,
             "loc": self.loc,
+            "branch_id": self.branch_id,
+            "decision_id": self.decision_id,
         }
 
     @classmethod
@@ -331,6 +341,8 @@ class CallNode:
             reasons=data.get("reasons"),
             complexity=data.get("complexity"),
             loc=data.get("loc"),
+            branch_id=data.get("branch_id"),
+            decision_id=data.get("decision_id"),
         )
 
 

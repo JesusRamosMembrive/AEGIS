@@ -592,7 +592,7 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                 scope_info=scope_info,
             )
 
-            # Handle external/ignored calls
+            # Handle external/ignored calls (no branch context in FULL mode)
             if status != ResolutionStatus.RESOLVED_PROJECT:
                 ignored_call = IgnoredCall(
                     expression=call_info.qualified_name,
@@ -600,6 +600,8 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                     call_site_line=call_info.line,
                     module_hint=module_hint,
                     caller_id=parent_id,
+                    branch_id=None,
+                    decision_id=None,
                 )
                 graph.ignored_calls.append(ignored_call)
 
@@ -811,7 +813,7 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                 scope_info=scope_info,
             )
 
-            # Handle external/ignored calls
+            # Handle external/ignored calls (pass branch context if available)
             if status != ResolutionStatus.RESOLVED_PROJECT:
                 ignored_call = IgnoredCall(
                     expression=call_info.qualified_name,
@@ -819,6 +821,8 @@ class PythonCallFlowExtractor(BaseCallFlowExtractor):
                     call_site_line=call_info.line,
                     module_hint=module_hint,
                     caller_id=parent_id,
+                    branch_id=branch_id,
+                    decision_id=decision_id,
                 )
                 graph.ignored_calls.append(ignored_call)
 

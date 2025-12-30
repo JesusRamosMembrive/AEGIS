@@ -126,8 +126,14 @@ def _add_external_nodes_to_graph(graph: CallGraph) -> None:
         if not ignored.caller_id:
             continue
 
-        # Skip if caller doesn't exist in graph (edge case)
-        if ignored.caller_id not in graph.nodes:
+        # Determine edge source: if this call is inside a branch, connect from the decision node
+        # Otherwise connect from the caller
+        if ignored.decision_id and ignored.decision_id in graph.decision_nodes:
+            edge_source = ignored.decision_id
+        elif ignored.caller_id in graph.nodes:
+            edge_source = ignored.caller_id
+        else:
+            # Skip if neither caller nor decision node exists
             continue
 
         # Determine kind based on resolution status
@@ -137,16 +143,23 @@ def _add_external_nodes_to_graph(graph: CallGraph) -> None:
             kind = "external"
 
         # Create a unique ID for this external call
-        # Use expression + module_hint to differentiate (e.g., json.loads vs yaml.loads)
-        expr_key = f"{ignored.module_hint or ''}:{ignored.expression}"
+        # Include branch_id in key to allow same call in different branches
+        branch_suffix = f":{ignored.branch_id}" if ignored.branch_id else ""
+        expr_key = f"{ignored.module_hint or ''}:{ignored.expression}{branch_suffix}"
 
         if expr_key not in external_nodes:
             # Create new external node
-            node_id = f"external:{expr_key}:{ignored.call_site_line}"
+            node_id = f"external:{ignored.module_hint or ''}:{ignored.expression}:{ignored.call_site_line}"
 
-            # Get depth from caller + 1
-            caller_node = graph.nodes[ignored.caller_id]
-            depth = caller_node.depth + 1
+            # Get depth: from decision node or caller
+            if ignored.decision_id and ignored.decision_id in graph.decision_nodes:
+                decision_node = graph.decision_nodes[ignored.decision_id]
+                depth = decision_node.depth + 1
+            elif ignored.caller_id in graph.nodes:
+                caller_node = graph.nodes[ignored.caller_id]
+                depth = caller_node.depth + 1
+            else:
+                depth = 1
 
             # Extract simple name from expression (e.g., "print" from "print(...)")
             name = ignored.expression.split("(")[0].split(".")[-1]
@@ -170,21 +183,26 @@ def _add_external_nodes_to_graph(graph: CallGraph) -> None:
                 reasons=None,
                 complexity=None,
                 loc=None,
+                # Store branch context in the node for frontend rendering
+                branch_id=ignored.branch_id,
+                decision_id=ignored.decision_id,
             )
             graph.add_node(external_node)
             external_nodes[expr_key] = node_id
         else:
             node_id = external_nodes[expr_key]
 
-        # Create edge from caller to external node
+        # Create edge from decision node (if in branch) or caller to external node
         edge = CallEdge(
-            source_id=ignored.caller_id,
+            source_id=edge_source,
             target_id=node_id,
             call_site_line=ignored.call_site_line,
             call_type="external",
             arguments=None,
             expression=ignored.expression,
             resolution_status=ignored.status,
+            branch_id=ignored.branch_id,
+            decision_id=ignored.decision_id,
         )
         graph.add_edge(edge)
 
