@@ -43,7 +43,13 @@ export function BranchFlowEdge({
   const isExpanded = data?.isExpanded ?? false;
   const branchLabel = data?.branchLabel ?? "";
   const callSiteLine = data?.callSiteLine;
-  const edgeColor = getBranchColor(branchLabel, isExpanded);
+  const callType = data?.callType;
+
+  // For statement/external edges, use the primary blue color like regular call edges
+  const isStatementOrExternalEdge = callType === "statement" || callType === "external";
+  const edgeColor = isStatementOrExternalEdge
+    ? colors.primary.main
+    : getBranchColor(branchLabel, isExpanded);
 
   // Determine what label to show:
   // - If we have a callSiteLine (for statement/external edges), show "L{line}"
@@ -61,6 +67,10 @@ export function BranchFlowEdge({
     borderRadius: 8,
   });
 
+  // Statement/external edges should look like regular call edges (solid line)
+  const strokeWidth = isStatementOrExternalEdge ? 2 : (isExpanded ? 2 : 1.5);
+  const strokeDasharray = isStatementOrExternalEdge ? "none" : (isExpanded ? "none" : "5,5");
+
   return (
     <>
       {/* Main edge path */}
@@ -71,8 +81,8 @@ export function BranchFlowEdge({
         markerEnd={markerEnd}
         style={{
           stroke: edgeColor,
-          strokeWidth: isExpanded ? 2 : 1.5,
-          strokeDasharray: isExpanded ? "none" : "5,5",
+          strokeWidth,
+          strokeDasharray,
           fill: "none",
           transition: "all 0.3s ease",
         }}

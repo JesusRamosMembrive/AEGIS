@@ -231,15 +231,20 @@ function CallFlowGraphInner({
     () =>
       edges.map((edge) => {
         const isBranchEdge = edge.data?.branchId != null;
+        const callType = edge.data?.callType as string | undefined;
+        // Statement and external edges should look like regular call edges (blue, animated)
+        const isStatementOrExternal = callType === "statement" || callType === "external";
         return {
           ...edge,
           type: isBranchEdge ? "branchFlow" : "callFlow",
-          animated: !isBranchEdge, // Only animate regular call edges
+          // Animate regular call edges AND statement/external edges
+          animated: !isBranchEdge || isStatementOrExternal,
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: isBranchEdge
-              ? colors.callFlow.decision
-              : colors.primary.main,
+            // Use blue for statement/external edges, decision color for other branch edges
+            color: isStatementOrExternal
+              ? colors.primary.main
+              : (isBranchEdge ? colors.callFlow.decision : colors.primary.main),
           },
         };
       }),
