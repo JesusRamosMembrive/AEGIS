@@ -13,7 +13,6 @@ import { InspectorPanel } from "./inspector";
 import { ValidationPanel } from "./validation";
 import { ComponentTabs } from "./ComponentTabs";
 import { ImportExportDialog, TemplatesDialog, AiGenerateDialog, ImportFromCodeDialog } from "./toolbar";
-import { FlowEditorDrawer } from "./flow-editor/FlowEditorDrawer";
 import { DESIGN_TOKENS } from "../../theme/designTokens";
 import {
   LANGUAGE_CONFIG,
@@ -657,9 +656,6 @@ export function UmlEditorView(): JSX.Element {
         isOpen={isImportFromCodeDialogOpen}
         onClose={() => setImportFromCodeDialogOpen(false)}
       />
-
-      {/* Flow Editor Drawer */}
-      <FlowEditorDrawer />
 
       {/* Language Change Confirmation Dialog */}
       {pendingLanguageChange && (

@@ -13,17 +13,7 @@
 import { useState } from "react";
 import { useUmlEditorStore } from "../../../state/useUmlEditorStore";
 import { DESIGN_TOKENS } from "../../../theme/designTokens";
-import type { UmlMethodDef, UmlParameter, UmlThrows, UmlTestCase, UmlHints, ActivityDiagram } from "../../../api/types";
-
-// Simple GitBranch icon
-const GitBranchIcon = ({ size = 16, color = "currentColor" }: { size?: number; color?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="6" y1="3" x2="6" y2="15" />
-    <circle cx="18" cy="6" r="3" />
-    <circle cx="6" cy="18" r="3" />
-    <path d="M18 9a9 9 0 0 1-9 9" />
-  </svg>
-);
+import type { UmlMethodDef, UmlParameter, UmlThrows, UmlTestCase, UmlHints } from "../../../api/types";
 
 const { colors, borders } = DESIGN_TOKENS;
 
@@ -32,7 +22,7 @@ interface MethodEditorProps {
 }
 
 export function MethodEditor({ classId }: MethodEditorProps): JSX.Element {
-  const { getClassById, addMethod, updateMethod, deleteMethod, openFlowEditor, getActivityDiagram } = useUmlEditorStore();
+  const { getClassById, addMethod, updateMethod, deleteMethod } = useUmlEditorStore();
   const cls = getClassById(classId);
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<"basic" | "params" | "contracts" | "hints" | "tests">("basic");
@@ -234,60 +224,9 @@ export function MethodEditor({ classId }: MethodEditorProps): JSX.Element {
           {activeSection === "tests" && (
             <TestCasesSection method={selectedMethod} onUpdate={handleUpdateMethod} />
           )}
-
-          {/* Design Flow Button */}
-          {selectedMethodId && (
-            <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: `1px solid ${borders.default}` }}>
-              <DesignFlowButton
-                classId={classId}
-                methodId={selectedMethodId}
-                hasFlowDesign={!!getActivityDiagram(classId, selectedMethodId)}
-                onOpenFlow={() => openFlowEditor(classId, selectedMethodId)}
-              />
-            </div>
-          )}
         </div>
       )}
     </div>
-  );
-}
-
-// Design Flow Button Component
-function DesignFlowButton({
-  classId,
-  methodId,
-  hasFlowDesign,
-  onOpenFlow,
-}: {
-  classId: string;
-  methodId: string;
-  hasFlowDesign: boolean;
-  onOpenFlow: () => void;
-}) {
-  return (
-    <button
-      onClick={onOpenFlow}
-      style={{
-        width: "100%",
-        padding: "10px 12px",
-        borderRadius: "6px",
-        border: `1px solid ${hasFlowDesign ? colors.primary.main : borders.default}`,
-        backgroundColor: hasFlowDesign ? `${colors.primary.main}15` : "transparent",
-        color: hasFlowDesign ? colors.primary.main : colors.text.secondary,
-        fontSize: "12px",
-        fontWeight: 500,
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-        transition: "all 0.15s ease",
-      }}
-      title="Open Flow Editor to design the internal algorithm of this method"
-    >
-      <GitBranchIcon size={16} />
-      {hasFlowDesign ? "Edit Flow Design" : "Design Flow (Activity Diagram)"}
-    </button>
   );
 }
 
